@@ -8,6 +8,7 @@ const api = {
   store: {
     list: (kind: string) => ipcRenderer.invoke('store:list', kind),
     read: (kind: string, id: string) => ipcRenderer.invoke('store:read', kind, id),
+    remove: (kind: string, id: string) => ipcRenderer.invoke('store:remove', kind, id),
     write: (kind: string, id: string, data: unknown) => ipcRenderer.invoke('store:write', kind, id, data),
   },
 };

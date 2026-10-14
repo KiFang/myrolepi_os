@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { validateManifest } from '../core/plugin';
@@ -69,6 +69,9 @@ ipcMain.handle('store:read', (_e, kind: string, id: string) => {
   const f = path.join(dataDir, safe(kind), `${safe(id)}.json`);
   return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
 });
+ipcMain.handle('store:remove', (_e, kind: string, id: string) => {
+  fs.rmSync(path.join(dataDir, safe(kind), `${safe(id)}.json`), { force: true });
+});
 ipcMain.handle('store:write', (_e, kind: string, id: string, data: unknown) => {
   const d = path.join(dataDir, safe(kind));
   fs.mkdirSync(d, { recursive: true });
@@ -91,6 +94,15 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: true,
     },
+  });
+  win.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'warning', title: 'Несохранённые изменения',
+      message: 'Закрыть документ без сохранения?',
+      buttons: ['Продолжить редактирование', 'Закрыть без сохранения'],
+      defaultId: 0, cancelId: 0,
+    });
+    if (choice === 1) event.preventDefault();
   });
   win.setMenuBarVisibility(false);
   const dev = process.env.VITE_DEV_SERVER_URL;
