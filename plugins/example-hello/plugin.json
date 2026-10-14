@@ -1,0 +1,8 @@
+{
+  "id": "example-hello",
+  "name": { "ru": "Пример: формулы d100 и тема", "en": "Example: d100 formulas & theme" },
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "main": "index.js",
+  "permissions": ["formulas", "locales"]
+}

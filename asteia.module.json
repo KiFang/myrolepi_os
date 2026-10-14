@@ -1,0 +1,8 @@
+{
+  "id": "myrolepi-os",
+  "name": { "ru": "MyRolePi OS — конструктор настольных ролевых систем", "en": "MyRolePi OS — tabletop RPG system builder" },
+  "version": "0.1.0",
+  "launcher": "Asteia Alltools",
+  "entry": { "command": "electron", "args": ["."], "launcherArgs": ["--launcher", "--data-dir", "{dataDir}", "--plugins-dir", "{pluginsDir}", "--lang", "{lang}"] },
+  "_note": "Черновой формат модуля. Подгоните под реальную спецификацию лаунчера Asteia Alltools."
+}

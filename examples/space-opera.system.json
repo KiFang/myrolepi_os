@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "id": "space-opera",
+  "name": { "ru": "Космическая опера (пример)", "en": "Space Opera (example)" },
+  "version": "0.1.0",
+  "macros": [{ "name": "mod", "params": ["score"], "formula": "floor((score - 10) / 2)" }],
+  "entityTypes": [
+    {
+      "id": "character",
+      "label": { "ru": "Персонаж", "en": "Character" },
+      "category": "character",
+      "fields": [
+        { "id": "level", "label": { "ru": "Уровень", "en": "Level" }, "type": "number", "default": 1, "min": 1 },
+        { "id": "str", "label": { "ru": "Сила", "en": "Strength" }, "type": "number", "default": 10, "group": "stats" },
+        { "id": "tech", "label": { "ru": "Технологии", "en": "Tech" }, "type": "number", "default": 10, "group": "stats" },
+        { "id": "tech_mod", "label": { "ru": "Мод. технологий", "en": "Tech mod" }, "type": "number", "formula": "mod(tech)" },
+        { "id": "max_hp", "label": { "ru": "Макс. HP", "en": "Max HP" }, "type": "number", "formula": "8 + mod(str) + level * 4" },
+        { "id": "hp", "label": "HP", "type": "resource", "default": 8 }
+      ],
+      "actions": [
+        { "id": "hack", "label": { "ru": "Взлом", "en": "Hack" }, "formula": "1d20 + tech_mod + level" }
+      ],
+      "cardViews": [
+        { "id": "default", "name": { "ru": "Стандартная", "en": "Default" }, "blocks": [
+          { "id": "b1", "kind": "heading", "x": 0, "y": 0, "w": 12, "h": 1 },
+          { "id": "b2", "kind": "field", "field": "max_hp", "x": 0, "y": 1, "w": 4, "h": 1 }
+        ] }
+      ]
+    },
+    {
+      "id": "starship",
+      "label": { "ru": "Космический корабль", "en": "Starship" },
+      "category": "vehicle",
+      "fields": [
+        { "id": "hull", "label": { "ru": "Корпус", "en": "Hull" }, "type": "number", "default": 100 },
+        { "id": "engines", "label": { "ru": "Двигатели", "en": "Engines" }, "type": "number", "default": 3 },
+        { "id": "mass", "label": { "ru": "Масса", "en": "Mass" }, "type": "number", "default": 50 },
+        { "id": "speed", "label": { "ru": "Скорость", "en": "Speed" }, "type": "number", "formula": "round(engines * 100 / mass * 10) / 10" },
+        { "id": "armor", "label": { "ru": "Броня", "en": "Armor" }, "type": "number", "formula": "floor(hull / 20)" }
+      ],
+      "children": [{ "type": "character", "label": { "ru": "Экипаж", "en": "Crew" }, "max": 8 }],
+      "cardViews": [{ "id": "default", "name": "Default", "blocks": [] }]
+    },
+    {
+      "id": "colony",
+      "label": { "ru": "Колония", "en": "Colony" },
+      "category": "settlement",
+      "fields": [
+        { "id": "population", "label": { "ru": "Население", "en": "Population" }, "type": "number", "default": 1000 },
+        { "id": "farms", "label": { "ru": "Фермы", "en": "Farms" }, "type": "number", "default": 5 },
+        { "id": "food_balance", "label": { "ru": "Баланс еды", "en": "Food balance" }, "type": "number", "formula": "farms * 250 - population" }
+      ],
+      "cardViews": [{ "id": "default", "name": "Default", "blocks": [] }]
+    }
+  ]
+}
