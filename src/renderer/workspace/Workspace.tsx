@@ -4,7 +4,11 @@ import type { Campaign, GameSystem } from "../../core";
 import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
-import { registerProject } from "../projectBridge";
+import { PanelFrame } from "../PanelFrame";
+import { emitPanelEvent } from "../panelEvents";
+import type { PanelDef } from "../../core";
+import type { PluginInfo } from "../plugin-host";
+import { registerProject, registerProjectApi } from "../projectBridge";
 import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { ExportDialog } from "../ExportDialog";
@@ -22,23 +26,45 @@ import "../workspace.css";
 type Selection = { kind: "system" | "campaign"; id: string };
 const same = (a: Selection, b: Selection) => a.kind === b.kind && a.id === b.id;
 
-export function Workspace({ registry, active }: { registry: PluginRegistry; active: boolean }) {
+export interface PanelItem { plugin: PluginInfo; panel: PanelDef }
+
+export function Workspace({ registry, active, panels = [] }: { registry: PluginRegistry; active: boolean; panels?: PanelItem[] }) {
   const { t, label, lang } = useLang();
   const notify = useToast();
   const lib = useLibrary(active);
   const { project, change } = lib;
   useEffect(() => { registerProject(lib.getProject); return () => registerProject(null); }, [lib.getProject]);
+  const selRef = useRef<Selection | null>(null);
+  useEffect(() => {
+    registerProjectApi({ get: () => lib.getProject() as never, change: (fn) => lib.change(fn), selection: () => selRef.current });
+    return () => registerProjectApi(null);
+  }, [lib.getProject, lib.change]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [openTabs, setOpenTabs] = useState<Selection[]>([]);
   const [treeOpen, setTreeOpen] = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [rolls, setRolls] = useState<RollEntry[]>([]);
-  const [bottomTab, setBottomTab] = useState<"problems" | "rolls">("problems");
+  const [bottomTab, setBottomTab] = useState<string>("problems");
+  const [rightTab, setRightTab] = useState<string>("props");
+  const [seenPanels, setSeenPanels] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const prot = useProtection(project.systems);
 
+  const pKey = (x: PanelItem) => `${x.plugin.id}:${x.panel.id}`;
+  const rightPanels = panels.filter((x) => x.panel.placement === "right");
+  const bottomPanels = panels.filter((x) => x.panel.placement === "bottom");
+  const visiblePanel = (x: PanelItem) => (x.panel.placement === "right" ? rightTab === pKey(x) && inspectorOpen : bottomTab === pKey(x));
+  useEffect(() => {
+    const shown = panels.filter(visiblePanel).map(pKey).filter((k) => !seenPanels.includes(k));
+    if (shown.length) setSeenPanels((s) => [...s, ...shown]);
+  });
+  useEffect(() => { if (rightTab !== "props" && !rightPanels.some((x) => pKey(x) === rightTab)) setRightTab("props"); }, [rightPanels.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (bottomTab !== "problems" && bottomTab !== "rolls" && !bottomPanels.some((x) => pKey(x) === bottomTab)) setBottomTab("problems"); }, [bottomPanels.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const system = selection?.kind === "system" ? project.systems.find((s) => s.id === selection.id) : undefined;
   const campaign = selection?.kind === "campaign" ? project.campaigns.find((c) => c.id === selection.id) : undefined;
+  selRef.current = selection;
+  useEffect(() => { emitPanelEvent("selection", selection); }, [selection?.kind, selection?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const linked = campaign && project.systems.find((s) => s.id === campaign.systemId);
 
   const locked = isLocked(system);
@@ -261,13 +287,17 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
               </div>
             )}
           </div>
-          <div className="ws-diagnostics">
+          <div className={"ws-diagnostics" + (bottomPanels.some((x) => pKey(x) === bottomTab) ? " has-panel" : "")}>
             <div className="ws-panel-title ws-bottom-tabs">
               <button className={bottomTab === "problems" ? "active" : ""} onClick={() => setBottomTab("problems")}>{t("ws.tabProblems")} <span className={errorCount ? "bad" : problems ? "warn" : "ok"}>{problems}</span></button>
               <button className={bottomTab === "rolls" ? "active" : ""} onClick={() => setBottomTab("rolls")}>{t("ws.tabRolls")} <span>{rolls.length}</span></button>
+              {bottomPanels.map((x) => <button key={pKey(x)} className={bottomTab === pKey(x) ? "active" : ""} onClick={() => setBottomTab(pKey(x))}>{label(x.panel.title)}</button>)}
               {bottomTab === "rolls" && !!rolls.length && <button className="ws-clear" onClick={() => setRolls([])}>{t("ws.clearRolls")}</button>}
             </div>
-            <div className="ws-diagnostics-list">
+            {bottomPanels.filter((x) => seenPanels.includes(pKey(x))).map((x) => (
+              <div key={pKey(x) + x.plugin.hash} className="ws-diagnostics-panel" hidden={bottomTab !== pKey(x)}><PanelFrame plugin={x.plugin} panel={x.panel} /></div>
+            ))}
+            <div className="ws-diagnostics-list" hidden={bottomTab !== "problems" && bottomTab !== "rolls"}>
               {bottomTab === "problems" ? (
                 <>
                   {issues.map((issue, i) => (
@@ -299,8 +329,16 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
           </div>
         </section>
         <aside className="ws-inspector" hidden={!inspectorOpen}>
-          <div className="ws-panel-title">{t("ws.inspector")}</div>
-          <div className="ws-inspector-content">
+          {rightPanels.length ? (
+            <div className="ws-panel-title ws-bottom-tabs">
+              <button className={rightTab === "props" ? "active" : ""} onClick={() => setRightTab("props")}>{t("ws.inspector")}</button>
+              {rightPanels.map((x) => <button key={pKey(x)} className={rightTab === pKey(x) ? "active" : ""} onClick={() => setRightTab(pKey(x))}>{label(x.panel.title)}</button>)}
+            </div>
+          ) : <div className="ws-panel-title">{t("ws.inspector")}</div>}
+          {rightPanels.filter((x) => seenPanels.includes(pKey(x))).map((x) => (
+            <div key={pKey(x) + x.plugin.hash} className="ws-inspector-panel" hidden={rightTab !== pKey(x)}><PanelFrame plugin={x.plugin} panel={x.panel} /></div>
+          ))}
+          <div className="ws-inspector-content" hidden={rightTab !== "props"}>
             {(system || campaign) && <button className="ws-with-icon ws-export" title={t("ws.exportTitle")} onClick={() => setExporting(true)}><Icon name="download" />{t("ws.export")}</button>}
             {system ? <fieldset className="ws-fieldset" disabled={locked}><SystemInspector ed={sys} /></fieldset> : campaign ? <CampaignInspector ed={cam} /> : (
               <>

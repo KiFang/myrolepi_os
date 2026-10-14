@@ -2,12 +2,20 @@ import { ipcMain, shell } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { validateManifest } from '../core/plugin';
+import { hashPluginDir } from './lib/pluginFiles';
 import { pluginsDir, resDir } from './paths';
 
-interface LoadedPlugin { dir: string; manifest: unknown; errors: string[]; code?: string }
+interface LoadedPlugin { dir: string; manifest: unknown; errors: string[]; code?: string; filesHash?: string }
+
+/** id плагина → отпечаток всех его файлов на момент последнего чтения (панели отдаются только при совпадении). */
+export const approvedHashes = new Map<string, string>();
+const dirOfId = new Map<string, string>();
+export const pluginDirOf = (id: string) => dirOfId.get(id);
 
 function scanPlugins(): LoadedPlugin[] {
   const out: LoadedPlugin[] = [];
+  approvedHashes.clear();
+  dirOfId.clear();
   for (const e of fs.readdirSync(pluginsDir, { withFileTypes: true })) {
     if (!e.isDirectory()) continue;
     const dir = path.join(pluginsDir, e.name);
@@ -17,13 +25,22 @@ function scanPlugins(): LoadedPlugin[] {
       const manifest = JSON.parse(fs.readFileSync(mf, 'utf8'));
       const errors = validateManifest(manifest);
       let code: string | undefined;
+      let filesHash: string | undefined;
       if (!errors.length) {
-        const mainPath = path.resolve(dir, manifest.main);
-        if (!mainPath.startsWith(dir + path.sep)) errors.push('main выходит за пределы папки плагина');
-        else if (!fs.existsSync(mainPath)) errors.push(`Не найден файл ${manifest.main}`);
-        else code = fs.readFileSync(mainPath, 'utf8');
+        if (manifest.main !== undefined) {
+          const mainPath = path.resolve(dir, manifest.main);
+          if (!mainPath.startsWith(dir + path.sep)) errors.push('main выходит за пределы папки плагина');
+          else if (!fs.existsSync(mainPath)) errors.push(`Не найден файл ${manifest.main}`);
+          else code = fs.readFileSync(mainPath, 'utf8');
+        }
+        if (Array.isArray(manifest.panels) && manifest.panels.length) {
+          for (const pn of manifest.panels) if (!fs.existsSync(path.join(dir, pn.entry))) errors.push(`Не найден файл панели ${pn.entry}`);
+          filesHash = hashPluginDir(dir);
+          if (!filesHash) errors.push('Папка плагина слишком большая для панелей (до 300 файлов и 20 МБ)');
+          else if (!errors.length) { approvedHashes.set(manifest.id, filesHash); dirOfId.set(manifest.id, e.name); }
+        }
       }
-      out.push({ dir: e.name, manifest, errors, code });
+      out.push({ dir: e.name, manifest, errors, code, filesHash });
     } catch (err) {
       out.push({ dir: e.name, manifest: null, errors: [`plugin.json: ${(err as Error).message}`] });
     }

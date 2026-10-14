@@ -7,6 +7,8 @@ const api = {
   changelog: () => ipcRenderer.invoke('changelog:read'),
   scaffoldPlugin: (id: string, files: Record<string, string>) => ipcRenderer.invoke('plugins:scaffold', id, files),
   installExamples: () => ipcRenderer.invoke('plugins:installExamples'),
+  /** адрес страницы панели плагина (открывается в изолированной рамке) */
+  panelUrl: (pluginId: string, entry: string) => `rolepi-plugin://${pluginId}/${entry.split('/').map(encodeURIComponent).join('/')}`,
   openPluginsFolder: () => ipcRenderer.invoke('plugins:openFolder'),
   store: {
     list: (kind: string) => ipcRenderer.invoke('store:list', kind),

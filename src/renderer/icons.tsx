@@ -20,6 +20,7 @@ const PATHS: Record<string, string> = {
   copy: "M9 9h10v10H9zM5 15V5h10",
   refresh: "M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6",
   folder: "M3 6h7l2 2h9v11H3z",
+  panel: "M4 5h16v14H4zM4 10h16M10 10v9",
   wand: "M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z",
   search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4",
   command: "M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z",

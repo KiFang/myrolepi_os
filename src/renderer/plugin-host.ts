@@ -3,18 +3,18 @@ import {
 } from '../core';
 import type {
   BlockRenderer, CommandDef, DicePreset, FormulaFn, FormulaFnInfo, GameSystem, LocalizedString,
-  PluginHost, PluginManifest, PluginModule, PluginPermission, SettingDef, ThemeDef,
+  PanelDef, PluginHost, PluginManifest, PluginModule, PluginPermission, SettingDef, ThemeDef,
 } from '../core';
 
-export interface RawPlugin { dir: string; manifest: PluginManifest | null; errors: string[]; code?: string }
+export interface RawPlugin { dir: string; manifest: PluginManifest | null; errors: string[]; code?: string; /** отпечаток всех файлов плагина (для плагинов с панелями) */ filesHash?: string }
 
 /** Согласия пользователя и отключённые плагины (хранятся в файле, см. App). */
 export interface PluginState { approved: Record<string, string>; disabled: string[] }
 /** Личные данные плагина: его хранилище и значения настроек. */
 export interface PluginData { storage: Record<string, unknown>; settings: Record<string, unknown> }
 
-export interface Contributions { functions: string[]; blocks: string[]; themes: string[]; systems: string[]; locales: string[]; commands: string[]; dice: string[] }
-const noContributions = (): Contributions => ({ functions: [], blocks: [], themes: [], systems: [], locales: [], commands: [], dice: [] });
+export interface Contributions { functions: string[]; blocks: string[]; themes: string[]; systems: string[]; locales: string[]; commands: string[]; dice: string[]; panels: string[] }
+const noContributions = (): Contributions => ({ functions: [], blocks: [], themes: [], systems: [], locales: [], commands: [], dice: [], panels: [] });
 
 export type PluginRunState = 'active' | 'needs-approval' | 'disabled' | 'error';
 
@@ -28,6 +28,8 @@ export interface PluginInfo {
   description?: LocalizedString;
   permissions: PluginPermission[];
   settings: SettingDef[];
+  /** панели плагина; заполнено, только пока плагин запущен */
+  panels: PanelDef[];
   state: PluginRunState;
   errors: string[];
   contributes: Contributions;
@@ -59,7 +61,7 @@ export interface PluginDeps {
 
 const BUILTIN_BLOCKS = ['heading', 'field', 'text', 'divider', 'image', 'bar', 'actions'];
 const BUILTIN_FUNCTIONS = ['floor', 'ceil', 'round', 'abs', 'sqrt', 'min', 'max', 'sum', 'avg', 'clamp', 'if', 'len', 'roll'];
-const STORAGE_LIMIT = 256 * 1024;
+export const STORAGE_LIMIT = 256 * 1024;
 const ACTIVATE_TIMEOUT_MS = 3000;
 
 /**
@@ -96,17 +98,19 @@ export async function loadPlugins(raw: RawPlugin[], deps: PluginDeps): Promise<L
     const m = p.manifest;
     const baseErrors = [...p.errors];
     if (m && !baseErrors.length) baseErrors.push(...validateManifest(m, deps.appVersion));
-    if (!m || baseErrors.length || !p.code) {
-      plugins.push({ id: m?.id ?? p.dir, dir: p.dir, name: m?.name ?? p.dir, version: m?.version ?? '?', permissions: Array.isArray(m?.permissions) ? m!.permissions : [], settings: [], state: 'error', errors: baseErrors, contributes: noContributions(), hash: '' });
+    if (m && !baseErrors.length && m.main !== undefined && !p.code) baseErrors.push(tm('plug.noCode'));
+    if (m && !baseErrors.length && m.panels?.length && !p.filesHash) baseErrors.push(tm('plug.noFilesHash'));
+    if (!m || baseErrors.length) {
+      plugins.push({ id: m?.id ?? p.dir, dir: p.dir, name: m?.name ?? p.dir, version: m?.version ?? '?', permissions: Array.isArray(m?.permissions) ? m!.permissions : [], settings: [], panels: [], state: 'error', errors: baseErrors, contributes: noContributions(), hash: '' });
       continue;
     }
     if (seen.has(m.id)) {
-      plugins.push({ id: m.id, dir: p.dir, name: m.name, version: m.version, permissions: m.permissions, settings: [], state: 'error', errors: [tm('plug.duplicate', { id: m.id })], contributes: noContributions(), hash: '' });
+      plugins.push({ id: m.id, dir: p.dir, name: m.name, version: m.version, permissions: m.permissions, settings: [], panels: [], state: 'error', errors: [tm('plug.duplicate', { id: m.id })], contributes: noContributions(), hash: '' });
       continue;
     }
     seen.add(m.id);
-    const hash = await deps.sha256(JSON.stringify(m) + '\n' + p.code);
-    const info: PluginInfo = { id: m.id, dir: p.dir, name: m.name, version: m.version, author: m.author, homepage: m.homepage, description: m.description, permissions: m.permissions, settings: m.settings ?? [], state: 'active', errors: [], contributes: noContributions(), hash };
+    const hash = await deps.sha256(JSON.stringify(m) + '\n' + (p.code ?? '') + (m.panels?.length ? '\nfiles:' + p.filesHash : ''));
+    const info: PluginInfo = { id: m.id, dir: p.dir, name: m.name, version: m.version, author: m.author, homepage: m.homepage, description: m.description, permissions: m.permissions, settings: m.settings ?? [], panels: m.panels ?? [], state: 'active', errors: [], contributes: noContributions(), hash };
     plugins.push(info);
     if (deps.state.approved[m.id] !== hash) { info.state = 'needs-approval'; continue; }
     if (deps.state.disabled.includes(m.id)) { info.state = 'disabled'; continue; }
@@ -193,14 +197,17 @@ export async function loadPlugins(raw: RawPlugin[], deps: PluginDeps): Promise<L
     };
 
     try {
-      const module: { exports: Partial<PluginModule> } = { exports: {} };
-      new Function('module', 'exports', ...SHADOWED, p.code)(module, module.exports, ...SHADOWED.map(() => undefined));
-      if (typeof module.exports.activate !== 'function') throw new Error(tm('plug.noActivate'));
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      await Promise.race([
-        Promise.resolve(module.exports.activate(host)),
-        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(tm('plug.timeout'))), deps.activateTimeoutMs ?? ACTIVATE_TIMEOUT_MS); }),
-      ]).finally(() => clearTimeout(timer));
+      if (p.code !== undefined) {
+        const module: { exports: Partial<PluginModule> } = { exports: {} };
+        new Function('module', 'exports', ...SHADOWED, p.code)(module, module.exports, ...SHADOWED.map(() => undefined));
+        if (typeof module.exports.activate !== 'function') throw new Error(tm('plug.noActivate'));
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        await Promise.race([
+          Promise.resolve(module.exports.activate(host)),
+          new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(tm('plug.timeout'))), deps.activateTimeoutMs ?? ACTIVATE_TIMEOUT_MS); }),
+        ]).finally(() => clearTimeout(timer));
+      }
+      if (m.panels?.length) { info.panels = m.panels; info.contributes.panels = m.panels.map((x) => x.id); }
       // успех: переносим черновик в общий реестр
       Object.assign(registry.functions, draft.functions);
       Object.assign(registry.functionInfo, draft.functionInfo);
@@ -214,6 +221,7 @@ export async function loadPlugins(raw: RawPlugin[], deps: PluginDeps): Promise<L
       info.state = 'error';
       info.errors = [(e as Error).message];
       info.contributes = noContributions();
+      info.panels = [];
     }
   }
   return { registry, plugins, data };

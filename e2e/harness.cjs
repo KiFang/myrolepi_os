@@ -20,29 +20,56 @@ function findChrome() {
   throw new Error('Chromium не найден: задайте CHROME_PATH');
 }
 
-function serve(port) {
+// как в приложении: страницы панелей отдаются с жёсткой политикой безопасности (см. src/main/lib/pluginFiles.ts)
+const PANEL_CSP = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'";
+const crypto = require('crypto');
+const filesOf = (dir, prefix = '') => fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1)).flatMap((e) => (e.isDirectory() ? filesOf(path.join(dir, e.name), prefix + e.name + '/') : [prefix + e.name]));
+const hashDir = (dir) => { const h = crypto.createHash('sha256'); for (const f of filesOf(dir)) { h.update(f + '\0'); h.update(fs.readFileSync(path.join(dir, f))); h.update('\0'); } return h.digest('hex'); };
+
+function serve(port, plugins) {
   const dist = path.join(ROOT, 'dist');
   return new Promise((resolve) => {
     const srv = http.createServer((q, r) => {
-      const f = path.join(dist, q.url === '/' ? 'index.html' : q.url.split('?')[0]);
+      const url = q.url.split('?')[0];
+      const m = /^\/__plugin\/([^/]+)\/(.+)$/.exec(url);
+      if (m) {
+        const p = plugins.find((x) => x.manifest.id === m[1]);
+        const rel = decodeURIComponent(m[2]);
+        const base = path.posix.basename(rel);
+        const f = base === '@sdk.js' ? path.join(ROOT, 'panel-sdk/sdk.js') : base === '@sdk.css' ? path.join(ROOT, 'panel-sdk/sdk.css') : p && path.join(p.absDir, rel);
+        if (!f || rel.includes('..') || !fs.existsSync(f)) { r.writeHead(404); return r.end(); }
+        const headers = { 'content-type': MIME[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' };
+        if (f.endsWith('.html')) headers['content-security-policy'] = PANEL_CSP;
+        r.writeHead(200, headers);
+        return r.end(fs.readFileSync(f));
+      }
+      const f = path.join(dist, url === '/' ? 'index.html' : url);
       if (!f.startsWith(dist) || !fs.existsSync(f)) { r.writeHead(404); return r.end(); }
       r.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
-      r.end(fs.readFileSync(f));
+      // в приложении рамки панелей открываются по rolepi-plugin://; в браузерной проверке их отдаёт этот сервер
+      r.end(url === '/' ? fs.readFileSync(f, 'utf8').replace('frame-src rolepi-plugin:', 'frame-src rolepi-plugin: http://localhost:*') : fs.readFileSync(f));
     }).listen(port, () => resolve(srv));
   });
 }
 
-const plug = (d) => ({ dir: d, manifest: JSON.parse(fs.readFileSync(path.join(ROOT, 'plugins', d, 'plugin.json'), 'utf8')), errors: [], code: fs.readFileSync(path.join(ROOT, 'plugins', d, 'index.js'), 'utf8') });
+/** Плагин из папки plugins/ (по имени) или по полному пути. */
+const plug = (d) => {
+  const abs = path.isAbsolute(d) ? d : path.join(ROOT, 'plugins', d);
+  const manifest = JSON.parse(fs.readFileSync(path.join(abs, 'plugin.json'), 'utf8'));
+  const code = manifest.main ? fs.readFileSync(path.join(abs, manifest.main), 'utf8') : undefined;
+  return { dir: path.basename(abs), absDir: abs, manifest, errors: [], code, filesHash: manifest.panels && manifest.panels.length ? hashDir(abs) : undefined };
+};
 
 /** Запускает сценарий в чистом браузере. opts: { locale, plugins: ['example-extras', ...], seed: {kind: {id: data}} } */
 async function run(name, port, opts, scenario) {
-  const srv = await serve(port);
+  const plugs = (opts.plugins || []).map(plug);
+  const srv = await serve(port, plugs);
   const browser = await chromium.launch({ executablePath: findChrome(), args: ['--no-sandbox'] });
   const ctx = await browser.newContext({ viewport: { width: 1500, height: 950 }, locale: opts.locale || 'ru-RU', acceptDownloads: true });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   const page = await ctx.newPage();
   const errors = [];
-  page.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.test(m.text()) && errors.push(m.text()));
+  page.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.test(m.text()) && !(opts.allowErrors && opts.allowErrors.test(m.text())) && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push('PAGEERROR ' + e.message));
   // confirm() в Electron работает, prompt() — нет: приложение его не использует, поэтому prompt-диалог считаем ошибкой
   page.on('dialog', (d) => (d.type() === 'prompt' ? (errors.push('используется window.prompt(), которого нет в Electron'), d.dismiss()) : d.accept()));
@@ -66,6 +93,7 @@ async function run(name, port, opts, scenario) {
     return null;
   });
   await page.addInitScript(({ plugins, seed }) => {
+    if (window !== window.top) return; // как в приложении: мост window.rpi есть только у главного окна, не у рамок панелей
     const db = JSON.parse(JSON.stringify(seed || {}));
     const scaffolds = [];
     window.__db = db; window.__scaffolds = scaffolds;
@@ -85,6 +113,7 @@ async function run(name, port, opts, scenario) {
     const K = (op) => (...a) => window.__keysOp(op, ...a);
     window.rpi = {
       keys: { author: K('author'), ensure: K('ensure'), setName: K('setName'), sign: K('sign'), verify: K('verify'), export: K('export'), import: K('import') },
+      panelUrl: (id, entry) => `http://localhost:${location.port}/__plugin/${id}/${entry}`,
       env: async () => ({ version: '0.2.0', launcherMode: false, lang: navigator.language }),
       plugins: async () => plugins, changelog: async () => '## 0.2.0\n- test', openPluginsFolder: async () => {},
       scaffoldPlugin: async (id, f) => { scaffolds.push({ id, files: f }); return id; }, installExamples: async () => 2,
@@ -120,7 +149,7 @@ async function run(name, port, opts, scenario) {
         openFolder: async () => '',
       },
     };
-  }, { plugins: (opts.plugins || []).map(plug), seed: opts.seed });
+  }, { plugins: plugs.map(({ absDir, ...rest }) => rest), seed: opts.seed });
   let failed = 0;
   const step = async (title, fn) => {
     try { await fn(); console.log('  ok   ', title); } catch (e) { failed++; console.log('  FAIL ', title, '—', String(e.message).split('\n')[0]); }

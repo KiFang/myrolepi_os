@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PluginInfo, PluginData, PluginRegistry, PluginState, RawPlugin, createRegistry, loadPlugins, sha256Hex } from "./plugin-host";
+import { tm } from "../core";
+import { PluginInfo, PluginData, PluginRegistry, PluginState, RawPlugin, STORAGE_LIMIT, createRegistry, loadPlugins, sha256Hex } from "./plugin-host";
 
 const EMPTY_STATE: PluginState = { approved: {}, disabled: [] };
 
@@ -69,6 +70,19 @@ export function usePlugins(getLang: () => string) {
       timers.current[id] = setTimeout(() => void window.rpi?.store.write("plugin-data", id, d), 300);
       bump((n) => n + 1);
     },
+    /** личное хранилище плагина для его панелей (право storage проверяет мост) */
+    panelStorage: (id: string) => ({
+      get: (key: string) => { const v = data.current[id]?.storage?.[key]; return v === undefined ? undefined : JSON.parse(JSON.stringify(v)); },
+      set: (key: string, value: unknown) => {
+        const d = data.current[id];
+        if (!d) throw new Error(tm("plug.storageFull"));
+        const next = { ...d.storage, [key]: value === undefined ? undefined : JSON.parse(JSON.stringify(value)) };
+        if (JSON.stringify(next).length > STORAGE_LIMIT) throw new Error(tm("plug.storageFull"));
+        d.storage = next;
+        clearTimeout(timers.current[id]);
+        timers.current[id] = setTimeout(() => void window.rpi?.store.write("plugin-data", id, d), 400);
+      },
+    }),
     scaffold: (id: string, files: Record<string, string>): Promise<string> => window.rpi!.scaffoldPlugin(id, files),
     installExamples: (): Promise<number> => window.rpi!.installExamples(),
     available: !!window.rpi,

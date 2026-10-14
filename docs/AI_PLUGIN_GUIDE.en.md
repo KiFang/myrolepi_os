@@ -4,7 +4,7 @@
 
 ## 1. Instructions for the AI
 
-You are writing a plugin for the Rolepi desktop app (a tabletop RPG system builder). A plugin is **a folder with two files**: `plugin.json` and `index.js`.
+You are writing a plugin for the Rolepi desktop app (a tabletop RPG system builder). A plugin is **a folder with two files**: `plugin.json` and `index.js`. If you need your own page with buttons and forms (a generator, a cheat-sheet, a helper), build a **panel** — read section 11 and follow its rules in addition to these.
 
 **Answer format** — exactly this:
 1. One sentence: what the plugin does.
@@ -33,7 +33,7 @@ my-plugin/
 ```
 The folder goes into the plugins directory (the “Open plugins folder” button). After “Reload” the plugin appears in the list and **asks for permission**: the user sees which rights it requests. If the plugin's code changes, permission is requested again.
 
-A plugin runs with the app's privileges: there is no sandbox isolation, and the closed names (`window`, `fetch`…) protect against accidents, not against malice. So write honest plugins and do not ask for extra permissions.
+The code of `index.js` runs with the app's privileges: there is no sandbox isolation, and the closed names (`window`, `fetch`…) protect against accidents, not against malice. Panels (section 11) are different: they run in an isolated frame. So write honest plugins and do not ask for extra permissions.
 
 ## 3. plugin.json
 
@@ -43,7 +43,8 @@ A plugin runs with the app's privileges: there is no sandbox isolation, and the 
 | `name` | yes | Name: a string or `{ "ru": "...", "en": "..." }` |
 | `version` | yes | Plugin version, e.g. `"1.0.0"` |
 | `apiVersion` | yes | Always `1` |
-| `main` | yes | The code file, usually `"index.js"` (no `..`, inside the folder) |
+| `main` | yes* | The code file, usually `"index.js"` (no `..`, inside the folder). *Not needed if the plugin only has panels |
+| `panels` | no | Its own panel pages (section 11) |
 | `permissions` | yes | List of permissions (section 4) |
 | `description` | no | What the plugin does (two languages) |
 | `author`, `homepage` | no | Author and link |
@@ -62,6 +63,8 @@ A plugin runs with the app's privileges: there is no sandbox isolation, and the 
 | `commands` | `registerCommand` — commands in the palette (Ctrl+K) |
 | `dice` | `registerDicePreset` — presets on the Dice page |
 | `storage` | `host.storage` — the plugin's private storage |
+| `ui` | the plugin's panels (section 11) |
+| `project.read`, `project.write` | panels read and change the project (section 11) |
 
 `host.settings.get`, `host.lang` and `host.log` need no permission.
 
@@ -190,6 +193,7 @@ module.exports = { activate(host) {
 - [ ] Formula functions return valid values (a number, a string, true/false, a list of numbers, `null`).
 - [ ] Function and block names do not clash with the built-in ones.
 - [ ] Visible texts exist in `ru` and `en`.
+- [ ] If there are panels: the `ui` permission, `entry` is an `.html` inside the plugin folder, the page includes `@sdk.css` and `@sdk.js`, all JS is in separate files (no `onclick=`, no inline `<script>`), no network or `localStorage`, texts are inserted with `textContent`, every `rolepi.*` call is covered by a permission.
 - [ ] Block HTML uses only the allowed tags and `class`/`title`.
 
 ## 10. If something does not work
@@ -201,9 +205,109 @@ module.exports = { activate(host) {
 | The function "…" already exists | The name is taken by a built-in or another plugin's function — choose another |
 | …returned an invalid result | Return a number, a string, true/false, a list of numbers or `null` |
 | App version … or newer is required | Update the app or lower `minAppVersion` |
+| The panel does not respond / is empty | The page does not include `<script src="@sdk.js"></script>`, JS is written inline in the HTML, or the panel files changed — press "Reload" |
+| No permission "…" (in a panel) | Add the permission to the plugin's `permissions` and approve the plugin again |
 | The plugin takes too long to start | `activate` runs longer than 3 seconds — avoid heavy work at start |
 
 Error details and `host.log` output are visible in the developer console (Ctrl+Shift+I in the app window).
+
+## 11. Panels: a plugin with its own pages
+
+Besides code that extends the app (`index.js`), a plugin can show **panels** — its own HTML pages inside the Rolepi window: a name generator, a rules cheat-sheet, a game-master helper. A panel runs in an **isolated frame**: it has no access to the network, files, browser storage or the app's data. Everything it needs it asks the app for through the `rolepi` object, and only within the permissions the user granted.
+
+A plugin may consist only of panels (then `main` is not needed) or combine panels and `index.js`.
+
+```
+my-panel-plugin/
+  plugin.json
+  panel/
+    main.html
+    main.css
+    main.js
+```
+
+In `plugin.json` panels are described like this (the `ui` permission is required):
+
+```json
+  "permissions": ["ui", "project.read", "project.write"],
+  "panels": [
+    { "id": "names", "title": { "ru": "Имена", "en": "Names" }, "entry": "panel/main.html", "placement": "right" }
+  ]
+```
+
+`placement` — where the panel lives: `right` — a tab on the right next to properties, `bottom` — a tab at the bottom next to "Problems" and "Rolls", `page` — a separate "Panels" section in the top menu.
+
+**Hard rules for panel pages:**
+- Include `<link rel="stylesheet" href="@sdk.css">` (styling in the selected theme's colours) and `<script src="@sdk.js"></script>` (the `rolepi` object). These addresses work from any folder of the plugin.
+- **All JavaScript goes into separate `.js` files** of the plugin. Inline `<script>…</script>` and `onclick="…"` handlers are forbidden by the security policy and will not run. Inline `<style>` and `style="…"` are allowed.
+- No network (`fetch`, `XMLHttpRequest`, `WebSocket`, external images, fonts and scripts by URL) and no `localStorage`. Keep your own data in `rolepi.storage` (permission `storage`). Images are files inside the plugin folder or `data:`.
+- Insert any text coming from data (character names, notes) with `textContent`, not `innerHTML`.
+- Wait for `rolepi.ready` before the first call. Every call returns a Promise; on refusal (no permission, bad data) the Promise rejects with a readable message — show it to the user.
+- Visible texts exist in two languages: the language arrives in `rolepi.ready` (`{ lang }`) and changes with the `theme` event.
+
+### Panel permissions
+
+| Permission | What it gives a panel |
+|---|---|
+| `ui` | show panels; `rolepi.notify(text)`, `rolepi.openPage(page)` |
+| `project.read` | read systems and campaigns, know the selected document (`rolepi.project.*` except `create…`/`update…`) |
+| `project.write` | `createNote`, `createEntity`, `updateEntityValues`, `createSystem` — each write is one "Undo" step |
+| `dice` | `rolepi.roll(formula)` — a roll by a Rolepi formula |
+| `storage` | `rolepi.storage.get/set` — private storage (up to 256 KB) |
+
+Writes are limited: unknown parameters are ignored, at most 120 writes per minute; protected systems can be read, but a plugin cannot pass its own system off as protected.
+
+### `rolepi` reference
+
+| Call | Returns |
+|---|---|
+| `rolepi.ready` | Promise `{ lang, appVersion }` — the panel is connected |
+| `rolepi.on('selection', cb)` | calls `cb({ kind, id })` or `cb(null)` when the user opens another document (needs `project.read`) |
+| `rolepi.on('theme', cb)` | theme or language changed (colours update by themselves) |
+| `rolepi.project.selection()` | the selected document `{ kind: 'system' \| 'campaign', id }` or `null` |
+| `rolepi.project.listSystems()` / `getSystem(id)` | list of systems (with types) / the full system description |
+| `rolepi.project.listCampaigns()` / `getCampaign(id)` | list of campaigns / a campaign with characters and notes |
+| `rolepi.project.createNote(campaignId, { title, body })` | `{ id }` of the new note |
+| `rolepi.project.createEntity(campaignId, { typeId, name, values })` | `{ id }` of the new character; `values` — values of the type's parameters |
+| `rolepi.project.updateEntityValues(campaignId, entityId, values)` | `true`; values are merged into existing ones |
+| `rolepi.project.createSystem(system)` | `{ id }` of the new system (format — section 7) |
+
+### Example: a "Roll d20 and save to a note" button
+
+`panel/main.html`:
+
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="@sdk.css">
+</head>
+<body>
+  <button class="primary" id="go">d20 → note</button>
+  <p id="msg" class="muted"></p>
+  <script src="@sdk.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+```
+
+`panel/main.js`:
+
+```js
+document.getElementById('go').onclick = async function () {
+  var msg = document.getElementById('msg');
+  try {
+    var sel = await rolepi.project.selection();
+    if (!sel || sel.kind !== 'campaign') { msg.textContent = 'Select a campaign'; return; }
+    var r = await rolepi.roll('1d20');
+    await rolepi.project.createNote(sel.id, { title: 'Roll', body: r.text });
+    msg.textContent = r.text;
+  } catch (e) { msg.textContent = e.message; }
+};
+```
+
+Manifest for the example: `permissions: ["ui", "dice", "project.read", "project.write"]`, panel `placement: "right"`. A complete working example is the "Example: name generator (panel)" plugin in the plugins folder.
 
 ## Appendix: the API in TypeScript
 
@@ -259,8 +363,9 @@ interface PluginManifest {
   author?: string;
   homepage?: string;
   minAppVersion?: string;        // например "0.1.0"
-  main: string;                  // "index.js"
-  permissions: ("formulas" | "blocks" | "systems" | "locales" | "themes" | "commands" | "dice" | "storage")[];
+  main?: string;                 // "index.js"; можно не указывать, если у плагина только панели
+  permissions: ("formulas" | "blocks" | "systems" | "locales" | "themes" | "commands" | "dice" | "storage" | "ui" | "project.read" | "project.write")[];
+  panels?: Array<{ id: string; title: LocalizedString; entry: string; placement: "page" | "right" | "bottom" }>;  // право "ui"; entry — .html внутри папки
   settings?: Array<{
     id: string; type: "number" | "text" | "boolean" | "select"; label: LocalizedString; description?: LocalizedString;
     default?: unknown; min?: number; max?: number; options?: { value: string; label: LocalizedString }[];
@@ -285,4 +390,27 @@ interface GameSystem {
         x: number; y: number; w: number; h: number; field?: string; props?: Record<string, unknown> }> }>;
   }>;
 }
+
+/** Объект window.rolepi, который есть на странице панели после <script src="@sdk.js"></script>. Все вызовы асинхронные. */
+interface RolepiPanelSdk {
+  ready: Promise<{ lang: string; appVersion: string }>;
+  lang(): string;
+  on(event: "selection" | "theme", cb: (data: any) => void): () => void;      // selection: { kind: "system" | "campaign", id } | null
+  notify(message: string): Promise<true>;                                       // право "ui"
+  openPage(page: "workspace" | "dice" | "formulas" | "plugins" | "data" | "help" | "about"): Promise<true>;  // право "ui"
+  roll(formula: string): Promise<{ value: unknown; text: string }>;              // право "dice"
+  storage: { get(key: string): Promise<unknown>; set(key: string, value: unknown): Promise<true> };  // право "storage", до 256 КБ
+  project: {                                                                    // читать — право "project.read", писать — "project.write"
+    selection(): Promise<{ kind: "system" | "campaign"; id: string } | null>;
+    listSystems(): Promise<{ id: string; name: string; locked: boolean; types: { id: string; label: string; category: string }[] }[]>;
+    getSystem(id: string): Promise<GameSystem>;
+    listCampaigns(): Promise<{ id: string; name: string; systemId: string; entities: number; notes: number }[]>;
+    getCampaign(id: string): Promise<{ id: string; name: string; systemId: string; entities: { id: string; typeId: string; name: string; values: Record<string, unknown> }[]; notes: { id: string; title: string; body: string }[] }>;
+    createNote(campaignId: string, note: { title: string; body?: string }): Promise<{ id: string }>;
+    createEntity(campaignId: string, entity: { typeId: string; name: string; values?: Record<string, unknown> }): Promise<{ id: string }>;
+    updateEntityValues(campaignId: string, entityId: string, values: Record<string, unknown>): Promise<true>;
+    createSystem(system: GameSystem): Promise<{ id: string }>;                   // id назначается заново, защита снимается
+  };
+}
+declare const rolepi: RolepiPanelSdk;
 ```

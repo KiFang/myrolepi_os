@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { evaluate, validateSystem } from '../src/core';
+import { evaluate, validateManifest, validateSystem } from '../src/core';
 import { loadPlugins, sha256Hex } from '../src/renderer/plugin-host';
 import type { PluginData, RawPlugin } from '../src/renderer/plugin-host';
 
@@ -38,8 +38,26 @@ describe.each(['AI_PLUGIN_GUIDE.md', 'AI_PLUGIN_GUIDE.en.md'])('%s', (file) => {
     expect(settings.settings).toHaveLength(2);
   });
   it('lists every permission and host method', () => {
-    for (const perm of ['formulas', 'blocks', 'systems', 'locales', 'themes', 'commands', 'dice', 'storage']) expect(text).toContain('`' + perm + '`');
+    for (const perm of ['formulas', 'blocks', 'systems', 'locales', 'themes', 'commands', 'dice', 'storage', 'ui', 'project.read', 'project.write']) expect(text).toContain('`' + perm + '`');
     for (const m of ['registerFormulaFunction', 'registerBlock', 'registerSystem', 'registerLocale', 'registerTheme', 'registerCommand', 'registerDicePreset', 'host.storage', 'host.settings.get']) expect(text).toContain(m);
+  });
+});
+
+describe.each(['AI_PLUGIN_GUIDE.md', 'AI_PLUGIN_GUIDE.en.md'])('%s panels', (file) => {
+  const text = guide(file);
+  it('the panel manifest example is valid', () => {
+    const json = '{' + blocks(text, 'json').find((b) => b.includes('"panels"'))! + '}';
+    const o = JSON.parse(json);
+    expect(validateManifest({ id: 'p', name: 'P', version: '1', apiVersion: 1, ...o })).toEqual([]);
+  });
+  it('the panel page example includes the SDK and uses no inline script', () => {
+    const html = blocks(text, 'html')[0];
+    expect(html).toContain('href="@sdk.css"');
+    expect(html).toContain('src="@sdk.js"');
+    expect(html.replace(/<script src="[^"]*"><\/script>/g, '')).not.toMatch(/<script/);
+  });
+  it('documents every SDK call', () => {
+    for (const m of ['rolepi.ready', 'rolepi.project.createNote', 'rolepi.project.createEntity', 'rolepi.project.updateEntityValues', 'rolepi.project.createSystem', 'rolepi.storage', 'rolepi.roll', 'rolepi.notify']) expect(text).toContain(m);
   });
 });
 

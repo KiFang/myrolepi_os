@@ -413,12 +413,12 @@ registerLocale('en', {
 });
 
 registerLocale('ru', {
-  'ws.import': 'Импорт', 'ws.importTitle': 'Добавить систему или кампанию из файла JSON', 'ws.imported': 'Файл добавлен в проекты', 'ws.importFailed': 'Не получилось прочитать файл: это не система и не кампания',
-  'ws.export': 'Сохранить в файл', 'ws.exportTitle': 'Выгрузить открытый документ в файл JSON, чтобы отправить другу или сохранить копию',
+  'ws.import': 'Импорт', 'ws.importTitle': 'Добавить систему или кампанию из файла .rolepi или JSON', 'ws.imported': 'Файл добавлен в проекты', 'ws.importFailed': 'Не получилось прочитать файл: это не система и не кампания',
+  'ws.export': 'Сохранить в файл', 'ws.exportTitle': 'Выгрузить открытый документ в файл .rolepi (с картинками), чтобы отправить другу или сохранить копию',
 });
 registerLocale('en', {
-  'ws.import': 'Import', 'ws.importTitle': 'Add a system or campaign from a JSON file', 'ws.imported': 'File added to your projects', 'ws.importFailed': 'Could not read the file: it is neither a system nor a campaign',
-  'ws.export': 'Save to file', 'ws.exportTitle': 'Export the open document to a JSON file to share it or keep a copy',
+  'ws.import': 'Import', 'ws.importTitle': 'Add a system or campaign from a .rolepi or JSON file', 'ws.imported': 'File added to your projects', 'ws.importFailed': 'Could not read the file: it is neither a system nor a campaign',
+  'ws.export': 'Save to file', 'ws.exportTitle': 'Export the open document to a .rolepi file (with its pictures) to share it or keep a copy',
 });
 
 registerLocale('ru', {
@@ -564,3 +564,6 @@ registerLocale('en', {
 });
 registerLocale('ru', { 'prot.readOnly': 'Система защищена автором — править её нельзя. Сделайте свою копию.' });
 registerLocale('en', { 'prot.readOnly': 'The system is protected by its author and cannot be edited. Make your own copy.' });
+
+registerLocale('ru', { 'panel.loading': 'Панель загружается…', 'panel.slow': 'Панель не отвечает. Проверьте, что страница подключает @sdk.js, и перечитайте плагины.', 'plugins.adds.panels': 'Панели', 'plugins.panelsHint': 'Панели плагина работают в изолированной рамке: у них нет доступа к сети и файлам, только к тому, что вы разрешили.' });
+registerLocale('en', { 'panel.loading': 'Loading panel…', 'panel.slow': 'The panel is not responding. Check that the page includes @sdk.js and reload the plugins.', 'plugins.adds.panels': 'Panels', 'plugins.panelsHint': 'Plugin panels run in an isolated frame: no network or file access, only what you allowed.' });
