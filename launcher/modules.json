@@ -1,0 +1,14 @@
+[
+  {
+    "id": "myrolepi-os",
+    "name": "MyRolePi OS",
+    "description": { "ru": "Конструктор настольных ролевых систем и кампаний", "en": "Tabletop RPG system & campaign builder" },
+    "repo": "kifang/myrolepi_os"
+  },
+  {
+    "id": "facet-os",
+    "name": "Facet OS",
+    "description": { "ru": "Заглушка: укажите репозиторий в repo", "en": "Placeholder: set the repo field" },
+    "repo": null
+  }
+]

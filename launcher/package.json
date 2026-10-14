@@ -1,0 +1,9 @@
+{
+  "name": "asteia-alltools-launcher",
+  "productName": "Asteia Alltools",
+  "version": "0.1.0",
+  "description": "Лаунчер проектов Asteia: установка, версии, обновления, changelog",
+  "main": "main.js",
+  "scripts": { "start": "electron .", "test": "node --test" },
+  "devDependencies": { "electron": "^33.0.0" }
+}

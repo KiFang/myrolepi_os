@@ -83,6 +83,13 @@
     "mac": {
       "target": [
         {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
           "target": "dmg",
           "arch": [
             "x64",
@@ -90,19 +97,24 @@
           ]
         }
       ],
-      "category": "public.app-category.games"
+      "category": "public.app-category.games",
+      "artifactName": "${productName}-${version}-${arch}-mac.${ext}"
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
       ],
-      "category": "Game"
+      "category": "Game",
+      "artifactName": "${productName}-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
     }
   }
 }

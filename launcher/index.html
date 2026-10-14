@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+<title>Asteia Alltools</title>
+<style>
+  :root { --bg:#14151a; --panel:#1c1e26; --panel2:#232632; --fg:#e8e6e1; --muted:#8b8e9b; --accent:#d9a441; --accent-fg:#1a1408; --danger:#e5676b; --border:#2e3140; font-family: system-ui, "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; } body { margin:0; background:var(--bg); color:var(--fg); }
+  .app { display:grid; grid-template-columns: 240px 1fr; height:100vh; }
+  .side { background:var(--panel); border-right:1px solid var(--border); padding:16px 12px; display:flex; flex-direction:column; gap:4px; }
+  .brand { font-weight:700; color:var(--accent); margin:0 8px 16px; letter-spacing:.04em; }
+  .mod { text-align:left; background:none; border:0; color:var(--fg); padding:10px 12px; border-radius:8px; cursor:pointer; font-size:14px; }
+  .mod:hover { background:var(--panel2); } .mod.active { background:var(--accent); color:var(--accent-fg); font-weight:600; }
+  main { padding:28px 36px; overflow:auto; } h1 { margin:0 0 6px; font-size:22px; }
+  .muted { color:var(--muted); font-size:13px; } .err { color:var(--danger); }
+  .row { display:flex; gap:8px; align-items:center; margin:16px 0; flex-wrap:wrap; }
+  .btn { background:var(--accent); color:var(--accent-fg); border:0; border-radius:8px; padding:10px 18px; font-weight:600; cursor:pointer; }
+  .btn.sec { background:var(--panel2); color:var(--fg); border:1px solid var(--border); } .btn:disabled { opacity:.45; cursor:default; }
+  select { background:var(--panel2); color:var(--fg); border:1px solid var(--border); border-radius:8px; padding:9px; }
+  pre { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px; white-space:pre-wrap; font-family:inherit; line-height:1.5; }
+  .bar { height:6px; background:var(--panel2); border-radius:3px; overflow:hidden; width:200px; } .bar i { display:block; height:100%; background:var(--accent); width:0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side"><div class="brand">ASTEIA ALLTOOLS</div><div id="mods"></div><div style="flex:1"></div><button class="btn sec" id="folder">Папка данных / Data folder</button></nav>
+  <main id="main"></main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const ru = navigator.language.startsWith('ru');
+const T = ru ? { install:'Установить', launch:'Запустить', remove:'Удалить версию', version:'Версия', installed:'установлена', notInstalled:'не установлена', noBuild:'нет сборки под вашу систему', changelog:'Список изменений', none:'Нет данных о релизах', noRepo:'Репозиторий модуля не указан', current:'Используется', use:'Использовать', loading:'Загрузка…', pre:'пре-релиз' }
+  : { install:'Install', launch:'Launch', remove:'Remove version', version:'Version', installed:'installed', notInstalled:'not installed', noBuild:'no build for your system', changelog:'Changelog', none:'No release info', noRepo:'Module repository is not set', current:'In use', use:'Use', loading:'Loading…', pre:'pre-release' };
+let state, active, releases = [], selected, progress = {};
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+const loc = (s) => (typeof s === 'string' ? s : s?.[ru ? 'ru' : 'en'] ?? '');
+
+async function load() { state = await asteia.list(); active = active || state.modules[0].id; renderNav(); await select(active); }
+function renderNav() { $('#mods').innerHTML = state.modules.map((m) => `<button class="mod ${m.id === active ? 'active' : ''}" data-id="${m.id}">${esc(m.name)}</button>`).join(''); document.querySelectorAll('.mod').forEach((b) => b.onclick = () => select(b.dataset.id)); }
+async function select(id) {
+  active = id; renderNav(); releases = []; selected = null; $('#main').innerHTML = `<p class="muted">${T.loading}</p>`;
+  const m = state.modules.find((x) => x.id === id);
+  let error = '';
+  if (m.repo) { try { releases = await asteia.releases(id); } catch (e) { error = e.message; } }
+  selected = state.installed[id]?.current ?? releases[0]?.version;
+  render(m, error);
+}
+function render(m, error) {
+  const rec = state.installed[m.id]; const rel = releases.find((r) => r.version === selected);
+  const isInst = !!rec?.versions[selected]; const p = progress[m.id];
+  $('#main').innerHTML = `<h1>${esc(m.name)}</h1><div class="muted">${esc(loc(m.description))}</div>
+    ${!m.repo ? `<p class="err">${T.noRepo}</p>` : ''}${error ? `<p class="err">${esc(error)}</p>` : ''}
+    <div class="row">
+      ${releases.length ? `<label class="muted">${T.version}</label><select id="ver">${releases.map((r) => `<option value="${esc(r.version)}" ${r.version === selected ? 'selected' : ''}>${esc(r.version)}${r.prerelease ? ' · ' + T.pre : ''}${rec?.versions[r.version] ? ' ✓' : ''}</option>`).join('')}</select>` : `<span class="muted">${T.none}</span>`}
+      ${rel && !isInst ? `<button class="btn" id="inst" ${rel.asset && !p ? '' : 'disabled'}>${T.install}</button>` : ''}
+      ${rel && !rel.asset ? `<span class="err">${T.noBuild}</span>` : ''}
+      ${isInst && rec.current !== selected ? `<button class="btn sec" id="use">${T.use}</button>` : ''}
+      ${isInst && rec.current === selected ? `<button class="btn" id="run">${T.launch}</button>` : ''}
+      ${isInst ? `<button class="btn sec" id="rm">${T.remove}</button>` : ''}
+      ${p ? `<div class="bar"><i style="width:${p.total ? Math.round(p.got / p.total * 100) : 50}%"></i></div>` : ''}
+    </div>
+    <div class="muted">${rec ? T.installed + ': ' + Object.keys(rec.versions).join(', ') + ' · ' + T.current + ': ' + rec.current : T.notInstalled}</div>
+    <h3>${T.changelog}</h3><pre>${esc(rel?.notes || '—')}</pre>`;
+  const on = (id, fn) => { const el = $('#' + id); if (el) el.onclick = async () => { try { await fn(); } catch (e) { alert(e.message); } }; };
+  if ($('#ver')) $('#ver').onchange = (e) => { selected = e.target.value; render(m, error); };
+  on('inst', async () => { progress[m.id] = { got: 0, total: 0 }; render(m, error); try { state.installed = await asteia.install(m.id, rel); } finally { delete progress[m.id]; } render(m, error); });
+  on('use', async () => { state.installed = await asteia.select(m.id, selected); render(m, error); });
+  on('rm', async () => { state.installed = await asteia.uninstall(m.id, selected); render(m, error); });
+  on('run', () => asteia.launch(m.id));
+}
+asteia.onProgress((p) => { progress[p.id] = p; const m = state.modules.find((x) => x.id === active); if (p.id === active) { const i = document.querySelector('.bar i'); if (i) i.style.width = (p.total ? Math.round(p.got / p.total * 100) : 50) + '%'; } });
+$('#folder').onclick = () => asteia.openFolder();
+load();
+</script>
+</body>
+</html>

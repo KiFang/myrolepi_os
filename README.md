@@ -19,6 +19,12 @@ Windows (установщик + portable), macOS (dmg, x64/arm64), Linux (AppIma
 - **Само приложение никогда не обновляется и не ходит в сеть за обновлениями.** Хотите обновления — используйте лаунчер Asteia Alltools; не хотите — скачайте нужную версию вручную из GitHub Releases и оставайтесь на ней.
 - **Лаунчер** читает фид `UpdateFeed` (`src/core/updates.ts`: версии, changelog, сборки по платформам), ставит обновления и показывает changelog. Changelog также лежит в приложении (раздел «О программе»).
 
+## Лаунчер (`launcher/`)
+Минимальный лаунчер Asteia Alltools: список модулей (`launcher/modules.json`), выбор любой версии из GitHub Releases,
+установка, запуск, переключение и удаление версий, changelog из описания релиза. Запуск: `cd launcher && npm install && npm start`.
+Модуль запускается с `--launcher --data-dir --plugins-dir --lang`. Для Facet OS укажите `repo` в `modules.json`.
+Имена файлов релиза важны: Windows `*-portable.exe`, Linux `*.AppImage`, macOS `*-mac.zip` — их лаунчер выбирает автоматически (`npm run dist` уже называет их так).
+
 ## Структура
 - `src/core` — движок без привязки к UI: кубики, формулы, схема системы, вычисление полей, валидатор, i18n, контракт плагинов.
 - `src/main` — Electron: окно, хранилище JSON, загрузка плагинов.
