@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { SCHEMA_VERSION } from "../../core";
 import type { Campaign, GameSystem } from "../../core";
 import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
+import { registerProject } from "../projectBridge";
 import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { downloadJson, detectDocument } from "../fileio";
@@ -21,6 +23,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   const notify = useToast();
   const lib = useLibrary(active);
   const { project, change } = lib;
+  useEffect(() => { registerProject(lib.getProject); return () => registerProject(null); }, [lib.getProject]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [openTabs, setOpenTabs] = useState<Selection[]>([]);
   const [treeOpen, setTreeOpen] = useState(true);
@@ -78,7 +81,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   const addCampaign = () => {
     const s = system ?? linked ?? project.systems[0];
     if (!s) return lib.setNotice({ key: "ws.createSystemFirst" });
-    const c: Campaign = { schema: 1, id: newId("campaign"), name: label(both("ws.defaultCampaignName")), systemId: s.id, entities: [], notes: [] };
+    const c: Campaign = { schema: SCHEMA_VERSION, id: newId("campaign"), name: label(both("ws.defaultCampaignName")), systemId: s.id, entities: [], notes: [] };
     change((p) => ({ ...p, campaigns: [...p.campaigns, c] }));
     open({ kind: "campaign", id: c.id });
   };
@@ -133,7 +136,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   }, []);
   // итог важных действий — коротким уведомлением
   useEffect(() => {
-    if (["ws.saved", "ws.imported", "ws.importFailed", "ws.saveError", "ws.fixInvalid", "ws.createSystemFirst"].includes(lib.notice.key)) notify(t(lib.notice.key, lib.notice.params));
+    if (["ws.saved", "ws.migrated", "ws.imported", "ws.importFailed", "ws.saveError", "ws.fixInvalid", "ws.createSystemFirst"].includes(lib.notice.key)) notify(t(lib.notice.key, lib.notice.params));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lib.notice]);
   const undo = () => { if (lib.undo()) sys.setFieldIndex(null); };

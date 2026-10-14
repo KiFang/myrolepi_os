@@ -6,6 +6,7 @@ import { CommandPalette } from "./CommandPalette";
 import type { PaletteCommand } from "./CommandPalette";
 import { Icon } from "./icons";
 import { HelpContext, LangContext, rememberLang, savedLang } from "./lang";
+import { DataPage } from "./DataPage";
 import { Plugins } from "./PluginsPage";
 import "./strings";
 import { THEMES, fromPlugin, rememberTheme, savedTheme } from "./themes";
@@ -15,9 +16,9 @@ import { usePlugins } from "./usePlugins";
 import { Workspace } from "./workspace/Workspace";
 import "./styles.css";
 
-type Page = "workspace" | "dice" | "formulas" | "plugins" | "help" | "about";
-const PAGES: Page[] = ["workspace", "dice", "formulas", "plugins", "help", "about"];
-const PAGE_ICONS: Record<Page, string> = { workspace: "studio", dice: "dice", formulas: "formula", plugins: "plugin", help: "help", about: "info" };
+type Page = "workspace" | "dice" | "formulas" | "plugins" | "data" | "help" | "about";
+const PAGES: Page[] = ["workspace", "dice", "formulas", "plugins", "data", "help", "about"];
+const PAGE_ICONS: Record<Page, string> = { workspace: "studio", dice: "dice", formulas: "formula", plugins: "plugin", data: "folder", help: "help", about: "info" };
 const LANG_NAMES: Record<string, string> = { ru: "Русский", en: "English" };
 
 function pickLang(candidate: string | null | undefined): string {
@@ -116,6 +117,7 @@ function Shell() {
               {page === "dice" && <Dice reg={reg} />}
               {page === "formulas" && <Formulas reg={reg} />}
               {page === "plugins" && <Plugins api={plugins} />}
+              {page === "data" && <DataPage />}
               {page === "help" && <Help reg={reg} target={helpTarget} onOpenFormula={(f) => { sessionStorage.setItem("rpi.formula", f); setPage("formulas"); }} />}
               {page === "about" && <About version={plugins.version} />}
             </div>

@@ -3,7 +3,7 @@ const { run } = require('./harness.cjs');
 (async () => {
   const only = process.argv[2];
   let failed = 0;
-  for (const f of ['studio', 'plugins', 'shell']) {
+  for (const f of ['studio', 'plugins', 'shell', 'data']) {
     if (only && only !== f) continue;
     const s = require(`./${f}.e2e.cjs`);
     failed += await run(s.name, s.port, s.opts, s.scenario);

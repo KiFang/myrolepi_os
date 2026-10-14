@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { BackupManifest } from './lib/backups';
 
 const api = {
   env: () => ipcRenderer.invoke('env:info'),
@@ -12,6 +13,22 @@ const api = {
     read: (kind: string, id: string) => ipcRenderer.invoke('store:read', kind, id),
     remove: (kind: string, id: string) => ipcRenderer.invoke('store:remove', kind, id),
     write: (kind: string, id: string, data: unknown) => ipcRenderer.invoke('store:write', kind, id, data),
+  },
+  /** Файлы проекта: картинки хранятся отдельно от JSON и адресуются содержимым. */
+  assets: {
+    put: (bytes: Uint8Array) => ipcRenderer.invoke('assets:put', bytes) as Promise<{ ok: true; id: string; size: number; existed: boolean } | { ok: false; code: string; message: string }>,
+    read: (id: string) => ipcRenderer.invoke('assets:read', id) as Promise<Uint8Array | null>,
+    list: () => ipcRenderer.invoke('assets:list') as Promise<{ id: string; size: number }[]>,
+    gc: (extraRefs: string[]) => ipcRenderer.invoke('assets:gc', extraRefs) as Promise<{ deleted: number; bytes: number; kept: number }>,
+    url: (id: string) => `rolepi-asset://${id}`,
+  },
+  backups: {
+    list: () => ipcRenderer.invoke('backups:list') as Promise<BackupManifest[]>,
+    create: (reason?: 'manual' | 'before-migration' | 'before-import', note?: string) => ipcRenderer.invoke('backups:create', reason ?? 'manual', note) as Promise<BackupManifest>,
+    auto: () => ipcRenderer.invoke('backups:auto') as Promise<BackupManifest | null>,
+    restore: (id: string) => ipcRenderer.invoke('backups:restore', id) as Promise<{ restored: BackupManifest; safety: BackupManifest } | null>,
+    delete: (id: string) => ipcRenderer.invoke('backups:delete', id) as Promise<boolean>,
+    openFolder: () => ipcRenderer.invoke('backups:openFolder') as Promise<string>,
   },
 };
 

@@ -1044,3 +1044,17 @@
   .workspace .ws-lang { min-width: 0; padding-left: 6px; padding-right: 6px; }
   .ws-wordmark { display: none; }
 }
+
+/* ── страница «Данные» ── */
+.data-card { padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(180deg, var(--panel2), var(--panel)); margin-bottom: 12px; }
+.data-card p { margin: 0 0 10px; line-height: 1.55; }
+.data-create { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-page .data-create input { flex: 1; min-width: 220px; }
+.data-list { display: flex; flex-direction: column; gap: 8px; }
+.data-row { display: grid; grid-template-columns: minmax(200px, 1.1fr) 1.4fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); animation: rp-item 0.2s ease both; }
+.data-when { display: flex; flex-direction: column; gap: 4px; }
+.data-reason { font-size: 11px; color: var(--muted); }
+.data-reason.manual { color: var(--accent); }
+.data-what { font-size: 12.5px; line-height: 1.5; }
+.data-actions { display: flex; gap: 6px; align-items: center; }
+@media (max-width: 900px) { .data-row { grid-template-columns: 1fr; } }

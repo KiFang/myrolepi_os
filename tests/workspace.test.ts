@@ -77,7 +77,8 @@ describe("library safety and localization", () => {
   it("rejects malformed documents instead of overwriting them", () => {
     const system = newSystem();
     expect(libraryProblem([system], [])).toBe(false);
-    expect(libraryProblem([{ schema: 2, id: "x", entityTypes: [] }], [])).toBe(true);
+    expect(libraryProblem([{ schema: "two", id: "x", entityTypes: [] }], [])).toBe(true);
+    expect(libraryProblem([{ schema: 2, entityTypes: [] }], [])).toBe(true); // нет id
     expect(libraryProblem([], [{ schema: 1, id: "c", entities: [{ id: "e", values: [] }], notes: [] }])).toBe(true);
     expect(libraryProblem([null], [])).toBe(true);
   });

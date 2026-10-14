@@ -9,3 +9,4 @@ export * from './plugin';
 export * from './updates';
 import './messages';
 export * from './actions';
+export * from './migrate';

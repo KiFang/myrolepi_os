@@ -50,13 +50,53 @@ async function run(name, port, opts, scenario) {
     const db = JSON.parse(JSON.stringify(seed || {}));
     const scaffolds = [];
     window.__db = db; window.__scaffolds = scaffolds;
+    // файлы проекта: id = sha256 + расширение (как в настоящем хранилище)
+    const files = new Map();
+    window.__files = files;
+    const sniff = (b) => (b[0] === 0x89 && b[1] === 0x50 ? 'png' : b[0] === 0xff && b[1] === 0xd8 ? 'jpg' : b[0] === 0x47 && b[1] === 0x49 ? 'gif' : null);
+    const hex = (buf) => [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, '0')).join('');
+    const DOCS = ['systems', 'campaigns', 'app', 'plugin-data'];
+    const backups = [];
+    window.__backups = backups;
+    const snapshot = (reason, note) => {
+      const data = {}; for (const k of DOCS) data[k] = JSON.parse(JSON.stringify(db[k] || {}));
+      const m = { id: `${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}-${String(backups.length).padStart(3, '0')}-${reason}`, createdAt: new Date().toISOString(), reason, note, app: '0.2.0', systems: Object.keys(data.systems).length, campaigns: Object.keys(data.campaigns).length, bytes: JSON.stringify(data).length };
+      backups.push({ m, data }); return m;
+    };
     window.rpi = {
-      env: async () => ({ version: '0.1.0', launcherMode: false, lang: navigator.language }),
-      plugins: async () => plugins, changelog: async () => '## 0.1.0\n- test', openPluginsFolder: async () => {},
-      scaffoldPlugin: async (id, files) => { scaffolds.push({ id, files }); return id; }, installExamples: async () => 2,
+      env: async () => ({ version: '0.2.0', launcherMode: false, lang: navigator.language }),
+      plugins: async () => plugins, changelog: async () => '## 0.2.0\n- test', openPluginsFolder: async () => {},
+      scaffoldPlugin: async (id, f) => { scaffolds.push({ id, files: f }); return id; }, installExamples: async () => 2,
       store: {
         list: async (k) => Object.keys(db[k] || {}), read: async (k, i) => (db[k] || {})[i] ?? null,
         write: async (k, i, d) => { (db[k] ||= {})[i] = JSON.parse(JSON.stringify(d)); }, remove: async (k, i) => { delete (db[k] || {})[i]; },
+      },
+      assets: {
+        put: async (bytes) => {
+          const ext = sniff(bytes); if (!ext) return { ok: false, code: 'bad-type', message: 'bad' };
+          if (bytes.length > 10 * 1024 * 1024) return { ok: false, code: 'too-big', message: 'big' };
+          const id = hex(await crypto.subtle.digest('SHA-256', bytes)) + '.' + ext;
+          const existed = files.has(id);
+          if (!existed) files.set(id, { bytes: new Uint8Array(bytes), url: URL.createObjectURL(new Blob([bytes], { type: 'image/' + ext })) });
+          return { ok: true, id, size: bytes.length, existed };
+        },
+        read: async (id) => files.get(id)?.bytes ?? null,
+        list: async () => [...files].map(([id, f]) => ({ id, size: f.bytes.length })),
+        gc: async (extra) => {
+          const text = JSON.stringify([db, backups.map((b) => b.data)]) + JSON.stringify(extra);
+          let deleted = 0, bytes = 0, kept = 0;
+          for (const [id, f] of [...files]) { if (text.includes('asset:' + id)) kept++; else { files.delete(id); deleted++; bytes += f.bytes.length; } }
+          return { deleted, bytes, kept };
+        },
+        url: (id) => files.get(id)?.url ?? 'about:blank',
+      },
+      backups: {
+        list: async () => backups.map((b) => b.m).reverse(),
+        create: async (reason = 'manual', note) => snapshot(reason, note),
+        auto: async () => (backups.some((b) => b.m.reason === 'auto') ? null : snapshot('auto')),
+        restore: async (id) => { const b = backups.find((x) => x.m.id === id); if (!b) return null; const safety = snapshot('before-restore'); for (const k of DOCS) db[k] = JSON.parse(JSON.stringify(b.data[k])); return { restored: b.m, safety }; },
+        delete: async (id) => { const i = backups.findIndex((x) => x.m.id === id); if (i < 0) return false; backups.splice(i, 1); return true; },
+        openFolder: async () => '',
       },
     };
   }, { plugins: (opts.plugins || []).map(plug), seed: opts.seed });
