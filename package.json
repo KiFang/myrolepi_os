@@ -119,7 +119,7 @@
       "provider": "github",
       "owner": "KiFang",
       "repo": "myrolepi_os",
-      "releaseType": "draft"
+      "releaseType": "release"
     }
   },
   "author": {
