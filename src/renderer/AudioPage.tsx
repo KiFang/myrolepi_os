@@ -4,14 +4,15 @@ import { audioEngine } from "./audio/engine";
 import { useAudio } from "./audio/useAudio";
 import { Icon } from "./icons";
 import { useLang } from "./lang";
+import { titleOf } from "./audio/titleOf";
+import { TipBar } from "./tips";
 
 const fmtTime = (s: number) => (Number.isFinite(s) && s > 0 ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00");
 const fmtSize = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 
-export const titleOf = (library: AudioFile[], ref: string | null | undefined) => (ref ? library.find((f) => f.ref === ref)?.title ?? ref.split("/").pop() ?? ref : "");
 
 /** Раздел «Звук»: музыка из папки, плеер и звуковая панель. Файлы, брошенные в папки, появляются сами. */
-export function AudioPage() {
+export default function AudioPage() {
   const { t } = useLang();
   const a = useAudio();
   const api = window.rpi?.audio;
@@ -33,6 +34,7 @@ export function AudioPage() {
     <>
       <h1><Icon name="music" size={24} />{t("audio.title")}</h1>
       <p className="muted">{t("audio.intro")}</p>
+      <TipBar context="audio" />
       <div className="audio-folders">
         <button className="ws-with-icon" onClick={() => void api.openFolder("music")}><Icon name="folder" size={15} />{t("audio.openMusic")}</button>
         <button className="ws-with-icon" onClick={() => void api.openFolder("sounds")}><Icon name="folder" size={15} />{t("audio.openSounds")}</button>
@@ -95,18 +97,5 @@ export function AudioPage() {
         </div>
       ))}
     </>
-  );
-}
-
-/** Маленький плеер в шапке: виден, пока есть выбранный трек. */
-export function MiniPlayer({ onOpen }: { onOpen: () => void }) {
-  const { t } = useLang();
-  const a = useAudio();
-  if (!a.current) return null;
-  return (
-    <div className="mini-player" role="group" aria-label={t("audio.player")}>
-      <button className="ws-icon-button" aria-label={a.playing ? t("audio.pause") : t("audio.play")} title={a.playing ? t("audio.pause") : t("audio.play")} onClick={() => audioEngine.toggle()}><Icon name={a.playing ? "pause" : "play"} size={14} /></button>
-      <button className="mini-title" title={t("audio.open")} onClick={onOpen}><span className={"mini-eq" + (a.playing ? " on" : "")} aria-hidden="true" /><span className="ws-ellipsis">{titleOf(a.library, a.current)}</span></button>
-    </div>
   );
 }

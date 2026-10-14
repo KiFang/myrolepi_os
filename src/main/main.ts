@@ -25,6 +25,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     backgroundColor: '#14161c',
+    show: false, // окно появляется, когда интерфейс готов: без белой вспышки и полупустого окна
     icon: path.join(app.getAppPath(), 'build', 'icon.png'),
     title: 'Rolepi',
     webPreferences: {
@@ -45,6 +46,8 @@ function createWindow() {
     if (choice === 1) event.preventDefault();
   });
   win.setMenuBarVisibility(false);
+  win.once('ready-to-show', () => win.show());
+  setTimeout(() => { if (!win.isDestroyed() && !win.isVisible()) win.show(); }, 4000); // на случай, если событие не придёт
   const dev = process.env.VITE_DEV_SERVER_URL;
   if (dev) win.loadURL(dev);
   else win.loadFile(path.join(__dirname, '../../dist/index.html'));

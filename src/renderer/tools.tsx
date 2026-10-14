@@ -3,7 +3,6 @@ import type { DiceRoll } from "../core";
 import { evaluate } from "../core";
 import { Icon } from "./icons";
 import { useLang } from "./lang";
-import { HelpPage } from "./help/HelpPage";
 import type { PluginRegistry } from "./plugin-host";
 
 const PRESETS = ["d20", "2d6", "4d6kh3", "d100", "3d8!", "4dF"];
@@ -84,10 +83,6 @@ export function Formulas({ reg }: { reg: PluginRegistry }) {
       <div className="card">{out.e ? <span className="err">{out.e}</span> : <span className="big">{String(out.r?.value)}</span>}</div>
     </>
   );
-}
-
-export function Help({ reg, target, onOpenFormula }: { reg: PluginRegistry; target?: string; onOpenFormula: (formula: string) => void }) {
-  return <HelpPage reg={reg} target={target} onOpenFormula={onOpenFormula} />;
 }
 
 export function About({ version }: { version?: string }) {

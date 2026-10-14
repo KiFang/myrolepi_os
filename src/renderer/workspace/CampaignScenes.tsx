@@ -1,7 +1,7 @@
 import { parseAudioRef } from "../../core";
 import type { MapMarker, Scene } from "../../core";
 import { audioEngine } from "../audio/engine";
-import { titleOf } from "../AudioPage";
+import { titleOf } from "../audio/titleOf";
 import { useAudio } from "../audio/useAudio";
 import { Icon } from "../icons";
 import { useLang } from "../lang";

@@ -61,6 +61,8 @@ interface PluginManifest {
 interface GameSystem {
   schema: 1; id: string; name: LocalizedString; version: string; description?: LocalizedString;
   macros?: { name: string; params: string[]; formula: string }[];
+  /** бестиарий: заготовки существ и объектов, которые мастер добавляет в кампанию одним нажатием */
+  bestiary?: { id: string; typeId: string; name: string; values: Record<string, unknown>; notes?: string }[];
   entityTypes: Array<{
     id: string; label: LocalizedString;
     category: "character" | "creature" | "vehicle" | "structure" | "settlement" | "item" | "location" | "faction" | "custom";

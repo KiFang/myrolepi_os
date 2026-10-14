@@ -105,6 +105,7 @@ export function libraryProblem(systems: unknown[], campaigns: unknown[]): boolea
   const okSystem = (s: any) =>
     isObj(s) && schemaState(s) !== 'invalid' && !!s.id &&
     (s.macros === undefined || arrayOf(s.macros, (m) => isObj(m) && typeof m.name === "string" && Array.isArray(m.params))) &&
+    (s.bestiary === undefined || arrayOf(s.bestiary, (b) => isObj(b) && typeof b.id === "string" && typeof b.typeId === "string" && typeof b.name === "string" && isObj(b.values))) &&
     arrayOf(s.entityTypes, okType);
   const okCampaign = (c: any) =>
     isObj(c) && schemaState(c) !== 'invalid' && !!c.id &&

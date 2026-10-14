@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { SCHEMA_VERSION, canFork, forkSystem, isLocked } from "../../core";
 import type { Campaign, GameSystem } from "../../core";
-import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
+import { rememberSimple, simpleChosen, useSimpleState } from "../simple";
 import { PanelFrame } from "../PanelFrame";
 import { emitPanelEvent } from "../panelEvents";
 import type { PanelDef } from "../../core";
@@ -11,8 +11,7 @@ import type { PluginInfo } from "../plugin-host";
 import { registerProject, registerProjectApi } from "../projectBridge";
 import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
-import { ExportDialog } from "../ExportDialog";
-import { ImportError, importData } from "../exchange";
+const ExportDialog = lazy(() => import("../ExportDialog").then((m) => ({ default: m.ExportDialog })));
 import { ProtectionBanner } from "../ProtectionBanner";
 import { exchangeApi } from "../rpiApi";
 import { useProtection } from "../useProtection";
@@ -48,6 +47,8 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
   const [rightTab, setRightTab] = useState<string>("props");
   const [seenPanels, setSeenPanels] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const simpleState = useSimpleState();
+  const [hintGone, setHintGone] = useState(simpleChosen);
   const prot = useProtection(project.systems);
 
   const pKey = (x: PanelItem) => `${x.plugin.id}:${x.panel.id}`;
@@ -137,7 +138,8 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
     if (!file) return;
     const api = exchangeApi();
     try {
-      if (!api) throw new ImportError("not-recognized", "no api");
+      if (!api) throw Object.assign(new Error("no api"), { code: "not-recognized" });
+      const { importData } = await import("../exchange");
       const out = await importData(new Uint8Array(await file.arrayBuffer()), { existingSystems: project.systems, newId }, api);
       change((p) => ({ ...p, systems: [...p.systems, ...out.systems], campaigns: [...p.campaigns, ...out.campaigns] }));
       open(out.focus);
@@ -150,7 +152,8 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
       notify([t("imp.done"), ...notes].join("; "));
       lib.setNotice({ key: "ws.imported" });
     } catch (e) {
-      notify(e instanceof ImportError ? t(`imp.err.${e.code}`) : t("ws.importFailed"));
+      const code = (e as { code?: string }).code;
+      notify(code && ["not-recognized", "newer", "broken", "not-zip", "bad-manifest", "too-big", "bad-entry", "bad-json", "newer-format", "empty"].includes(code) ? t(`imp.err.${code}`) : t("ws.importFailed"));
       lib.setNotice({ key: "ws.importFailed" });
     }
   };
@@ -272,9 +275,16 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
                 <div className="ws-eyebrow">{t("ws.eyebrow")}</div>
                 <h1>{t("ws.heroTitle")}</h1>
                 <p>{t("ws.heroText")}</p>
+                {!hintGone && !simpleState.simple && (
+                  <div className="simple-hint" data-testid="simple-hint">
+                    <div><b>{t("simple.hintTitle")}</b><span className="muted">{t("simple.hintText")}</span></div>
+                    <button className="ws-primary ws-with-icon" onClick={() => { simpleState.setSimple(true); setHintGone(true); }}><Icon name="wand" size={14} />{t("simple.enable")}</button>
+                    <button onClick={() => { rememberSimple(false); setHintGone(true); }}>{t("simple.dismiss")}</button>
+                  </div>
+                )}
                 <div className="ws-welcome-actions">
                   <button className="ws-primary ws-with-icon" disabled={!lib.ready} onClick={() => addSystem()}><Icon name="plus" />{t("ws.createSystem")}</button>
-                  <button className="ws-with-icon" disabled={!lib.ready} onClick={() => addSystem(example as unknown as GameSystem)}><Icon name="dice" />{t("ws.openExample")}</button>
+                  <button className="ws-with-icon" disabled={!lib.ready} onClick={async () => addSystem((await import("../../../examples/space-opera.system.json")).default as unknown as GameSystem)}><Icon name="dice" />{t("ws.openExample")}</button>
                   {registry.systems.map((s) => (
                     <button key={s.id} className="ws-with-icon" disabled={!lib.ready} onClick={() => addSystem(s)}><Icon name="plugin" />{t("ws.fromPlugin", { name: label(s.name) })}</button>
                   ))}
@@ -351,7 +361,7 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
         </aside>
       </div>
       {exporting && (system || campaign) && (
-        <ExportDialog kind={system ? "system" : "campaign"} system={system ?? linked} campaign={campaign} onClose={() => setExporting(false)} />
+        <Suspense fallback={null}><ExportDialog kind={system ? "system" : "campaign"} system={system ?? linked} campaign={campaign} onClose={() => setExporting(false)} /></Suspense>
       )}
       <footer className="ws-status" role="status">
         <span className={lib.loadError ? "err" : ""}>● {t(lib.notice.key, lib.notice.params)}</span>

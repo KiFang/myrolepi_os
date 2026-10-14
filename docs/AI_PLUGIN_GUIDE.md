@@ -139,7 +139,7 @@ host.registerBlock({
 ## 7. Формат игровой системы (для `registerSystem`)
 
 Полное описание типов — в приложении в конце файла. Коротко:
-- **Система** → `entityTypes` (типы объектов), `macros` (свои функции формул: `{ name, params, formula }`).
+- **Система** → `entityTypes` (типы объектов), `macros` (свои функции формул: `{ name, params, formula }`), `bestiary` (необязательно: заготовки существ `{ id, typeId, name, values, notes? }`, которые мастер добавляет в кампанию).
 - **Тип** → `fields` (параметры), `actions` (действия), `cardViews` (виды карточки), `initiative` (формула инициативы).
 - **Параметр** (`field`): `id` (имя в формулах), `label`, `type` (`number text longtext boolean select resource list reference image`), `default`, `formula` (если задана — значение считается само), `min`/`max`, `options` (для `select`).
 - **Действие**: `formula` (бросок), `inputs` (что спросить), `effects` (`{ field, op: "add"|"set", formula }` — в формуле эффекта `result` = итог броска).
@@ -375,6 +375,8 @@ interface PluginManifest {
 interface GameSystem {
   schema: 1; id: string; name: LocalizedString; version: string; description?: LocalizedString;
   macros?: { name: string; params: string[]; formula: string }[];
+  /** бестиарий: заготовки существ и объектов, которые мастер добавляет в кампанию одним нажатием */
+  bestiary?: { id: string; typeId: string; name: string; values: Record<string, unknown>; notes?: string }[];
   entityTypes: Array<{
     id: string; label: LocalizedString;
     category: "character" | "creature" | "vehicle" | "structure" | "settlement" | "item" | "location" | "faction" | "custom";

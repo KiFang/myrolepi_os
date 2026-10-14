@@ -1033,9 +1033,16 @@
 /* узкое окно: у шапки остаются иконки (подписи — в подсказках), активный раздел подписан */
 .ws-header { min-width: 0; }
 .ws-menu { min-width: 0; }
-@media (max-width: 1240px) {
+/* раздела в меню много: сначала сворачивается подпись «Быстрые команды», затем подписи неактивных разделов */
+.ws-menu { flex: 0 1 auto; overflow-x: auto; scrollbar-width: none; }
+.ws-menu::-webkit-scrollbar { display: none; }
+.workspace .ws-palette-hint, .workspace .ws-theme, .workspace .ws-lang, .mini-player { flex: none; }
+@media (max-width: 1520px) {
+  .ws-palette-hint .lbl { display: none; }
+}
+@media (max-width: 1380px) {
   .ws-header { gap: 14px; }
-  .workspace .ws-menu button:not(.active) .lbl, .ws-palette-hint .lbl { display: none; }
+  .workspace .ws-menu button:not(.active) .lbl { display: none; }
   .workspace .ws-menu button { padding: 0 11px; }
 }
 @media (max-width: 1040px) {
@@ -1165,3 +1172,43 @@ button[aria-pressed=true].ws-icon-button { color: var(--accent); }
 .map-swatch.on { border-color: var(--fg); }
 .ws-note.focus { outline: 2px solid var(--accent); }
 @media (max-width: 900px) { .scenes { grid-template-columns: 1fr; } }
+
+/* заголовок раздела со вкладками и элементами управления не вылезает за край */
+.ws-section-heading { flex-wrap: wrap; gap: 8px 14px; }
+.ws-section-heading .ws-inline { flex-wrap: wrap; max-width: 100%; }
+
+/* выпадающие панели, готовые параметры, бестиарий */
+.popover { position: relative; display: inline-block; }
+.popover-panel { position: fixed; z-index: 60; width: min(420px, calc(100vw - 16px)); overflow: auto; padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); animation: rp-grow 0.14s ease both; transform-origin: top; }
+.preset-groups { display: flex; flex-direction: column; gap: 10px; margin: 8px 0; }
+.preset-group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
+.preset-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; cursor: pointer; }
+.preset-row:hover { background: var(--hover); }
+.preset-row.done { opacity: 0.55; cursor: default; }
+.preset-foot { position: sticky; bottom: -12px; padding: 10px 0 0; background: linear-gradient(180deg, transparent, var(--panel) 30%); display: flex; justify-content: flex-end; }
+.template-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 8px 10px; margin-top: 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel2); text-align: left; }
+.template-row:hover { background: var(--hover); border-color: var(--border-strong); }
+.bestiary { display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: start; }
+.bestiary-list { display: flex; flex-direction: column; gap: 6px; }
+.bestiary-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 900px) { .bestiary { grid-template-columns: 1fr; } }
+
+/* простой режим и советы */
+.ws-simple-toggle { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 6px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ws-simple-toggle:hover { color: var(--fg); border-color: var(--border-strong); }
+.ws-simple-toggle[aria-pressed=true] { color: var(--on-accent); background: var(--accent); border-color: transparent; }
+@media (max-width: 1520px) { .ws-simple-toggle .lbl { display: none; } }
+.tip-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); font-size: 13px; line-height: 1.45; animation: rp-grow 0.2s ease both; transform-origin: top; }
+.tip-bar > svg { color: var(--accent); flex: none; }
+.tip-text { flex: 1; min-width: 0; }
+.tip-bar button { flex: none; padding: 3px 10px; font-size: 12px; }
+.simple-hint { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0; max-width: 620px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel2); }
+.simple-hint > div { flex: 1; min-width: 220px; }
+.simple-hint b { display: block; margin-bottom: 2px; }
+
+.ws-document-heading { flex-wrap: wrap; gap: 10px 16px; }
+.ws-document-heading > .ws-inline { flex: none; }
+.ws-document-heading button, .ws-section-heading button, .popover > button { white-space: nowrap; }
+
+.scene-head .ws-control { flex: 1 1 160px; }
+.scene-head button { white-space: nowrap; }
