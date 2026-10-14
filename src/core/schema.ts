@@ -129,10 +129,22 @@ export interface GameSystem {
   tables?: TableDef[];
   /** пользовательские формулы-макросы, доступны во всех формулах как функции: name(args) */
   macros?: { name: string; params: string[]; formula: string }[];
+  /** бестиарий: заготовки существ и объектов, которые можно добавить в кампанию одним нажатием */
+  bestiary?: BestiaryEntry[];
   meta?: DocMeta;
   protection?: Protection;
   /** id плагинов, необходимых системе */
   requires?: string[];
+}
+
+/** Заготовка из бестиария: существо или объект системы со значениями параметров. */
+export interface BestiaryEntry {
+  id: string;
+  typeId: string;
+  name: string;
+  values: Record<string, unknown>;
+  /** заметка мастера: повадки, добыча, как использовать */
+  notes?: string;
 }
 
 /** Конкретный экземпляр: персонаж Ариэль, корабль «Странник», город Асгард. */

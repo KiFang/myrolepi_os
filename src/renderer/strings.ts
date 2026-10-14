@@ -614,3 +614,20 @@ registerLocale('en', {
 
 registerLocale('ru', { 'exp.audioNote': 'Музыка и звуки сцен в пакет не входят (они лежат в ваших папках звука). Получателю нужны такие же файлы в его папках — иначе сцена покажет «файл не найден».' });
 registerLocale('en', { 'exp.audioNote': 'Scene music and sounds are not included in the package (they live in your sound folders). The recipient needs the same files in their folders — otherwise the scene shows “file not found”.' });
+
+registerLocale('ru', {
+  'ws.mode.bestiary': 'Бестиарий',
+  'tpl.presets': 'Готовые параметры', 'tpl.presetsTitle': 'Добавить привычные параметры: характеристики, здоровье, броню и другое', 'tpl.presetsHint': 'Отметьте нужное — параметры появятся в таблице и на первой карточке типа.', 'tpl.have': 'уже есть',
+  'tpl.addPicked': 'Добавить выбранные ({n})', 'tpl.added': 'Добавлено параметров: {n}',
+  'tpl.fromTemplate': 'Из шаблона', 'tpl.fromTemplateTitle': 'Добавить готовый тип: персонаж, существо, корабль…', 'tpl.templatesHint': 'Тип с параметрами, карточкой и действиями. Всё можно менять.',
+  'bestiary.title': 'Бестиарий: {type}', 'bestiary.add': 'Добавить заготовку', 'bestiary.hint': 'Заготовки существ и объектов этого типа. В кампании их добавляют одним нажатием: «Герои» → «Из бестиария».', 'bestiary.empty': 'Заготовок пока нет. Создайте, например, волка или стражника — и добавляйте их в любые кампании по этой системе.',
+  'bestiary.name': 'Название заготовки', 'bestiary.notes': 'Заметка мастера (повадки, добыча)', 'bestiary.copy': 'Копия', 'bestiary.delete': 'Удалить', 'bestiary.deleteConfirm': 'Удалить заготовку «{name}»?', 'bestiary.fromBestiary': 'Из бестиария…',
+});
+registerLocale('en', {
+  'ws.mode.bestiary': 'Bestiary',
+  'tpl.presets': 'Ready-made parameters', 'tpl.presetsTitle': 'Add common parameters: ability scores, health, armor and more', 'tpl.presetsHint': 'Tick what you need — the parameters appear in the table and on the type\'s first card.', 'tpl.have': 'already added',
+  'tpl.addPicked': 'Add selected ({n})', 'tpl.added': 'Parameters added: {n}',
+  'tpl.fromTemplate': 'From a template', 'tpl.fromTemplateTitle': 'Add a ready-made type: character, creature, ship…', 'tpl.templatesHint': 'A type with parameters, a card and actions. Everything can be changed.',
+  'bestiary.title': 'Bestiary: {type}', 'bestiary.add': 'Add an entry', 'bestiary.hint': 'Ready-made creatures and objects of this type. In a campaign add them in one click: Heroes → “From bestiary”.', 'bestiary.empty': 'No entries yet. Create, say, a wolf or a guard — and add them to any campaign of this system.',
+  'bestiary.name': 'Entry name', 'bestiary.notes': 'GM note (behavior, loot)', 'bestiary.copy': 'Copy', 'bestiary.delete': 'Delete', 'bestiary.deleteConfirm': 'Delete the entry "{name}"?', 'bestiary.fromBestiary': 'From bestiary…',
+});

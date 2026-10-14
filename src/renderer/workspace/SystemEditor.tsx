@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ActionDef, CardBlock, CardView, EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from "../../core";
 import { useLang } from "../lang";
+import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { both, fieldIdProblem, newField, newId, newType, preview, rename } from "../workspace-model";
 import { ActionsEditor } from "./ActionsEditor";
 import { CardDesigner, CardInspector } from "./CardDesigner";
 import { Icon } from "../icons";
 import { CommitInput, HelpLink, Input, JsonInput } from "./inputs";
+import { appendToView, uniqueTypeId } from "../templates";
+import type { FieldPreset, TypeTemplate } from "../templates";
+import { BestiaryEditor } from "./BestiaryEditor";
+import { FieldPresetsMenu, TypeTemplatesMenu } from "./PresetMenus";
 
 const CATEGORIES: EntityCategory[] = ["character", "creature", "vehicle", "structure", "settlement", "item", "location", "faction", "custom"];
 const FIELD_TYPES: FieldType[] = ["number", "text", "longtext", "boolean", "select", "resource", "list", "reference", "image"];
@@ -15,7 +20,7 @@ const FIELD_TYPES: FieldType[] = ["number", "text", "longtext", "boolean", "sele
 export function useSystemEditor(system: GameSystem | undefined, updateSystem: (fn: (s: GameSystem) => GameSystem) => void, registry: PluginRegistry, onRenameField: (typeId: string, from: string, to: string) => void) {
   const [typeIndex, setTypeIndex] = useState(0);
   const [fieldIndex, setFieldIndex] = useState<number | null>(null);
-  const [mode, setMode] = useState<"fields" | "cards" | "actions">("fields");
+  const [mode, setMode] = useState<"fields" | "cards" | "actions" | "bestiary">("fields");
   const [viewIndexRaw, setViewIndex] = useState(0);
   const [blockId, setBlockId] = useState<string | null>(null);
   useEffect(() => {
@@ -79,6 +84,30 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
       updateType((t) => ({ ...t, fields: [...t.fields, newField()] }));
       setFieldIndex(type.fields.length);
     },
+    /** Готовые параметры: добавляются те, которых ещё нет, и сразу появляются на первой карточке типа. */
+    addPresets: (presets: FieldPreset[]) => {
+      if (!type) return 0;
+      const have = new Set(type.fields.map((f) => f.id));
+      const fresh = presets.flatMap((p) => p.fields).filter((f, i, all) => !have.has(f.id) && all.findIndex((x) => x.id === f.id) === i).map((f) => structuredClone(f));
+      if (!fresh.length) return 0;
+      const bars = Object.assign({}, ...presets.map((p) => p.bars ?? {})) as Record<string, string>;
+      updateType((t) => ({
+        ...t,
+        fields: [...t.fields, ...fresh],
+        cardViews: t.cardViews.map((v, i) => (i === 0 ? appendToView(v, fresh, bars) : v)),
+      }));
+      setFieldIndex(type.fields.length);
+      return fresh.length;
+    },
+    addTypeFromTemplate: (tpl: TypeTemplate) => {
+      if (!system) return;
+      const built = tpl.build();
+      built.id = uniqueTypeId(built.id, system.entityTypes.map((x) => x.id));
+      updateSystem((s) => ({ ...s, entityTypes: [...s.entityTypes, built] }));
+      setTypeIndex(system.entityTypes.length);
+      setFieldIndex(null);
+      setMode("fields");
+    },
     removeType: () => {
       updateSystem((s) => ({ ...s, entityTypes: s.entityTypes.filter((_, i) => i !== typeIndex) }));
       setFieldIndex(null);
@@ -93,6 +122,7 @@ export type SystemEditorState = ReturnType<typeof useSystemEditor>;
 
 export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
   const { t, label } = useLang();
+  const notify = useToast();
   const { system, type, computed } = ed;
   if (!system) return null;
   return (
@@ -103,7 +133,10 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
           <h1>{label(system.name) || t("ws.untitled")}</h1>
           <p>{t("ws.systemSub")}</p>
         </div>
-        <button className="ws-with-icon" onClick={ed.addType}><Icon name="plus" />{t("ws.addType")}</button>
+        <div className="ws-inline">
+          <TypeTemplatesMenu onPick={ed.addTypeFromTemplate} />
+          <button className="ws-with-icon" onClick={ed.addType}><Icon name="plus" />{t("ws.addType")}</button>
+        </div>
       </div>
       <p className="ws-hint ws-hint-tight">{t("ws.typesHint")}</p>
       <div className="ws-type-tabs">
@@ -115,18 +148,22 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
       </div>
       {type && (
         <div className="ws-mode-tabs" role="tablist">
-          {(["fields", "cards", "actions"] as const).map((m) => (
+          {(["fields", "cards", "actions", "bestiary"] as const).map((m) => (
             <button key={m} role="tab" aria-selected={ed.mode === m} className={ed.mode === m ? "active" : ""} onClick={() => ed.setMode(m)}>{t(`ws.mode.${m}`)}</button>
           ))}
         </div>
       )}
       {type && ed.mode === "cards" && <CardDesigner ed={ed} registry={ed.registry} />}
       {type && ed.mode === "actions" && <ActionsEditor ed={ed} />}
+      {type && ed.mode === "bestiary" && <BestiaryEditor ed={ed} />}
       {type && ed.mode === "fields" && (
         <>
           <div className="ws-section-heading">
             <h2>{t("ws.fieldsOf", { type: label(type.label) })}</h2>
-            <button className="ws-with-icon" onClick={ed.addField}><Icon name="plus" />{t("ws.addField")}</button>
+            <div className="ws-inline">
+              <FieldPresetsMenu existing={type.fields} onAdd={(p) => { const n = ed.addPresets(p); if (n) notify(t("tpl.added", { n })); }} />
+              <button className="ws-with-icon" onClick={ed.addField}><Icon name="plus" />{t("ws.addField")}</button>
+            </div>
           </div>
           <div className="ws-table-wrap">
             <table className="ws-table">
@@ -181,7 +218,7 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
           <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteTypeConfirm", { name: label(type.label) })) && ed.removeType()}><Icon name="trash" />{t("ws.deleteType")}</button>
         </>
       )}
-      {ed.mode === "cards" ? <CardInspector ed={ed} /> : ed.mode === "actions" ? null : field ? (
+      {ed.mode === "cards" ? <CardInspector ed={ed} /> : ed.mode === "actions" || ed.mode === "bestiary" ? null : field ? (
         <>
           <div className="ws-property-group">{t("ws.groupField")}</div>
           <Input title={t("ws.fieldName")} value={label(field.label)} onChange={(v) => ed.updateField({ label: rename(field.label, v, lang) })} />

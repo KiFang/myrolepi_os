@@ -1033,9 +1033,16 @@
 /* узкое окно: у шапки остаются иконки (подписи — в подсказках), активный раздел подписан */
 .ws-header { min-width: 0; }
 .ws-menu { min-width: 0; }
-@media (max-width: 1240px) {
+/* раздела в меню много: сначала сворачивается подпись «Быстрые команды», затем подписи неактивных разделов */
+.ws-menu { flex: 0 1 auto; overflow-x: auto; scrollbar-width: none; }
+.ws-menu::-webkit-scrollbar { display: none; }
+.workspace .ws-palette-hint, .workspace .ws-theme, .workspace .ws-lang, .mini-player { flex: none; }
+@media (max-width: 1520px) {
+  .ws-palette-hint .lbl { display: none; }
+}
+@media (max-width: 1380px) {
   .ws-header { gap: 14px; }
-  .workspace .ws-menu button:not(.active) .lbl, .ws-palette-hint .lbl { display: none; }
+  .workspace .ws-menu button:not(.active) .lbl { display: none; }
   .workspace .ws-menu button { padding: 0 11px; }
 }
 @media (max-width: 1040px) {
@@ -1165,3 +1172,25 @@ button[aria-pressed=true].ws-icon-button { color: var(--accent); }
 .map-swatch.on { border-color: var(--fg); }
 .ws-note.focus { outline: 2px solid var(--accent); }
 @media (max-width: 900px) { .scenes { grid-template-columns: 1fr; } }
+
+/* заголовок раздела со вкладками и элементами управления не вылезает за край */
+.ws-section-heading { flex-wrap: wrap; gap: 8px 14px; }
+.ws-section-heading .ws-inline { flex-wrap: wrap; max-width: 100%; }
+
+/* выпадающие панели, готовые параметры, бестиарий */
+.popover { position: relative; display: inline-block; }
+.popover-panel { position: absolute; top: calc(100% + 6px); z-index: 30; width: min(420px, 90vw); max-height: min(60vh, 520px); overflow: auto; padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); animation: rp-grow 0.14s ease both; transform-origin: top; }
+.popover-panel.right { right: 0; }
+.popover-panel.left { left: 0; }
+.preset-groups { display: flex; flex-direction: column; gap: 10px; margin: 8px 0; }
+.preset-group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
+.preset-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; cursor: pointer; }
+.preset-row:hover { background: var(--hover); }
+.preset-row.done { opacity: 0.55; cursor: default; }
+.preset-foot { position: sticky; bottom: -12px; padding: 10px 0 0; background: linear-gradient(180deg, transparent, var(--panel) 30%); display: flex; justify-content: flex-end; }
+.template-row { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 8px 10px; margin-top: 6px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel2); text-align: left; }
+.template-row:hover { background: var(--hover); border-color: var(--border-strong); }
+.bestiary { display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: start; }
+.bestiary-list { display: flex; flex-direction: column; gap: 6px; }
+.bestiary-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 900px) { .bestiary { grid-template-columns: 1fr; } }

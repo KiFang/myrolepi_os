@@ -65,7 +65,7 @@ async function run(name, port, opts, scenario) {
   const plugs = (opts.plugins || []).map(plug);
   const srv = await serve(port, plugs);
   const browser = await chromium.launch({ executablePath: findChrome(), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
-  const ctx = await browser.newContext({ viewport: { width: 1500, height: 950 }, locale: opts.locale || 'ru-RU', acceptDownloads: true });
+  const ctx = await browser.newContext({ viewport: opts.viewport || { width: 1500, height: 950 }, locale: opts.locale || 'ru-RU', acceptDownloads: true });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   const page = await ctx.newPage();
   const errors = [];

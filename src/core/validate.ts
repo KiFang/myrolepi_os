@@ -56,6 +56,13 @@ export function validateSystem(sys: GameSystem): Issue[] {
     if (!type.cardViews.length) warn(base, tm('err.noViews'));
   });
 
+  const bestiaryIds = new Set<string>();
+  for (const b of sys.bestiary ?? []) {
+    if (bestiaryIds.has(b.id)) err(`bestiary.${b.id}`, tm('err.dupBestiary', { id: b.id }));
+    bestiaryIds.add(b.id);
+    if (!typeIds.has(b.typeId)) warn(`bestiary.${b.id}`, tm('err.bestiaryType', { name: b.name }));
+  }
+
   for (const type of sys.entityTypes) {
     for (const f of type.fields) {
       if (f.type === 'reference' && f.refType && !typeIds.has(f.refType)) err(`entityTypes.${type.id}.fields.${f.id}`, tm('err.refUnknown', { t: f.refType }));

@@ -2,18 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import type { ActionDef, Campaign, Encounter, Entity, GameSystem, MapMarker } from "../../core";
 import { adjustResource, computeEntity, loc, rollInitiative, runAction } from "../../core";
 import { CardRenderer } from "../cards/CardRenderer";
-import { putImage, resolveSrc } from "../assets";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
 import type { RollEntry } from "../rolls";
 import { createEntity, newId, preview } from "../workspace-model";
+import { EntityForm } from "./EntityForm";
 import { CampaignGallery } from "./CampaignGallery";
 import { CampaignMaps } from "./CampaignMaps";
 import { CampaignNotes } from "./CampaignNotes";
 import { CampaignScenes } from "./CampaignScenes";
 import { CombatTracker } from "./CombatTracker";
-import { Input, JsonInput } from "./inputs";
+import { Input } from "./inputs";
 
 export type CampaignTab = "heroes" | "cards" | "combat" | "scenes" | "maps" | "notes";
 
@@ -70,6 +70,13 @@ export function useCampaignEditor(
       scenes: c.scenes?.map((s) => ({ ...s, entityIds: s.entityIds.filter((id) => id !== entity?.id) })),
       maps: c.maps?.map((m) => ({ ...m, markers: m.markers.map((k) => (k.entityId === entity?.id ? { ...k, entityId: undefined } : k)) })),
     })),
+    /** Добавляет в кампанию копию заготовки из бестиария системы. */
+    addFromBestiary: (beastId: string) => {
+      const b = system?.bestiary?.find((x) => x.id === beastId);
+      if (!campaign || !b) return;
+      updateCampaign((c) => ({ ...c, entities: [...c.entities, { id: newId("entity"), typeId: b.typeId, name: b.name, values: structuredClone(b.values) }] }));
+      setEntityIndex(campaign.entities.length);
+    },
     addNote: (title: string) => updateCampaign((c) => ({ ...c, notes: [...c.notes, { id: newId("note"), title, body: "" }] })),
     /** Бросок действия героя: результат уходит в журнал. */
     run: (target: Entity, action: ActionDef, inputs: Record<string, unknown> = {}) => {
@@ -154,6 +161,14 @@ function Heroes({ ed }: { ed: CampaignEditorState }) {
             {system?.entityTypes.map((x, i) => <option key={x.id} value={i}>{label(x.label)}</option>)}
           </select>
           <button className="ws-with-icon" disabled={!system?.entityTypes[ed.newTypeIndex]} onClick={ed.addEntity}><Icon name="plus" />{t("ws.add")}</button>
+          {!!system?.bestiary?.length && (
+            <select aria-label={t("bestiary.fromBestiary")} value="" onChange={(e) => { if (e.target.value) ed.addFromBestiary(e.target.value); }}>
+              <option value="">{t("bestiary.fromBestiary")}</option>
+              {system.entityTypes.filter((x) => system.bestiary!.some((b) => b.typeId === x.id)).map((x) => (
+                <optgroup key={x.id} label={label(x.label)}>{system.bestiary!.filter((b) => b.typeId === x.id).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</optgroup>
+              ))}
+            </select>
+          )}
         </div>
       </div>
       <div className="ws-entities">
@@ -189,51 +204,7 @@ function Heroes({ ed }: { ed: CampaignEditorState }) {
               <CardRenderer type={entityType} view={cardView} name={entity.name} values={computed?.values ?? {}} registry={ed.registry} onRun={(a) => ed.run(entity, a)} />
             </div>
           ) : (
-            <div className="ws-sheet-fields">
-              {entityType?.fields.map((f) => {
-                const value = entity.values[f.id] ?? f.default;
-                const set = (v: unknown) => ed.updateEntity((e) => ({ ...e, values: { ...e.values, [f.id]: v } }));
-                const numeric = f.type === "number" || f.type === "resource";
-                return (
-                  <div key={f.id}>
-                    {f.formula ? (
-                      <div className="ws-computed">
-                        <span>{label(f.label)} <small>ƒ</small></span>
-                        <strong>{computed?.errors[f.id] ? <span className="err">{computed.errors[f.id]}</span> : String(computed?.values[f.id] ?? "—")}</strong>
-                      </div>
-                    ) : f.type === "boolean" ? (
-                      <label className="ws-checkbox"><input type="checkbox" checked={Boolean(value)} onChange={(e) => set(e.target.checked)} />{label(f.label)}</label>
-                    ) : f.type === "select" ? (
-                      <label className="ws-control">
-                        <span>{label(f.label)}</span>
-                        <select value={String(value ?? "")} onChange={(e) => set(e.target.value)}>
-                          <option value="">{t("ws.notSelected")}</option>
-                          {f.options?.map((o) => <option key={o.value} value={o.value}>{label(o.label)}</option>)}
-                        </select>
-                      </label>
-                    ) : f.type === "image" ? (
-                      <div className="ws-control">
-                        <span>{label(f.label)}</span>
-                        {typeof value === "string" && value && <img className="ws-image-preview" src={resolveSrc(value)} alt="" />}
-                        <input type="file" accept="image/*" aria-label={label(f.label)} onChange={async (ev) => {
-                          const file = ev.target.files?.[0];
-                          ev.target.value = "";
-                          if (!file) return;
-                          const r = await putImage(file);
-                          if (r.ok) set(r.ref);
-                          else window.alert(t(r.code === "too-big" ? "ws.imageTooBig" : r.code === "bad-type" ? "ws.imageBadType" : "ws.imageFailed"));
-                        }} />
-                        {typeof value === "string" && value && <button onClick={() => set("")}>{t("ws.removeImage")}</button>}
-                      </div>
-                    ) : f.type === "list" || (f.type === "resource" && typeof value === "object") ? (
-                      <JsonInput title={label(f.label)} value={value} onChange={set} />
-                    ) : (
-                      <Input title={label(f.label)} value={String(value ?? "")} type={numeric ? "number" : "text"} min={f.min} max={f.max} multiline={f.type === "longtext"} onChange={(v) => set(numeric ? (v === "" ? undefined : Number(v)) : v)} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            entityType && <EntityForm type={entityType} values={entity.values} computed={computed} onSet={(id, v) => ed.updateEntity((e) => ({ ...e, values: { ...e.values, [id]: v } }))} />
           )}
         </div>
       )}
