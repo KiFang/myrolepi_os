@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { availableLocales, t as translate } from "../core";
+import { availableLocales, setCoreLang, t as translate } from "../core";
+import { Icon } from "./icons";
 import { LangContext, rememberLang, savedLang } from "./lang";
 import { PluginRegistry, PluginStatus, RawPlugin, loadPlugins } from "./plugin-host";
 import "./strings";
@@ -10,6 +11,7 @@ import "./styles.css";
 
 type Page = "workspace" | "dice" | "formulas" | "plugins" | "help" | "about";
 const PAGES: Page[] = ["workspace", "dice", "formulas", "plugins", "help", "about"];
+const PAGE_ICONS: Record<Page, string> = { workspace: "studio", dice: "dice", formulas: "formula", plugins: "plugin", help: "help", about: "info" };
 const LANG_NAMES: Record<string, string> = { ru: "Русский", en: "English" };
 const emptyRegistry: PluginRegistry = { functions: {}, blocks: {}, systems: [], themes: [] };
 
@@ -28,6 +30,7 @@ function App() {
   const setLang = (l: string) => { setLangState(l); rememberLang(l); };
   const ctx = useMemo(() => ({ lang, setLang }), [lang]);
   const t = (key: string) => translate(key, lang);
+  setCoreLang(lang); // сообщения ядра (ошибки формул и проверки) — на языке интерфейса
 
   useEffect(() => {
     window.rpi?.env().then((e: { version: string; lang: string }) => {
@@ -46,16 +49,15 @@ function App() {
     <LangContext.Provider value={ctx}>
       <div className="workspace">
         <header className="ws-header">
-          <div className="ws-brand"><span className="ws-logo">M</span>MyRolePi <span>OS</span></div>
+          <div className="ws-brand"><img className="ws-logo-img" src="./logo.svg" alt="" width={30} height={30} />{t("app.name")} <span>OS</span></div>
           <nav className="ws-menu" aria-label="Main">
             {PAGES.map((p) => (
               <button key={p} className={p === page ? "active" : ""} onClick={() => setPage(p)}>
-                {p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}
+                <Icon name={PAGE_ICONS[p]} size={15} />{p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}
               </button>
             ))}
           </nav>
-          <span className="ws-local">{t("ws.library")}</span>
-          <select className="ws-lang" aria-label={t("lang")} value={lang} onChange={(e) => setLang(e.target.value)}>
+                    <select className="ws-lang" aria-label={t("lang")} value={lang} onChange={(e) => setLang(e.target.value)}>
             {availableLocales().map((l) => <option key={l} value={l}>{LANG_NAMES[l] ?? l}</option>)}
           </select>
         </header>
@@ -65,7 +67,7 @@ function App() {
             <div className="ws-page-inner">
               {page === "dice" && <Dice reg={reg} />}
               {page === "formulas" && <Formulas reg={reg} />}
-              {page === "plugins" && <Plugins status={status} reg={reg} />}
+              {page === "plugins" && <Plugins status={status} />}
               {page === "help" && <Help />}
               {page === "about" && <About version={version} />}
             </div>

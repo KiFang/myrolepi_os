@@ -674,3 +674,96 @@
 .ws-section-heading .ws-inline { flex: none; width: auto; }
 .ws-section-heading h2 { white-space: nowrap; }
 .ws-section-heading .ws-inline select { width: auto; }
+
+/* ───────── Иконки, кнопки, панели ───────── */
+.ws-icon { flex: none; display: inline-block; vertical-align: -3px; }
+.workspace .ws-with-icon { display: inline-flex; align-items: center; gap: 7px; }
+.workspace .ws-icon-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0;
+  background: transparent; border-color: transparent; color: var(--muted);
+}
+.workspace .ws-icon-button:hover { background: var(--panel2); color: var(--fg); }
+.workspace .ws-icon-button[aria-pressed="true"] { color: var(--accent); }
+.ws-logo-img { display: block; border-radius: 8px; box-shadow: 0 2px 12px rgba(91, 127, 230, 0.4); }
+.ws-brand > span:last-child { margin-left: 2px; }
+.workspace .ws-menu button { display: inline-flex; align-items: center; gap: 8px; }
+.ws-menu .ws-icon { opacity: 0.8; }
+.ws-body[style] { transition: grid-template-columns 0.18s ease; }
+.ws-tree[hidden], .ws-inspector[hidden] { display: block; visibility: hidden; overflow: hidden; border: 0; }
+
+/* список проектов */
+.ws-tree-section { padding: 18px 16px 8px; }
+.ws-tree-empty { padding: 4px 16px 6px; color: var(--muted); font-size: 12px; font-style: italic; }
+.ws-row { position: relative; display: flex; align-items: center; margin: 1px 8px; border-radius: 7px; }
+.ws-row:hover { background: var(--panel2); }
+.ws-row.selected { background: #26335a; box-shadow: inset 2px 0 0 var(--accent); }
+.workspace .ws-row .ws-row-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; text-align: left;
+  background: none; border: 0; padding: 8px 6px 8px 10px; color: var(--fg);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ws-row-main .ws-icon { color: var(--accent); }
+.workspace .ws-row .ws-row-action { opacity: 0; width: 26px; height: 26px; margin-right: 4px; }
+.ws-row:hover .ws-row-action, .ws-row.selected .ws-row-action, .ws-row .ws-row-action:focus-visible { opacity: 1; }
+.workspace .ws-row .ws-row-action:hover { color: #ff9aa3; }
+.ws-tree-footer { margin: 18px 12px 12px; padding: 12px; border-radius: 8px; background: #20242f; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+/* вкладки документов */
+.ws-tabs { background: #171a21; padding: 6px 8px 0; gap: 3px; align-items: flex-end; }
+.ws-tab { display: flex; align-items: center; max-width: 240px; border-radius: 8px 8px 0 0; background: transparent; border: 1px solid transparent; border-bottom: 0; }
+.ws-tab:hover { background: #20242d; }
+.ws-tab.active { background: var(--bg); border-color: var(--border); box-shadow: inset 0 2px 0 var(--accent); }
+.workspace .ws-tab .ws-tab-main {
+  display: flex; align-items: center; gap: 7px; background: none; border: 0; border-radius: 0;
+  padding: 9px 4px 9px 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;
+}
+.ws-tab.active .ws-tab-main { color: var(--fg); }
+.workspace .ws-tab .ws-tab-close { width: 22px; height: 22px; margin-right: 6px; opacity: 0.5; }
+.ws-tab:hover .ws-tab-close, .ws-tab.active .ws-tab-close { opacity: 1; }
+
+/* заголовки, подсказки, пустые состояния */
+.ws-hint-tight { margin: -2px 0 14px; }
+.ws-field-hint { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.ws-empty { margin: 14px 0; padding: 22px 24px; border: 1px dashed #3a4153; border-radius: 12px; color: var(--muted); font-size: 13px; line-height: 1.6; text-align: center; background: #181b22; }
+.ws-document-heading h1 { font-size: 28px; letter-spacing: -0.015em; margin: 4px 0 6px; }
+.ws-document-heading p { color: var(--muted); margin: 0; font-size: 13px; }
+.ws-type-tabs button { border-radius: 999px; padding: 6px 14px; }
+.ws-type-tabs button.active { background: #26335a; border-color: var(--accent-strong); color: #fff; }
+.ws-sheet-head { display: flex; align-items: flex-end; gap: 12px; }
+.ws-sheet-head .ws-control { flex: 1; margin-bottom: 12px; }
+.ws-sheet-head > button { margin-bottom: 12px; }
+.ws-note { position: relative; }
+.workspace .ws-note .ws-note-delete { position: absolute; top: 10px; right: 10px; }
+.ws-note .ws-control:first-of-type { margin-right: 36px; }
+.ws-property-group { margin-top: 20px; }
+.workspace .ws-danger.ws-with-icon { margin-top: 10px; }
+
+/* панель «Проблемы» */
+.ws-diagnostics { max-height: 170px; display: flex; flex-direction: column; }
+.ws-diagnostics-list { overflow: auto; padding: 4px 14px 12px; }
+.ws-issue { display: flex; gap: 9px; align-items: flex-start; padding: 6px 0; font-size: 12.5px; line-height: 1.45; }
+.ws-issue small { color: var(--muted); margin-left: 6px; }
+.ws-issue.error { color: #ff9aa3; }
+.ws-issue.warning { color: #f2c46d; }
+.ws-issue.ok { color: #8fd6a4; }
+.ws-diagnostics .ws-panel-title span.ok { background: #1f3b2b; color: #8fd6a4; }
+.ws-diagnostics .ws-panel-title span.warn { background: #44381a; color: #f2c46d; }
+
+/* приветствие */
+.ws-hero-logo { display: block; border-radius: 18px; margin-bottom: 22px; box-shadow: 0 10px 40px rgba(91, 127, 230, 0.35); }
+.ws-welcome-actions .ws-with-icon { padding: 10px 16px; }
+
+/* инструменты */
+.ws-page h1 { display: flex; align-items: center; gap: 12px; }
+.ws-page h1 .ws-icon { color: var(--accent); }
+.ws-page .card.roll { display: flex; align-items: center; gap: 22px; }
+.ws-page .card.roll .big { min-width: 74px; text-align: center; }
+.ws-page .card p { color: var(--muted); line-height: 1.6; margin: 8px 0 0; }
+.about-head { display: flex; align-items: center; gap: 20px; margin-bottom: 14px; }
+.about-head img { border-radius: 18px; box-shadow: 0 10px 40px rgba(91, 127, 230, 0.35); }
+.about-head h1 { margin: 0 0 4px; }
+.ws-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.workspace .ws-lang { margin-left: auto; }
+.ws-hero-logo { margin-bottom: 30px; }
+.ws-welcome { padding-top: 12px; }

@@ -3,6 +3,7 @@ import type { Campaign, GameSystem } from "../../core";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
 import { createEntity, newId, preview } from "../workspace-model";
+import { Icon } from "../icons";
 import { Input, JsonInput } from "./inputs";
 
 /** Состояние редактора кампании: выбранная сущность и пересчёт её вычисляемых полей. */
@@ -17,7 +18,7 @@ export function useCampaignEditor(campaign: Campaign | undefined, system: GameSy
   const entityType = system?.entityTypes.find((x) => x.id === entity?.typeId);
   const computed = useMemo(
     () => (entityType && system && entity ? preview(entityType, entity.values, system, registry) : undefined),
-    [entityType, system, entity, registry],
+    [entityType, system, entity, registry, lang],
   );
   const updateEntity = (fn: (e: Campaign["entities"][number]) => Campaign["entities"][number]) =>
     updateCampaign((c) => ({ ...c, entities: c.entities.map((e, i) => (i === entityIndex ? fn(e) : e)) }));
@@ -31,6 +32,8 @@ export function useCampaignEditor(campaign: Campaign | undefined, system: GameSy
       updateCampaign((c) => ({ ...c, entities: [...c.entities, createEntity(type, lang, c.entities.filter((e) => e.typeId === type.id).length + 1)] }));
       setEntityIndex(campaign.entities.length);
     },
+    removeEntity: () => updateCampaign((c) => ({ ...c, entities: c.entities.filter((_, i) => i !== entityIndex) })),
+    removeNote: (id: string) => updateCampaign((c) => ({ ...c, notes: c.notes.filter((n) => n.id !== id) })),
     addNote: (title: string) => updateCampaign((c) => ({ ...c, notes: [...c.notes, { id: newId("note"), title, body: "" }] })),
   };
 }
@@ -55,7 +58,7 @@ export function CampaignCanvas({ ed }: { ed: CampaignEditorState }) {
           <select aria-label={t("ws.newEntityType")} value={ed.newTypeIndex} onChange={(e) => ed.setNewTypeIndex(Number(e.target.value))}>
             {system?.entityTypes.map((x, i) => <option key={x.id} value={i}>{label(x.label)}</option>)}
           </select>
-          <button disabled={!system?.entityTypes[ed.newTypeIndex]} onClick={ed.addEntity}>{t("ws.add")}</button>
+          <button className="ws-with-icon" disabled={!system?.entityTypes[ed.newTypeIndex]} onClick={ed.addEntity}><Icon name="plus" />{t("ws.add")}</button>
         </div>
       </div>
       <div className="ws-entities">
@@ -65,11 +68,14 @@ export function CampaignCanvas({ ed }: { ed: CampaignEditorState }) {
             <small>{label(system?.entityTypes.find((x) => x.id === e.typeId)?.label) || t("ws.typeMissing")}</small>
           </button>
         ))}
-        {!campaign.entities.length && <div className="ws-empty">{t("ws.noEntities")}</div>}
+        {!campaign.entities.length && <div className="ws-empty">{system?.entityTypes.length ? t("ws.noEntities") : t("ws.noTypesForCampaign")}</div>}
       </div>
       {entity && (
         <div className="ws-sheet">
-          <Input title={t("ws.entityName")} value={entity.name} onChange={(name) => ed.updateEntity((e) => ({ ...e, name }))} />
+          <div className="ws-sheet-head">
+            <Input title={t("ws.entityName")} value={entity.name} onChange={(name) => ed.updateEntity((e) => ({ ...e, name }))} />
+            <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteEntityConfirm", { name: entity.name })) && ed.removeEntity()}><Icon name="trash" />{t("ws.deleteEntity")}</button>
+          </div>
           {!entityType && <p className="err">{t("ws.entityTypeMissing")}</p>}
           <div className="ws-sheet-fields">
             {entityType?.fields.map((f) => {
@@ -117,10 +123,12 @@ export function CampaignCanvas({ ed }: { ed: CampaignEditorState }) {
       )}
       <div className="ws-section-heading">
         <h2>{t("ws.notes")}</h2>
-        <button onClick={() => ed.addNote(t("ws.newNote"))}>{t("ws.addNote")}</button>
+        <button className="ws-with-icon" onClick={() => ed.addNote(t("ws.newNoteTitle"))}><Icon name="plus" />{t("ws.addNote")}</button>
       </div>
+      {!campaign.notes.length && <div className="ws-empty">{t("ws.noNotes")}</div>}
       {campaign.notes.map((n) => (
         <div className="ws-note" key={n.id}>
+          <button className="ws-icon-button ws-note-delete" title={t("ws.deleteNote")} aria-label={t("ws.deleteNote")} onClick={() => ed.removeNote(n.id)}><Icon name="trash" /></button>
           <Input title={t("ws.noteTitle")} value={n.title} onChange={(title) => ed.updateCampaign((c) => ({ ...c, notes: c.notes.map((x) => (x.id === n.id ? { ...x, title } : x)) }))} />
           <Input title={t("ws.noteBody")} value={n.body} multiline onChange={(body) => ed.updateCampaign((c) => ({ ...c, notes: c.notes.map((x) => (x.id === n.id ? { ...x, body } : x)) }))} />
         </div>

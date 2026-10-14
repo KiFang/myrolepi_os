@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { computeEntity, evaluate, loc, parseDice, rollDice, seededRng, t, validateSystem, validateManifest, GameSystem } from '../src/core';
+import { computeEntity, evaluate, loc, parseDice, rollDice, seededRng, setCoreLang, t, validateSystem, validateManifest, GameSystem } from '../src/core';
 
 const rngOf = (...vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]; };
 
@@ -121,5 +121,21 @@ describe('i18n & plugins', () => {
     expect(validateManifest(ok)).toEqual([]);
     expect(validateManifest({ ...ok, main: '../evil.js' }).length).toBe(1);
     expect(validateManifest({ ...ok, permissions: ['root'] }).length).toBe(1);
+  });
+});
+
+describe('localized core errors', () => {
+  it('speaks the interface language', () => {
+    try {
+      setCoreLang('en');
+      expect(() => evaluate('nope')).toThrow(/Unknown variable "nope"/);
+      expect(() => evaluate('1 / 0')).toThrow(/Division by zero/);
+      expect(() => parseDice('banana')).toThrow(/Invalid dice notation/);
+      const bad = { schema: 1, id: 's', name: 's', version: '1', entityTypes: [{ id: 'x', label: 'X', category: 'custom', cardViews: [], fields: [{ id: 'a', label: 'a', type: 'number', formula: 'zzz' }] }] } as GameSystem;
+      expect(validateSystem(bad).map((i) => i.message).join('|')).toMatch(/unknown field "zzz"/);
+    } finally {
+      setCoreLang('ru');
+    }
+    expect(() => evaluate('nope')).toThrow(/Неизвестная переменная/);
   });
 });

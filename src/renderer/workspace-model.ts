@@ -24,17 +24,17 @@ export const both = (key: string): Record<string, string> => ({ ru: t(key, "ru")
 export function newType(): EntityType {
   return {
     id: newId("type"),
-    label: both("ws.newType"),
+    label: both("ws.defaultTypeName"),
     category: "character",
     fields: [],
     cardViews: [{ id: "default", name: both("ws.defaultSheet"), blocks: [] }],
   };
 }
 export function newSystem(): GameSystem {
-  return { schema: 1, id: newId("system"), name: both("ws.newSystem"), version: "0.1.0", entityTypes: [newType()] };
+  return { schema: 1, id: newId("system"), name: both("ws.defaultSystemName"), version: "0.1.0", entityTypes: [newType()] };
 }
 export function newField(): FieldDef {
-  return { id: newId("field"), label: both("ws.newField"), type: "number", default: 0 };
+  return { id: newId("field"), label: both("ws.defaultFieldName"), type: "number", default: 0 };
 }
 export function copyOf(template: GameSystem): GameSystem {
   const name = template.name;

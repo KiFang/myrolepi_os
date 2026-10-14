@@ -1,4 +1,5 @@
 import { Rng, defaultRng } from './rng';
+import { tm } from './i18n';
 
 export interface DiceSpec {
   count: number;
@@ -22,11 +23,11 @@ export const DICE_RE = /^(\d*)d(\d+|%|F)((?:!|k[hl]?\d+|d[hl]?\d+)*)/i;
 
 export function parseDice(notation: string): DiceSpec {
   const m = DICE_RE.exec(notation.trim());
-  if (!m || m[0].length !== notation.trim().length) throw new Error(`Некорректная запись кубика: "${notation}"`);
+  if (!m || m[0].length !== notation.trim().length) throw new Error(tm('err.diceBad', { n: notation }));
   const count = m[1] === '' ? 1 : parseInt(m[1], 10);
   const sides: DiceSpec['sides'] = m[2].toUpperCase() === 'F' ? 'F' : m[2] === '%' ? 100 : parseInt(m[2], 10);
-  if (count < 0 || count > 1000) throw new Error('Количество кубиков должно быть от 0 до 1000');
-  if (sides !== 'F' && (sides < 1 || sides > 100000)) throw new Error('Некорректное число граней');
+  if (count < 0 || count > 1000) throw new Error(tm('err.diceCount'));
+  if (sides !== 'F' && (sides < 1 || sides > 100000)) throw new Error(tm('err.diceSides'));
   const spec: DiceSpec = { count, sides, explode: false };
   const mods = m[3].toLowerCase();
   const re = /!|k([hl]?)(\d+)|d([hl]?)(\d+)/g;
@@ -36,7 +37,7 @@ export function parseDice(notation: string): DiceSpec {
     else if (mm[0][0] === 'k') spec.keep = { mode: mm[1] === 'l' ? 'low' : 'high', n: parseInt(mm[2], 10) };
     else spec.drop = { mode: mm[3] === 'h' ? 'high' : 'low', n: parseInt(mm[4], 10) };
   }
-  if (spec.explode && (spec.sides === 'F' || spec.sides === 1)) throw new Error('Этот кубик нельзя взрывать');
+  if (spec.explode && (spec.sides === 'F' || spec.sides === 1)) throw new Error(tm('err.diceExplode'));
   return spec;
 }
 

@@ -38,12 +38,14 @@
     "productName": "MyRolePi OS",
     "copyright": "Asteia",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**",
       "dist-electron/**",
       "package.json",
+      "build/icon.png",
       "!**/*.map"
     ],
     "extraResources": [

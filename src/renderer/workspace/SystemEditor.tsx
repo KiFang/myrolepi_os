@@ -3,6 +3,7 @@ import type { EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
 import { newField, newType, preview, rename } from "../workspace-model";
+import { Icon } from "../icons";
 import { Input, JsonInput } from "./inputs";
 
 const CATEGORIES: EntityCategory[] = ["character", "creature", "vehicle", "structure", "settlement", "item", "location", "faction", "custom"];
@@ -17,7 +18,9 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
   }, [system, typeIndex]);
   const type = system?.entityTypes[typeIndex];
   const field = fieldIndex === null ? undefined : type?.fields[fieldIndex];
-  const computed = useMemo(() => (system && type ? preview(type, {}, system, registry) : undefined), [system, type, registry]);
+  const { lang } = useLang();
+  // lang в зависимостях: сообщения об ошибках формул зависят от языка
+  const computed = useMemo(() => (system && type ? preview(type, {}, system, registry) : undefined), [system, type, registry, lang]);
 
   const updateType = (fn: (t: EntityType) => EntityType) =>
     updateSystem((s) => ({ ...s, entityTypes: s.entityTypes.map((t, i) => (i === typeIndex ? fn(t) : t)) }));
@@ -41,6 +44,10 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
       updateType((t) => ({ ...t, fields: [...t.fields, newField()] }));
       setFieldIndex(type.fields.length);
     },
+    removeType: () => {
+      updateSystem((s) => ({ ...s, entityTypes: s.entityTypes.filter((_, i) => i !== typeIndex) }));
+      setFieldIndex(null);
+    },
     removeField: () => {
       updateType((t) => ({ ...t, fields: t.fields.filter((_, i) => i !== fieldIndex) }));
       setFieldIndex(null);
@@ -50,7 +57,7 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
 export type SystemEditorState = ReturnType<typeof useSystemEditor>;
 
 export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
-  const { t, label, lang } = useLang();
+  const { t, label } = useLang();
   const { system, type, computed } = ed;
   if (!system) return null;
   return (
@@ -61,8 +68,9 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
           <h1>{label(system.name) || t("ws.untitled")}</h1>
           <p>{t("ws.systemSub")}</p>
         </div>
-        <button onClick={ed.addType}>{t("ws.addType")}</button>
+        <button className="ws-with-icon" onClick={ed.addType}><Icon name="plus" />{t("ws.addType")}</button>
       </div>
+      <p className="ws-hint ws-hint-tight">{t("ws.typesHint")}</p>
       <div className="ws-type-tabs">
         {system.entityTypes.map((et, i) => (
           <button key={et.id || i} className={i === ed.typeIndex ? "active" : ""} onClick={() => ed.setTypeIndex(i)}>
@@ -74,7 +82,7 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
         <>
           <div className="ws-section-heading">
             <h2>{t("ws.fieldsOf", { type: label(type.label) })}</h2>
-            <button onClick={ed.addField}>{t("ws.addField")}</button>
+            <button className="ws-with-icon" onClick={ed.addField}><Icon name="plus" />{t("ws.addField")}</button>
           </div>
           <div className="ws-table-wrap">
             <table className="ws-table">
@@ -100,7 +108,6 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
           <div className="ws-hint">{t("ws.previewHint")}</div>
         </>
       )}
-      <span hidden>{lang}</span>
     </>
   );
 }
@@ -126,13 +133,14 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
               {CATEGORIES.map((c) => <option key={c} value={c}>{t(`cat.${c}`)}</option>)}
             </select>
           </label>
+          <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteTypeConfirm", { name: label(type.label) })) && ed.removeType()}><Icon name="trash" />{t("ws.deleteType")}</button>
         </>
       )}
       {field ? (
         <>
           <div className="ws-property-group">{t("ws.groupField")}</div>
           <Input title={t("ws.fieldName")} value={label(field.label)} onChange={(v) => ed.updateField({ label: rename(field.label, v, lang) })} />
-          <Input title={t("ws.fieldId")} value={field.id} onChange={(id) => ed.updateField({ id })} />
+          <Input title={t("ws.fieldId")} value={field.id} hint={t("ws.fieldIdHint")} onChange={(id) => ed.updateField({ id })} />
           <label className="ws-control">
             <span>{t("ws.fieldType")}</span>
             <select
@@ -149,9 +157,9 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
               {FIELD_TYPES.map((k) => <option key={k} value={k}>{t(`ft.${k}`)}</option>)}
             </select>
           </label>
-          <Input title={t("ws.group")} value={field.group ?? ""} onChange={(group) => ed.updateField({ group })} />
+          <Input title={t("ws.group")} value={field.group ?? ""} placeholder={t("ws.groupPlaceholder")} onChange={(group) => ed.updateField({ group })} />
           <Input title={t("ws.formula")} value={field.formula ?? ""} placeholder={t("ws.formulaPlaceholder")} onChange={(formula) => ed.updateField({ formula: formula || undefined })} />
-          <p className="ws-hint">{t("ws.formulaHint")}</p>
+          <p className="ws-hint ws-hint-tight">{t("ws.formulaHint")}</p>
           <JsonInput title={t("ws.default")} value={field.default} onChange={(value) => ed.updateField({ default: value })} />
           {(field.type === "number" || field.type === "resource") && (
             <div className="ws-inline">
@@ -162,6 +170,7 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
           {field.type === "select" && (
             <Input
               title={t("ws.options")}
+              hint={t("ws.optionsHint")}
               multiline
               value={field.options?.map((o) => o.value).join("\n") ?? ""}
               onChange={(v) =>
@@ -181,7 +190,7 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
             </label>
           )}
           <Input title={t("ws.fieldDescription")} multiline value={label(field.description)} onChange={(v) => ed.updateField({ description: rename(field.description, v, lang) })} />
-          <button className="ws-danger" onClick={() => window.confirm(t("ws.deleteFieldConfirm")) && ed.removeField()}>{t("ws.deleteField")}</button>
+          <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteFieldConfirm")) && ed.removeField()}><Icon name="trash" />{t("ws.deleteField")}</button>
         </>
       ) : (
         <p className="ws-hint">{t("ws.pickField")}</p>

@@ -86,6 +86,6 @@ describe("library safety and localization", () => {
     expect(label(system.name, "en")).toBe("New system");
     expect(rename(system.name, "Sci-fi", "en")).toEqual({ ru: "Новая система", en: "Sci-fi" });
     expect(rename("plain", "x", "en")).toBe("x");
-    expect(systemIssues({ ...system, entityTypes: [{ ...system.entityTypes[0], fields: [{ id: "a b", label: "", type: "number" }] }] }, "en")[0].message).toMatch(/Field ID/);
+    expect(systemIssues({ ...system, entityTypes: [{ ...system.entityTypes[0], fields: [{ id: "a b", label: "", type: "number" }] }] }, "en")[0].message).toMatch(/Name in formulas/);
   });
 });

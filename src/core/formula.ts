@@ -1,5 +1,6 @@
 import { DICE_RE, DiceRoll, rollDice } from './dice';
 import { Rng, defaultRng } from './rng';
+import { tm } from './i18n';
 
 /**
  * Движок формул. Примеры:
@@ -42,14 +43,14 @@ function lex(src: string): Tok[] {
     if (im) { out.push({ t: 'id', v: im[0].replace(/^@/, '') }); i += im[0].length; continue; }
     if (c === '"' || c === "'") {
       const end = src.indexOf(c, i + 1);
-      if (end < 0) throw new FormulaError('Незакрытая строка');
+      if (end < 0) throw new FormulaError(tm('err.strOpen'));
       out.push({ t: 'str', v: src.slice(i + 1, end) });
       i = end + 1;
       continue;
     }
     const op = /^(>=|<=|==|!=|&&|\|\||[+\-*\/%^()<>,!?:])/.exec(rest);
     if (op) { out.push({ t: 'op', v: op[0] }); i += op[0].length; continue; }
-    throw new FormulaError(`Неожиданный символ "${c}" в позиции ${i}`);
+    throw new FormulaError(tm('err.badChar', { c, i }));
   }
   out.push({ t: 'eof' });
   return out;
@@ -77,7 +78,7 @@ export function parse(src: string): Node {
   const peek = () => toks[p];
   const next = () => toks[p++];
   const isOp = (v: string) => peek().t === 'op' && (peek() as { v: string }).v === v;
-  const expect = (v: string) => { if (!isOp(v)) throw new FormulaError(`Ожидалось "${v}"`); p++; };
+  const expect = (v: string) => { if (!isOp(v)) throw new FormulaError(tm('err.expected', { v })); p++; };
 
   function expr(minPrec: number): Node {
     let left = unary();
@@ -125,11 +126,11 @@ export function parse(src: string): Node {
       case 'op':
         if (t.v === '(') { const e = expr(0); expect(')'); return e; }
     }
-    throw new FormulaError('Неожиданный конец выражения');
+    throw new FormulaError(tm('err.unexpectedEnd'));
   }
 
   const ast = expr(0);
-  if (peek().t !== 'eof') throw new FormulaError('Лишние символы после выражения');
+  if (peek().t !== 'eof') throw new FormulaError(tm('err.trailing'));
   return ast;
 }
 
@@ -166,11 +167,11 @@ export interface EvalResult {
   rolls: DiceRoll[];
 }
 
-const num = (v: Value, what = 'значение'): number => {
+const num = (v: Value, what = tm('err.value')): number => {
   if (typeof v === 'number') return v;
   if (typeof v === 'boolean') return v ? 1 : 0;
   if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v);
-  throw new FormulaError(`Ожидалось число (${what}), получено: ${JSON.stringify(v)}`);
+  throw new FormulaError(tm('err.needNumber', { what, got: JSON.stringify(v) }));
 };
 const nums = (args: Value[]): number[] => args.flatMap((a) => (Array.isArray(a) ? a : [num(a)]));
 const truthy = (v: Value) => (typeof v === 'string' ? v !== '' : !!v);
@@ -200,7 +201,7 @@ function lookup(scope: Scope, path: string): Value {
   let cur: unknown = scope;
   for (const part of path.split('.')) {
     if (cur && typeof cur === 'object' && part in (cur as object)) cur = (cur as Record<string, unknown>)[part];
-    else throw new FormulaError(`Неизвестная переменная "${path}"`);
+    else throw new FormulaError(tm('err.unknownVar', { p: path }));
   }
   return cur as Value;
 }
@@ -223,7 +224,7 @@ function evalNode(n: Node, ctx: EvalContext): Value {
     case 'cond': return truthy(evalNode(n.c, ctx)) ? evalNode(n.a, ctx) : evalNode(n.b, ctx);
     case 'call': {
       const fn = ctx.functions[n.name];
-      if (!fn) throw new FormulaError(`Неизвестная функция "${n.name}"`);
+      if (!fn) throw new FormulaError(tm('err.unknownFn', { n: n.name }));
       // if() вычисляется лениво, чтобы не бросать кубики в неиспользуемой ветке
       if (n.name === 'if' && n.args.length === 3) {
         return truthy(evalNode(n.args[0], ctx)) ? evalNode(n.args[1], ctx) : evalNode(n.args[2], ctx);
@@ -238,8 +239,8 @@ function evalNode(n: Node, ctx: EvalContext): Value {
         case '+': return typeof a === 'string' || typeof b === 'string' ? String(a) + String(b) : num(a) + num(b);
         case '-': return num(a) - num(b);
         case '*': return num(a) * num(b);
-        case '/': { const d = num(b); if (d === 0) throw new FormulaError('Деление на ноль'); return num(a) / d; }
-        case '%': { const d = num(b); if (d === 0) throw new FormulaError('Деление на ноль'); return num(a) % d; }
+        case '/': { const d = num(b); if (d === 0) throw new FormulaError(tm('err.divZero')); return num(a) / d; }
+        case '%': { const d = num(b); if (d === 0) throw new FormulaError(tm('err.divZero')); return num(a) % d; }
         case '^': return Math.pow(num(a), num(b));
         case '==': return a === b;
         case '!=': return a !== b;
@@ -250,7 +251,7 @@ function evalNode(n: Node, ctx: EvalContext): Value {
       }
     }
   }
-  throw new FormulaError('Неизвестный узел выражения');
+  throw new FormulaError(tm('err.unknownNode'));
 }
 
 export interface EvalOptions {

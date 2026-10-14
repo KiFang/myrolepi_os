@@ -1,6 +1,7 @@
 import { FormulaError, Scope, Value, dependencies, evaluate, parse, EvalOptions } from './formula';
 import type { EntityType, GameSystem } from './schema';
 import { DiceRoll } from './dice';
+import { tm } from './i18n';
 
 export interface ComputeResult {
   values: Record<string, unknown>;
@@ -22,7 +23,7 @@ export function computeOrder(type: EntityType): string[] {
   const state = new Map<string, 1 | 2>();
   const visit = (id: string, path: string[]) => {
     if (state.get(id) === 2) return;
-    if (state.get(id) === 1) throw new FormulaError(`Циклическая зависимость полей: ${[...path, id].join(' → ')}`);
+    if (state.get(id) === 1) throw new FormulaError(tm('err.cycle', { path: [...path, id].join(' → ') }));
     state.set(id, 1);
     for (const d of deps.get(id) ?? []) visit(d, [...path, id]);
     state.set(id, 2);

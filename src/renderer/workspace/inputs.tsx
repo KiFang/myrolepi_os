@@ -6,14 +6,15 @@ interface InputProps {
   value: string | number;
   onChange: (value: string) => void;
   multiline?: boolean;
-  readOnly?: boolean;
   placeholder?: string;
   type?: string;
   min?: number;
   max?: number;
+  /** Пояснение под полем простыми словами. */
+  hint?: string;
 }
 
-export function Input({ title, value, onChange, multiline = false, ...props }: InputProps) {
+export function Input({ title, value, onChange, multiline = false, hint, ...props }: InputProps) {
   return (
     <label className="ws-control">
       <span>{title}</span>
@@ -22,11 +23,12 @@ export function Input({ title, value, onChange, multiline = false, ...props }: I
       ) : (
         <input {...props} aria-label={title} value={value} onChange={(e) => onChange(e.target.value)} />
       )}
+      {hint && <small className="ws-field-hint">{hint}</small>}
     </label>
   );
 }
 
-/** Поле для значений-структур (список, ресурс). Некорректный JSON блокирует сохранение. */
+/** Поле для значений-структур (список, ресурс). Некорректная запись подсвечивается и блокирует сохранение. */
 export function JsonInput({ title, value, onChange }: { title: string; value: unknown; onChange: (value: unknown) => void }) {
   const { t } = useLang();
   const [text, setText] = useState(JSON.stringify(value ?? null));
@@ -50,8 +52,8 @@ export function JsonInput({ title, value, onChange }: { title: string; value: un
   };
   return (
     <label className="ws-control">
-      <span>{title} · JSON</span>
-      <input ref={input} aria-label={`${title} · JSON`} aria-invalid={bad} value={text} onChange={(e) => apply(e.target.value)} />
+      <span>{title}</span>
+      <input ref={input} aria-label={title} aria-invalid={bad} value={text} onChange={(e) => apply(e.target.value)} />
       {bad && <small className="err">{t("ws.badJson")}</small>}
     </label>
   );
