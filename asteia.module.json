@@ -3,6 +3,8 @@
   "name": { "ru": "MyRolePi OS — конструктор настольных ролевых систем", "en": "MyRolePi OS — tabletop RPG system builder" },
   "version": "0.1.0",
   "launcher": "Asteia Alltools",
+  "platforms": ["win", "mac", "linux"],
+  "updateFeed": "latest.json (формат UpdateFeed в src/core/updates.ts)",
   "entry": { "command": "electron", "args": ["."], "launcherArgs": ["--launcher", "--data-dir", "{dataDir}", "--plugins-dir", "{pluginsDir}", "--lang", "{lang}"] },
   "_note": "Черновой контракт модуля. Лаунчера Asteia Alltools ещё нет: его будем делать под этот формат и менять формат здесь по мере необходимости."
 }

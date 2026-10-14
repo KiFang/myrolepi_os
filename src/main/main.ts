@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { validateManifest } from '../core/plugin';
+import { Platform, checkForUpdate, validateFeed } from '../core/updates';
 
 /**
  * Запуск из лаунчера Asteia Alltools:
@@ -16,6 +17,11 @@ function arg(name: string): string | undefined {
 const dataDir = arg('data-dir') ?? path.join(app.getPath('userData'), 'data');
 const pluginsDir = arg('plugins-dir') ?? (app.isPackaged ? path.join(app.getPath('userData'), 'plugins') : path.join(app.getAppPath(), 'plugins'));
 const launcherMode = process.argv.includes('--launcher');
+// URL фида обновлений (latest.json). В режиме лаунчера обновлениями управляет он — приложение само не проверяет.
+const updateFeedUrl = arg('update-feed') ?? process.env.MYROLEPI_UPDATE_FEED;
+const resDir = app.isPackaged ? process.resourcesPath : app.getAppPath();
+const platform: Platform = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'mac' : 'linux';
+const archName = process.arch === 'arm64' ? 'arm64' : 'x64';
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(pluginsDir, { recursive: true });
 
@@ -54,7 +60,20 @@ function scanPlugins(): LoadedPlugin[] {
 /** Хранилище проектов: JSON-файлы в dataDir. Имена санитизируются от выхода из каталога. */
 const safe = (name: string) => name.replace(/[^\p{L}\p{N}_.\- ]/gu, '_').replace(/^\.+/, '_');
 ipcMain.handle('plugins:list', () => scanPlugins());
-ipcMain.handle('env:info', () => ({ dataDir, pluginsDir, launcherMode, lang: arg('lang') ?? app.getLocale() }));
+ipcMain.handle('env:info', () => ({ dataDir, pluginsDir, launcherMode, version: app.getVersion(), platform, updatesEnabled: !launcherMode && !!updateFeedUrl, lang: arg('lang') ?? app.getLocale() }));
+ipcMain.handle('changelog:read', () => {
+  const f = path.join(resDir, 'CHANGELOG.md');
+  return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+});
+ipcMain.handle('updates:check', async () => {
+  if (launcherMode || !updateFeedUrl) return null;
+  const res = await fetch(updateFeedUrl);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const feed: unknown = await res.json();
+  if (!validateFeed(feed)) throw new Error('Некорректный фид обновлений');
+  return checkForUpdate(app.getVersion(), feed, platform, archName);
+});
+ipcMain.handle('updates:openRelease', (_e, url: string) => (/^https:/.test(url) ? shell.openExternal(url) : undefined));
 ipcMain.handle('plugins:openFolder', () => shell.openPath(pluginsDir));
 ipcMain.handle('store:list', (_e, kind: string) => {
   const d = path.join(dataDir, safe(kind));

@@ -5,8 +5,8 @@ import { PluginRegistry, PluginStatus, RawPlugin, loadPlugins } from './plugin-h
 import exampleSystem from '../../examples/space-opera.system.json';
 import './styles.css';
 
-type Page = 'dice' | 'formulas' | 'systems' | 'plugins' | 'help';
-const PAGES: Page[] = ['dice', 'formulas', 'systems', 'plugins', 'help'];
+type Page = 'dice' | 'formulas' | 'systems' | 'plugins' | 'help' | 'about';
+const PAGES: Page[] = ['dice', 'formulas', 'systems', 'plugins', 'help', 'about'];
 const PRESETS = ['d20', '2d6', '4d6kh3', '1d100', '3d8!', '4dF'];
 const LANG_NAMES: Record<string, string> = { ru: 'Русский', en: 'English' };
 
@@ -118,14 +118,45 @@ function Help({ lang }: { lang: string }) {
   );
 }
 
+interface Env { version: string; launcherMode: boolean; updatesEnabled: boolean; lang: string }
+interface Check { available: { version: string } | null; asset: { url: string } | null }
+
+function About({ lang, env }: { lang: string; env: Env | null }) {
+  const [log, setLog] = useState('');
+  const [msg, setMsg] = useState('');
+  const [check, setCheck] = useState<Check | null>(null);
+  useEffect(() => { window.rpi?.changelog().then(setLog); }, []);
+  const run = async () => {
+    try {
+      const c: Check | null = await window.rpi!.checkUpdates();
+      if (!c) setMsg(t('about.noFeed', lang)); else { setCheck(c); setMsg(c.available ? t('about.available', lang, { v: c.available.version }) : t('about.upToDate', lang)); }
+    } catch (e) { setMsg((e as Error).message); }
+  };
+  return (
+    <>
+      <h1>{t('nav.about', lang)}</h1>
+      <div className="card">
+        <b>{t('about.version', lang, { v: env?.version ?? '—' })}</b>
+        {env?.launcherMode ? <p className="muted">{t('about.launcher', lang)}</p> : (
+          <p><button className="btn" onClick={run}>{t('about.check', lang)}</button> <span className="muted">{msg}</span>
+            {check?.asset && <> <button className="btn" onClick={() => window.rpi!.openRelease(check.asset!.url)}>{t('about.download', lang)}</button></>}</p>
+        )}
+      </div>
+      <h3>{t('about.changelog', lang)}</h3>
+      <pre className="card" style={{ whiteSpace: 'pre-wrap' }}>{log}</pre>
+    </>
+  );
+}
+
 function App() {
   const [page, setPage] = useState<Page>('dice');
   const [lang, setLang] = useState('ru');
   const [reg, setReg] = useState<PluginRegistry>(emptyRegistry);
   const [status, setStatus] = useState<PluginStatus[]>([]);
+  const [env, setEnv] = useState<Env | null>(null);
 
   useEffect(() => {
-    window.rpi?.env().then((e: { lang: string }) => setLang(availableLocales().includes(e.lang.slice(0, 2)) ? e.lang.slice(0, 2) : 'en'));
+    window.rpi?.env().then((e: Env) => { setEnv(e); setLang(availableLocales().includes(e.lang.slice(0, 2)) ? e.lang.slice(0, 2) : 'en'); });
     window.rpi?.plugins().then((raw: RawPlugin[]) => { const r = loadPlugins(raw); setReg(r.registry); setStatus(r.status); });
   }, []);
 
@@ -146,6 +177,7 @@ function App() {
         {page === 'systems' && <Systems lang={lang} reg={reg} />}
         {page === 'plugins' && <Plugins lang={lang} status={status} />}
         {page === 'help' && <Help lang={lang} />}
+        {page === 'about' && <About lang={lang} env={env} />}
       </main>
     </div>
   );

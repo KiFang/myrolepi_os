@@ -6,3 +6,4 @@ export * from './schema';
 export * from './compute';
 export * from './validate';
 export * from './plugin';
+export * from './updates';
