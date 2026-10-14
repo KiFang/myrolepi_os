@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   createEntity,
+  label,
+  libraryProblem,
   newSystem,
   preview,
   rename,
@@ -67,5 +69,23 @@ describe("editable systems and campaigns", () => {
     expect(
       systemIssues(system).filter((i) => i.level === "error"),
     ).toHaveLength(2);
+  });
+});
+
+describe("library safety and localization", () => {
+  it("rejects malformed documents instead of overwriting them", () => {
+    const system = newSystem();
+    expect(libraryProblem([system], [])).toBe(false);
+    expect(libraryProblem([{ schema: 2, id: "x", entityTypes: [] }], [])).toBe(true);
+    expect(libraryProblem([], [{ schema: 1, id: "c", entities: [{ id: "e", values: [] }], notes: [] }])).toBe(true);
+    expect(libraryProblem([null], [])).toBe(true);
+  });
+  it("creates bilingual defaults and edits one language at a time", () => {
+    const system = newSystem();
+    expect(label(system.name, "ru")).toBe("Новая система");
+    expect(label(system.name, "en")).toBe("New system");
+    expect(rename(system.name, "Sci-fi", "en")).toEqual({ ru: "Новая система", en: "Sci-fi" });
+    expect(rename("plain", "x", "en")).toBe("x");
+    expect(systemIssues({ ...system, entityTypes: [{ ...system.entityTypes[0], fields: [{ id: "a b", label: "", type: "number" }] }] }, "en")[0].message).toMatch(/Field ID/);
   });
 });
