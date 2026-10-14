@@ -4,6 +4,7 @@ import { audioEngine } from "./audio/engine";
 import { useAudio } from "./audio/useAudio";
 import { Icon } from "./icons";
 import { useLang } from "./lang";
+import { TipBar } from "./tips";
 
 const fmtTime = (s: number) => (Number.isFinite(s) && s > 0 ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00");
 const fmtSize = (n: number) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
@@ -33,6 +34,7 @@ export function AudioPage() {
     <>
       <h1><Icon name="music" size={24} />{t("audio.title")}</h1>
       <p className="muted">{t("audio.intro")}</p>
+      <TipBar context="audio" />
       <div className="audio-folders">
         <button className="ws-with-icon" onClick={() => void api.openFolder("music")}><Icon name="folder" size={15} />{t("audio.openMusic")}</button>
         <button className="ws-with-icon" onClick={() => void api.openFolder("sounds")}><Icon name="folder" size={15} />{t("audio.openSounds")}</button>

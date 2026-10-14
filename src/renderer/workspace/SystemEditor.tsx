@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ActionDef, CardBlock, CardView, EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from "../../core";
 import { useLang } from "../lang";
+import { useSimple } from "../simple";
+import { TipBar } from "../tips";
 import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { both, fieldIdProblem, newField, newId, newType, preview, rename } from "../workspace-model";
@@ -123,7 +125,9 @@ export type SystemEditorState = ReturnType<typeof useSystemEditor>;
 export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
   const { t, label } = useLang();
   const notify = useToast();
+  const simple = useSimple();
   const { system, type, computed } = ed;
+  const mode = simple && ed.mode === "actions" ? "fields" : ed.mode;
   if (!system) return null;
   return (
     <>
@@ -148,15 +152,16 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
       </div>
       {type && (
         <div className="ws-mode-tabs" role="tablist">
-          {(["fields", "cards", "actions", "bestiary"] as const).map((m) => (
-            <button key={m} role="tab" aria-selected={ed.mode === m} className={ed.mode === m ? "active" : ""} onClick={() => ed.setMode(m)}>{t(`ws.mode.${m}`)}</button>
+          {(simple ? (["fields", "cards", "bestiary"] as const) : (["fields", "cards", "actions", "bestiary"] as const)).map((m) => (
+            <button key={m} role="tab" aria-selected={mode === m} className={mode === m ? "active" : ""} onClick={() => ed.setMode(m)}>{t(`ws.mode.${m}`)}</button>
           ))}
         </div>
       )}
-      {type && ed.mode === "cards" && <CardDesigner ed={ed} registry={ed.registry} />}
-      {type && ed.mode === "actions" && <ActionsEditor ed={ed} />}
-      {type && ed.mode === "bestiary" && <BestiaryEditor ed={ed} />}
-      {type && ed.mode === "fields" && (
+      {type && <TipBar context={`system.${mode}`} />}
+      {type && mode === "cards" && <CardDesigner ed={ed} registry={ed.registry} />}
+      {type && mode === "actions" && <ActionsEditor ed={ed} />}
+      {type && mode === "bestiary" && <BestiaryEditor ed={ed} />}
+      {type && mode === "fields" && (
         <>
           <div className="ws-section-heading">
             <h2>{t("ws.fieldsOf", { type: label(type.label) })}</h2>
@@ -168,17 +173,17 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
           <div className="ws-table-wrap">
             <table className="ws-table">
               <thead>
-                <tr><th>{t("ws.colName")}</th><th>{t("ws.colType")}</th><th>{t("ws.colFormula")}</th><th>{t("ws.colValue")}</th></tr>
+                <tr><th>{t("ws.colName")}</th><th>{t("ws.colType")}</th>{!simple && <th>{t("ws.colFormula")}</th>}<th>{t("ws.colValue")}</th></tr>
               </thead>
               <tbody>
                 {type.fields.map((f, i) => (
                   <tr key={i} className={i === ed.fieldIndex ? "selected" : ""} onClick={() => ed.setFieldIndex(i)}>
                     <td>
                       <button onClick={() => ed.setFieldIndex(i)}>{label(f.label) || t("ws.untitled")}</button>
-                      <small>{f.id}</small>
+                      {!simple && <small>{f.id}</small>}
                     </td>
                     <td>{t(`ft.${f.type}`)}</td>
-                    <td><code>{f.formula || "—"}</code></td>
+                    {!simple && <td><code>{f.formula || "—"}</code></td>}
                     <td>{computed?.errors[f.id] ? <span className="err">{t("ws.error")}</span> : <strong>{String(computed?.values[f.id] ?? "—")}</strong>}</td>
                   </tr>
                 ))}
@@ -195,7 +200,9 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
 
 export function SystemInspector({ ed }: { ed: SystemEditorState }) {
   const { t, label, lang } = useLang();
+  const simple = useSimple();
   const { system, type, field } = ed;
+  const mode = simple && ed.mode === "actions" ? "fields" : ed.mode;
   if (!system) return null;
   const defaultFor = (kind: FieldType) => (kind === "number" || kind === "resource" ? 0 : kind === "boolean" ? false : kind === "list" ? [] : "");
   return (
@@ -214,15 +221,28 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
               {CATEGORIES.map((c) => <option key={c} value={c}>{t(`cat.${c}`)}</option>)}
             </select>
           </label>
-          <Input title={t("ws.initiative")} value={type.initiative ?? ""} placeholder="1d20" hint={t("ws.initiativeHint")} onChange={(v) => ed.updateType((x) => ({ ...x, initiative: v || undefined }))} />
+          {simple ? (
+            <label className="ws-control">
+              <span>{t("simple.initiative")}</span>
+              <select aria-label={t("simple.initiative")} value={type.initiative ?? ""} onChange={(e) => ed.updateType((x) => ({ ...x, initiative: e.target.value || undefined }))}>
+                <option value="">{t("simple.initiativeNone")}</option>
+                <option value="1d20">{t("simple.initiativeD20")}</option>
+                {type.fields.filter((f) => f.type === "number").map((f) => <option key={f.id} value={`1d20 + ${f.id}`}>{t("simple.initiativePlus", { name: label(f.label) })}</option>)}
+                {type.initiative && type.initiative !== "1d20" && !type.fields.some((f) => type.initiative === `1d20 + ${f.id}`) && <option value={type.initiative}>{t("simple.initiativeCustom", { f: type.initiative })}</option>}
+              </select>
+              <small className="ws-field-hint">{t("simple.initiativeHint")}</small>
+            </label>
+          ) : (
+            <Input title={t("ws.initiative")} value={type.initiative ?? ""} placeholder="1d20" hint={t("ws.initiativeHint")} onChange={(v) => ed.updateType((x) => ({ ...x, initiative: v || undefined }))} />
+          )}
           <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteTypeConfirm", { name: label(type.label) })) && ed.removeType()}><Icon name="trash" />{t("ws.deleteType")}</button>
         </>
       )}
-      {ed.mode === "cards" ? <CardInspector ed={ed} /> : ed.mode === "actions" || ed.mode === "bestiary" ? null : field ? (
+      {mode === "cards" ? <CardInspector ed={ed} /> : mode === "actions" || mode === "bestiary" ? null : field ? (
         <>
           <div className="ws-property-group">{t("ws.groupField")}</div>
           <Input title={t("ws.fieldName")} value={label(field.label)} onChange={(v) => ed.updateField({ label: rename(field.label, v, lang) })} />
-          <CommitInput title={t("ws.fieldId")} value={field.id} hint={t("ws.fieldIdHint")} validate={(next) => (type ? fieldIdProblem(type, field.id, next, lang) : "")} onCommit={ed.renameField} />
+          {!simple && <CommitInput title={t("ws.fieldId")} value={field.id} hint={t("ws.fieldIdHint")} validate={(next) => (type ? fieldIdProblem(type, field.id, next, lang) : "")} onCommit={ed.renameField} />}
           <label className="ws-control">
             <span>{t("ws.fieldType")}</span>
             <select
@@ -239,11 +259,17 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
               {FIELD_TYPES.map((k) => <option key={k} value={k}>{t(`ft.${k}`)}</option>)}
             </select>
           </label>
-          <Input title={t("ws.group")} value={field.group ?? ""} placeholder={t("ws.groupPlaceholder")} onChange={(group) => ed.updateField({ group })} />
-          <Input title={t("ws.formula")} value={field.formula ?? ""} placeholder={t("ws.formulaPlaceholder")} onChange={(formula) => ed.updateField({ formula: formula || undefined })} />
-          <p className="ws-hint ws-hint-tight">{t("ws.formulaHint")} <HelpLink topic="formulas" /></p>
-          <JsonInput title={t("ws.default")} value={field.default} onChange={(value) => ed.updateField({ default: value })} />
-          {(field.type === "number" || field.type === "resource") && (
+          {!simple && <Input title={t("ws.group")} value={field.group ?? ""} placeholder={t("ws.groupPlaceholder")} onChange={(group) => ed.updateField({ group })} />}
+          {!simple && <Input title={t("ws.formula")} value={field.formula ?? ""} placeholder={t("ws.formulaPlaceholder")} onChange={(formula) => ed.updateField({ formula: formula || undefined })} />}
+          {!simple && <p className="ws-hint ws-hint-tight">{t("ws.formulaHint")} <HelpLink topic="formulas" /></p>}
+          {simple ? (
+            field.formula ? <p className="ws-hint">ƒ {field.formula}</p>
+            : field.type === "number" || field.type === "resource" ? <Input title={t("simple.defaultValue")} type="number" value={typeof field.default === "number" ? field.default : 0} onChange={(v) => ed.updateField({ default: v === "" ? 0 : Number(v) })} />
+            : field.type === "text" || field.type === "longtext" ? <Input title={t("simple.defaultValue")} value={String(field.default ?? "")} multiline={field.type === "longtext"} onChange={(v) => ed.updateField({ default: v })} />
+            : field.type === "boolean" ? <label className="ws-checkbox"><input type="checkbox" checked={Boolean(field.default)} onChange={(e) => ed.updateField({ default: e.target.checked })} />{t("simple.defaultValue")}</label>
+            : null
+          ) : <JsonInput title={t("ws.default")} value={field.default} onChange={(value) => ed.updateField({ default: value })} />}
+          {!simple && (field.type === "number" || field.type === "resource") && (
             <div className="ws-inline">
               <Input title={t("ws.min")} type="number" value={field.min ?? ""} onChange={(v) => ed.updateField({ min: v === "" ? undefined : Number(v) })} />
               <Input title={t("ws.max")} type="number" value={field.max ?? ""} onChange={(v) => ed.updateField({ max: v === "" ? undefined : Number(v) })} />

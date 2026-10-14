@@ -10,6 +10,7 @@ import { AudioPage, MiniPlayer } from "./AudioPage";
 import { useAudioLibrary } from "./audio/useAudio";
 import { DataPage } from "./DataPage";
 import { PanelFrame, PanelsContext } from "./PanelFrame";
+import { SimpleContext, rememberSimple, savedSimple } from "./simple";
 import { currentProjectApi } from "./projectBridge";
 import { newId } from "./workspace-model";
 import { Plugins } from "./PluginsPage";
@@ -36,6 +37,11 @@ function Shell() {
   const [lang, setLangState] = useState(() => pickLang(savedLang() ?? navigator.language));
   const [themeId, setThemeId] = useState(() => savedTheme() ?? "night");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [simple, setSimpleState] = useState(savedSimple);
+  const setSimple = useCallback((v: boolean) => { setSimpleState(v); rememberSimple(v); }, []);
+  const simpleCtx = useMemo(() => ({ simple, setSimple }), [simple, setSimple]);
+  const hiddenInSimple: Page[] = ["formulas", "plugins", "data"];
+  useEffect(() => { if (simple && hiddenInSimple.includes(page)) setPage("workspace"); }); // eslint-disable-line react-hooks/exhaustive-deps
   const [helpTarget, setHelpTarget] = useState<string | undefined>();
   const notify = useToast();
   useAudioLibrary();
@@ -125,19 +131,21 @@ function Shell() {
 
   return (
     <LangContext.Provider value={ctx}>
+      <SimpleContext.Provider value={simpleCtx}>
       <PanelsContext.Provider value={panelsCtx}>
       <HelpContext.Provider value={openHelp}>
       <div className="workspace" data-theme={theme.id} style={{ ...theme.vars, colorScheme: theme.scheme } as React.CSSProperties}>
         <header className="ws-header">
           <div className="ws-brand"><img className="ws-logo-img" src="./logo.svg" alt="" width={30} height={30} /><span className="ws-wordmark">{t("app.name")}</span></div>
           <nav className="ws-menu" aria-label="Main">
-            {PAGES.filter((p) => p !== "panels" || pagePanels.length > 0).map((p) => (
+            {PAGES.filter((p) => (p !== "panels" || pagePanels.length > 0) && !(simple && hiddenInSimple.includes(p))).map((p) => (
               <button key={p} className={p === page ? "active" : ""} onClick={() => setPage(p)} title={p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}>
                 <Icon name={PAGE_ICONS[p]} size={15} /><span className="lbl">{p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}</span>
               </button>
             ))}
           </nav>
           <MiniPlayer onOpen={() => setPage("audio")} />
+          <button className="ws-simple-toggle" aria-pressed={simple} title={t("simple.title")} onClick={() => setSimple(!simple)}><Icon name="wand" size={15} /><span className="lbl">{t("simple.on")}</span></button>
           <button className="ws-palette-hint" onClick={() => setPaletteOpen(true)} title={t("palette.title")}><Icon name="search" size={14} /><span className="lbl">{t("palette.hint")}</span><kbd>Ctrl K</kbd></button>
           <select className="ws-lang ws-theme" aria-label={t("theme")} value={theme.id} onChange={(e) => setTheme(e.target.value)}>
             {themes.map((th) => <option key={th.id} value={th.id}>{th.name[lang === "ru" ? "ru" : "en"]}</option>)}
@@ -180,6 +188,7 @@ function Shell() {
       </div>
       </HelpContext.Provider>
       </PanelsContext.Provider>
+      </SimpleContext.Provider>
     </LangContext.Provider>
   );
 }

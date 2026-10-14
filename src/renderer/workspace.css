@@ -1194,3 +1194,16 @@ button[aria-pressed=true].ws-icon-button { color: var(--accent); }
 .bestiary-list { display: flex; flex-direction: column; gap: 6px; }
 .bestiary-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 @media (max-width: 900px) { .bestiary { grid-template-columns: 1fr; } }
+
+/* простой режим и советы */
+.ws-simple-toggle { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 6px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ws-simple-toggle:hover { color: var(--fg); border-color: var(--border-strong); }
+.ws-simple-toggle[aria-pressed=true] { color: var(--on-accent); background: var(--accent); border-color: transparent; }
+@media (max-width: 1520px) { .ws-simple-toggle .lbl { display: none; } }
+.tip-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); font-size: 13px; line-height: 1.45; animation: rp-grow 0.2s ease both; transform-origin: top; }
+.tip-bar > svg { color: var(--accent); flex: none; }
+.tip-text { flex: 1; min-width: 0; }
+.tip-bar button { flex: none; padding: 3px 10px; font-size: 12px; }
+.simple-hint { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0; max-width: 620px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel2); }
+.simple-hint > div { flex: 1; min-width: 220px; }
+.simple-hint b { display: block; margin-bottom: 2px; }

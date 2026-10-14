@@ -631,3 +631,16 @@ registerLocale('en', {
   'bestiary.title': 'Bestiary: {type}', 'bestiary.add': 'Add an entry', 'bestiary.hint': 'Ready-made creatures and objects of this type. In a campaign add them in one click: Heroes → “From bestiary”.', 'bestiary.empty': 'No entries yet. Create, say, a wolf or a guard — and add them to any campaign of this system.',
   'bestiary.name': 'Entry name', 'bestiary.notes': 'GM note (behavior, loot)', 'bestiary.copy': 'Copy', 'bestiary.delete': 'Delete', 'bestiary.deleteConfirm': 'Delete the entry "{name}"?', 'bestiary.fromBestiary': 'From bestiary…',
 });
+
+registerLocale('ru', {
+  'tips.label': 'Совет:', 'tips.gotIt': 'Понятно', 'tips.off': 'Больше не показывать советы', 'tips.reset': 'Показать советы снова', 'tips.resetDone': 'Советы включены снова',
+  'simple.on': 'Простой режим', 'simple.title': 'Простой режим: без формул и технических разделов', 'simple.hintTitle': 'Впервые здесь?', 'simple.hintText': 'Включите простой режим: останется только нужное, чтобы собрать систему и вести игру. Формулы и плагины всегда можно вернуть переключателем в шапке.', 'simple.enable': 'Включить простой режим', 'simple.dismiss': 'Не нужно',
+  'simple.initiative': 'Инициатива', 'simple.initiativeNone': 'Без броска', 'simple.initiativeD20': 'Бросок d20', 'simple.initiativePlus': 'd20 + {name}', 'simple.initiativeCustom': 'Своя формула: {f}', 'simple.initiativeHint': 'Кто ходит первым в бою.',
+  'simple.defaultValue': 'Значение по умолчанию',
+});
+registerLocale('en', {
+  'tips.label': 'Tip:', 'tips.gotIt': 'Got it', 'tips.off': 'Stop showing tips', 'tips.reset': 'Show tips again', 'tips.resetDone': 'Tips are back on',
+  'simple.on': 'Simple mode', 'simple.title': 'Simple mode: no formulas or technical sections', 'simple.hintTitle': 'New here?', 'simple.hintText': 'Turn on simple mode: only what you need to build a system and run a game stays. Formulas and plugins come back with the switch in the header.', 'simple.enable': 'Turn on simple mode', 'simple.dismiss': 'No thanks',
+  'simple.initiative': 'Initiative', 'simple.initiativeNone': 'No roll', 'simple.initiativeD20': 'Roll d20', 'simple.initiativePlus': 'd20 + {name}', 'simple.initiativeCustom': 'Custom formula: {f}', 'simple.initiativeHint': 'Who goes first in combat.',
+  'simple.defaultValue': 'Default value',
+});

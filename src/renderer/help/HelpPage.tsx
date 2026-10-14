@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { loc } from "../../core";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
+import { resetTips } from "../tips";
+import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { ARTICLES } from "./content";
 import type { Article, Block, L } from "./content";
@@ -76,6 +78,7 @@ function Blocks({ a, reg, onTry }: { a: Article; reg: PluginRegistry; onTry: (f:
 /** Справочник: оглавление, поиск по тексту, примеры формул с переходом в калькулятор. */
 export function HelpPage({ reg, target, onOpenFormula }: { reg: PluginRegistry; target?: string; onOpenFormula: (formula: string) => void }) {
   const { t, lang } = useLang();
+  const notify = useToast();
   const [query, setQuery] = useState("");
   const [current, setCurrent] = useState(target && ARTICLES.some((a) => a.id === target) ? target : ARTICLES[0].id);
   const body = useRef<HTMLDivElement>(null);
@@ -102,7 +105,7 @@ export function HelpPage({ reg, target, onOpenFormula }: { reg: PluginRegistry; 
         {!found.length && <p className="muted help-none">{t("help.nothing")}</p>}
       </aside>
       <article className="help-body" ref={body} key={article?.id}>
-        {article && (<><h1><Icon name={article.icon} size={24} />{article.title[ln]}</h1><p className="muted help-lead">{article.summary[ln]}</p><Blocks a={article} reg={reg} onTry={onOpenFormula} /></>)}
+        {article && (<><h1><Icon name={article.icon} size={24} />{article.title[ln]}</h1><p className="muted help-lead">{article.summary[ln]}</p><Blocks a={article} reg={reg} onTry={onOpenFormula} />{article.id === "start" && <p><button className="ws-with-icon" onClick={() => { resetTips(); notify(t("tips.resetDone")); }}><Icon name="info" size={14} />{t("tips.reset")}</button></p>}</>)}
         <p className="muted help-files">{t("help.files")}</p>
       </article>
     </div>

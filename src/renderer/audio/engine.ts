@@ -104,12 +104,19 @@ export class AudioEngine {
   pause() { const a = this.music; if (!a) return; this.token++; this.ramp(a, 0, () => a.pause()); this.set({ playing: false }); }
   async resume() { const a = this.music; if (!a || !this.state.current) return; this.token++; try { await a.play(); this.set({ playing: true, failed: null }); this.ramp(a, this.state.volume); } catch { this.set({ failed: this.state.current }); } }
   toggle() { if (this.state.playing) this.pause(); else if (this.state.current) void this.resume(); else { const first = this.state.library.find((f) => f.kind === "music"); if (first) void this.play(first.ref); } }
-  stop() { const a = this.music; this.token++; if (a) this.ramp(a, 0, () => { a.pause(); a.removeAttribute("src"); a.load(); }); this.set({ playing: false, current: null, position: 0, duration: 0 }); }
+  stop() {
+    const a = this.music;
+    const tk = ++this.token;
+    // очередь сбрасывается сразу: трек, доигрывающий последние мгновения затухания, не должен запустить следующий
+    this.set({ playing: false, current: null, queue: [], position: 0, duration: 0, failed: null });
+    if (a) this.ramp(a, 0, () => { if (tk === this.token) { a.pause(); a.removeAttribute("src"); a.load(); } });
+  }
 
   next() { const { queue, current, loop, shuffle } = this.state; const i = current ? queue.indexOf(current) : -1; const n = nextTrack(Math.max(i, 0), queue.length, loop === "one" ? "all" : loop, shuffle); if (n !== null) void this.play(queue[n], queue); }
   prev() { const { queue, current } = this.state; if (this.music && this.music.currentTime > 3) { this.music.currentTime = 0; return; } const n = prevTrack(current ? queue.indexOf(current) : 0, queue.length); if (n !== null) void this.play(queue[n], queue); }
   private onEnded() {
     const { queue, current, loop, shuffle } = this.state;
+    if (!current || !this.state.playing) return; // остановлено пользователем
     if (loop === "one" && this.music) { this.music.currentTime = 0; void this.music.play(); return; }
     const n = nextTrack(current ? queue.indexOf(current) : 0, queue.length, loop, shuffle);
     if (n === null) this.set({ playing: false, position: 0 }); else void this.play(queue[n], queue);

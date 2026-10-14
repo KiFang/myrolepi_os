@@ -7,6 +7,7 @@ import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
 import type { RollEntry } from "../rolls";
 import { createEntity, newId, preview } from "../workspace-model";
+import { TipBar } from "../tips";
 import { EntityForm } from "./EntityForm";
 import { CampaignGallery } from "./CampaignGallery";
 import { CampaignMaps } from "./CampaignMaps";
@@ -231,6 +232,7 @@ export function CampaignCanvas({ ed }: { ed: CampaignEditorState }) {
           <button key={k} role="tab" aria-selected={ed.tab === k} className={ed.tab === k ? "active" : ""} onClick={() => ed.setTab(k)}>{t(`ws.ctab.${k}`)}</button>
         ))}
       </div>
+      <TipBar context={`campaign.${ed.tab}`} />
       {ed.tab === "heroes" && <Heroes ed={ed} />}
       {ed.tab === "cards" && <CampaignGallery ed={ed} />}
       {ed.tab === "combat" && <CombatTracker ed={ed} />}

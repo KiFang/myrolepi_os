@@ -4,6 +4,7 @@ import type { Campaign, GameSystem } from "../../core";
 import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
+import { rememberSimple, simpleChosen, useSimpleState } from "../simple";
 import { PanelFrame } from "../PanelFrame";
 import { emitPanelEvent } from "../panelEvents";
 import type { PanelDef } from "../../core";
@@ -48,6 +49,8 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
   const [rightTab, setRightTab] = useState<string>("props");
   const [seenPanels, setSeenPanels] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
+  const simpleState = useSimpleState();
+  const [hintGone, setHintGone] = useState(simpleChosen);
   const prot = useProtection(project.systems);
 
   const pKey = (x: PanelItem) => `${x.plugin.id}:${x.panel.id}`;
@@ -272,6 +275,13 @@ export function Workspace({ registry, active, panels = [] }: { registry: PluginR
                 <div className="ws-eyebrow">{t("ws.eyebrow")}</div>
                 <h1>{t("ws.heroTitle")}</h1>
                 <p>{t("ws.heroText")}</p>
+                {!hintGone && !simpleState.simple && (
+                  <div className="simple-hint" data-testid="simple-hint">
+                    <div><b>{t("simple.hintTitle")}</b><span className="muted">{t("simple.hintText")}</span></div>
+                    <button className="ws-primary ws-with-icon" onClick={() => { simpleState.setSimple(true); setHintGone(true); }}><Icon name="wand" size={14} />{t("simple.enable")}</button>
+                    <button onClick={() => { rememberSimple(false); setHintGone(true); }}>{t("simple.dismiss")}</button>
+                  </div>
+                )}
                 <div className="ws-welcome-actions">
                   <button className="ws-primary ws-with-icon" disabled={!lib.ready} onClick={() => addSystem()}><Icon name="plus" />{t("ws.createSystem")}</button>
                   <button className="ws-with-icon" disabled={!lib.ready} onClick={() => addSystem(example as unknown as GameSystem)}><Icon name="dice" />{t("ws.openExample")}</button>
