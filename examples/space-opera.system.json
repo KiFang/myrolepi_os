@@ -1,56 +1,625 @@
 {
   "schema": 1,
   "id": "space-opera",
-  "name": { "ru": "Космическая опера (пример)", "en": "Space Opera (example)" },
+  "name": {
+    "ru": "Космическая опера (пример)",
+    "en": "Space Opera (example)"
+  },
   "version": "0.1.0",
-  "macros": [{ "name": "mod", "params": ["score"], "formula": "floor((score - 10) / 2)" }],
+  "macros": [
+    {
+      "name": "mod",
+      "params": [
+        "score"
+      ],
+      "formula": "floor((score - 10) / 2)"
+    }
+  ],
   "entityTypes": [
     {
       "id": "character",
-      "label": { "ru": "Персонаж", "en": "Character" },
+      "label": {
+        "ru": "Персонаж",
+        "en": "Character"
+      },
       "category": "character",
       "fields": [
-        { "id": "level", "label": { "ru": "Уровень", "en": "Level" }, "type": "number", "default": 1, "min": 1 },
-        { "id": "str", "label": { "ru": "Сила", "en": "Strength" }, "type": "number", "default": 10, "group": "stats" },
-        { "id": "tech", "label": { "ru": "Технологии", "en": "Tech" }, "type": "number", "default": 10, "group": "stats" },
-        { "id": "tech_mod", "label": { "ru": "Мод. технологий", "en": "Tech mod" }, "type": "number", "formula": "mod(tech)" },
-        { "id": "max_hp", "label": { "ru": "Макс. HP", "en": "Max HP" }, "type": "number", "formula": "8 + mod(str) + level * 4" },
-        { "id": "hp", "label": "HP", "type": "resource", "default": 8 }
+        {
+          "id": "level",
+          "label": {
+            "ru": "Уровень",
+            "en": "Level"
+          },
+          "type": "number",
+          "default": 1,
+          "min": 1
+        },
+        {
+          "id": "str",
+          "label": {
+            "ru": "Сила",
+            "en": "Strength"
+          },
+          "type": "number",
+          "default": 10,
+          "group": "stats"
+        },
+        {
+          "id": "tech",
+          "label": {
+            "ru": "Технологии",
+            "en": "Tech"
+          },
+          "type": "number",
+          "default": 10,
+          "group": "stats"
+        },
+        {
+          "id": "tech_mod",
+          "label": {
+            "ru": "Мод. технологий",
+            "en": "Tech mod"
+          },
+          "type": "number",
+          "formula": "mod(tech)"
+        },
+        {
+          "id": "max_hp",
+          "label": {
+            "ru": "Макс. HP",
+            "en": "Max HP"
+          },
+          "type": "number",
+          "formula": "8 + mod(str) + level * 4"
+        },
+        {
+          "id": "hp",
+          "label": "HP",
+          "type": "resource",
+          "default": 8
+        }
       ],
       "actions": [
-        { "id": "hack", "label": { "ru": "Взлом", "en": "Hack" }, "formula": "1d20 + tech_mod + level" }
+        {
+          "id": "attack",
+          "label": {
+            "ru": "Атака",
+            "en": "Attack"
+          },
+          "formula": "1d20 + level + mod(str)"
+        },
+        {
+          "id": "hack",
+          "label": {
+            "ru": "Взлом",
+            "en": "Hack"
+          },
+          "formula": "1d20 + tech_mod + level"
+        },
+        {
+          "id": "heal",
+          "label": {
+            "ru": "Лечение",
+            "en": "Heal"
+          },
+          "formula": "1d8 + level",
+          "effects": [
+            {
+              "field": "hp",
+              "op": "add",
+              "formula": "result"
+            }
+          ]
+        },
+        {
+          "id": "damage",
+          "label": {
+            "ru": "Получить урон",
+            "en": "Take damage"
+          },
+          "formula": "amount",
+          "inputs": [
+            {
+              "id": "amount",
+              "label": {
+                "ru": "Сколько урона",
+                "en": "Damage amount"
+              },
+              "type": "number",
+              "default": 3
+            }
+          ],
+          "effects": [
+            {
+              "field": "hp",
+              "op": "add",
+              "formula": "-result"
+            }
+          ]
+        }
       ],
       "cardViews": [
-        { "id": "default", "name": { "ru": "Стандартная", "en": "Default" }, "blocks": [
-          { "id": "b1", "kind": "heading", "x": 0, "y": 0, "w": 12, "h": 1 },
-          { "id": "b2", "kind": "field", "field": "max_hp", "x": 0, "y": 1, "w": 4, "h": 1 }
-        ] }
-      ]
+        {
+          "id": "default",
+          "name": {
+            "ru": "Лист героя",
+            "en": "Hero sheet"
+          },
+          "theme": "night",
+          "blocks": [
+            {
+              "id": "h",
+              "kind": "heading",
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 2,
+              "props": {
+                "size": "l"
+              }
+            },
+            {
+              "id": "hp",
+              "kind": "bar",
+              "x": 0,
+              "y": 2,
+              "w": 12,
+              "h": 2,
+              "field": "hp",
+              "props": {
+                "maxField": "max_hp"
+              }
+            },
+            {
+              "id": "lv",
+              "kind": "field",
+              "x": 0,
+              "y": 4,
+              "w": 4,
+              "h": 2,
+              "field": "level"
+            },
+            {
+              "id": "st",
+              "kind": "field",
+              "x": 4,
+              "y": 4,
+              "w": 4,
+              "h": 2,
+              "field": "str"
+            },
+            {
+              "id": "te",
+              "kind": "field",
+              "x": 8,
+              "y": 4,
+              "w": 4,
+              "h": 2,
+              "field": "tech"
+            },
+            {
+              "id": "d",
+              "kind": "divider",
+              "x": 0,
+              "y": 6,
+              "w": 12,
+              "h": 1
+            },
+            {
+              "id": "mh",
+              "kind": "field",
+              "x": 0,
+              "y": 7,
+              "w": 6,
+              "h": 2,
+              "field": "max_hp"
+            },
+            {
+              "id": "tm",
+              "kind": "field",
+              "x": 6,
+              "y": 7,
+              "w": 6,
+              "h": 2,
+              "field": "tech_mod"
+            },
+            {
+              "id": "ac",
+              "kind": "actions",
+              "x": 0,
+              "y": 9,
+              "w": 12,
+              "h": 2
+            }
+          ]
+        },
+        {
+          "id": "compact",
+          "name": {
+            "ru": "Компактная",
+            "en": "Compact"
+          },
+          "theme": "steel",
+          "blocks": [
+            {
+              "id": "h",
+              "kind": "heading",
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 2
+            },
+            {
+              "id": "hp",
+              "kind": "bar",
+              "x": 0,
+              "y": 2,
+              "w": 12,
+              "h": 2,
+              "field": "hp",
+              "props": {
+                "maxField": "max_hp"
+              }
+            },
+            {
+              "id": "ac",
+              "kind": "actions",
+              "x": 0,
+              "y": 4,
+              "w": 12,
+              "h": 2
+            }
+          ]
+        }
+      ],
+      "initiative": "1d20 + level"
     },
     {
       "id": "starship",
-      "label": { "ru": "Космический корабль", "en": "Starship" },
+      "label": {
+        "ru": "Космический корабль",
+        "en": "Starship"
+      },
       "category": "vehicle",
       "fields": [
-        { "id": "hull", "label": { "ru": "Корпус", "en": "Hull" }, "type": "number", "default": 100 },
-        { "id": "engines", "label": { "ru": "Двигатели", "en": "Engines" }, "type": "number", "default": 3 },
-        { "id": "mass", "label": { "ru": "Масса", "en": "Mass" }, "type": "number", "default": 50 },
-        { "id": "speed", "label": { "ru": "Скорость", "en": "Speed" }, "type": "number", "formula": "round(engines * 100 / mass * 10) / 10" },
-        { "id": "armor", "label": { "ru": "Броня", "en": "Armor" }, "type": "number", "formula": "floor(hull / 20)" }
+        {
+          "id": "hull",
+          "label": {
+            "ru": "Корпус",
+            "en": "Hull"
+          },
+          "type": "number",
+          "default": 100
+        },
+        {
+          "id": "engines",
+          "label": {
+            "ru": "Двигатели",
+            "en": "Engines"
+          },
+          "type": "number",
+          "default": 3
+        },
+        {
+          "id": "mass",
+          "label": {
+            "ru": "Масса",
+            "en": "Mass"
+          },
+          "type": "number",
+          "default": 50
+        },
+        {
+          "id": "speed",
+          "label": {
+            "ru": "Скорость",
+            "en": "Speed"
+          },
+          "type": "number",
+          "formula": "round(engines * 100 / mass * 10) / 10"
+        },
+        {
+          "id": "armor",
+          "label": {
+            "ru": "Броня",
+            "en": "Armor"
+          },
+          "type": "number",
+          "formula": "floor(hull / 20)"
+        }
       ],
-      "children": [{ "type": "character", "label": { "ru": "Экипаж", "en": "Crew" }, "max": 8 }],
-      "cardViews": [{ "id": "default", "name": "Default", "blocks": [] }]
+      "children": [
+        {
+          "type": "character",
+          "label": {
+            "ru": "Экипаж",
+            "en": "Crew"
+          },
+          "max": 8
+        }
+      ],
+      "cardViews": [
+        {
+          "id": "default",
+          "name": {
+            "ru": "Паспорт корабля",
+            "en": "Ship card"
+          },
+          "theme": "steel",
+          "blocks": [
+            {
+              "id": "h",
+              "kind": "heading",
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 2,
+              "props": {
+                "size": "l"
+              }
+            },
+            {
+              "id": "hu",
+              "kind": "field",
+              "x": 0,
+              "y": 2,
+              "w": 6,
+              "h": 2,
+              "field": "hull"
+            },
+            {
+              "id": "ar",
+              "kind": "field",
+              "x": 6,
+              "y": 2,
+              "w": 6,
+              "h": 2,
+              "field": "armor"
+            },
+            {
+              "id": "en",
+              "kind": "field",
+              "x": 0,
+              "y": 4,
+              "w": 6,
+              "h": 2,
+              "field": "engines"
+            },
+            {
+              "id": "sp",
+              "kind": "field",
+              "x": 6,
+              "y": 4,
+              "w": 6,
+              "h": 2,
+              "field": "speed"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "colony",
-      "label": { "ru": "Колония", "en": "Colony" },
+      "label": {
+        "ru": "Колония",
+        "en": "Colony"
+      },
       "category": "settlement",
       "fields": [
-        { "id": "population", "label": { "ru": "Население", "en": "Population" }, "type": "number", "default": 1000 },
-        { "id": "farms", "label": { "ru": "Фермы", "en": "Farms" }, "type": "number", "default": 5 },
-        { "id": "food_balance", "label": { "ru": "Баланс еды", "en": "Food balance" }, "type": "number", "formula": "farms * 250 - population" }
+        {
+          "id": "population",
+          "label": {
+            "ru": "Население",
+            "en": "Population"
+          },
+          "type": "number",
+          "default": 1000
+        },
+        {
+          "id": "farms",
+          "label": {
+            "ru": "Фермы",
+            "en": "Farms"
+          },
+          "type": "number",
+          "default": 5
+        },
+        {
+          "id": "food_balance",
+          "label": {
+            "ru": "Баланс еды",
+            "en": "Food balance"
+          },
+          "type": "number",
+          "formula": "farms * 250 - population"
+        }
       ],
-      "cardViews": [{ "id": "default", "name": "Default", "blocks": [] }]
+      "cardViews": [
+        {
+          "id": "default",
+          "name": {
+            "ru": "Карточка колонии",
+            "en": "Colony card"
+          },
+          "theme": "emerald",
+          "blocks": [
+            {
+              "id": "h",
+              "kind": "heading",
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 2,
+              "props": {
+                "size": "l"
+              }
+            },
+            {
+              "id": "po",
+              "kind": "field",
+              "x": 0,
+              "y": 2,
+              "w": 6,
+              "h": 2,
+              "field": "population"
+            },
+            {
+              "id": "fa",
+              "kind": "field",
+              "x": 6,
+              "y": 2,
+              "w": 6,
+              "h": 2,
+              "field": "farms"
+            },
+            {
+              "id": "fb",
+              "kind": "field",
+              "x": 0,
+              "y": 4,
+              "w": 12,
+              "h": 2,
+              "field": "food_balance"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monster",
+      "label": {
+        "ru": "Космическое существо",
+        "en": "Space creature"
+      },
+      "category": "creature",
+      "initiative": "1d20",
+      "fields": [
+        {
+          "id": "threat",
+          "label": {
+            "ru": "Опасность",
+            "en": "Threat"
+          },
+          "type": "number",
+          "default": 3,
+          "min": 1
+        },
+        {
+          "id": "max_hp",
+          "label": {
+            "ru": "Макс. здоровье",
+            "en": "Max health"
+          },
+          "type": "number",
+          "formula": "threat * 6"
+        },
+        {
+          "id": "hp",
+          "label": {
+            "ru": "Здоровье",
+            "en": "Health"
+          },
+          "type": "resource",
+          "default": 18
+        },
+        {
+          "id": "bite_bonus",
+          "label": {
+            "ru": "Бонус укуса",
+            "en": "Bite bonus"
+          },
+          "type": "number",
+          "formula": "threat + 2"
+        },
+        {
+          "id": "lore",
+          "label": {
+            "ru": "Описание",
+            "en": "Lore"
+          },
+          "type": "longtext",
+          "default": ""
+        }
+      ],
+      "actions": [
+        {
+          "id": "bite",
+          "label": {
+            "ru": "Укус",
+            "en": "Bite"
+          },
+          "formula": "1d20 + bite_bonus"
+        },
+        {
+          "id": "claw",
+          "label": {
+            "ru": "Когти",
+            "en": "Claws"
+          },
+          "formula": "2d6 + threat"
+        }
+      ],
+      "cardViews": [
+        {
+          "id": "default",
+          "name": {
+            "ru": "Карточка существа",
+            "en": "Creature card"
+          },
+          "theme": "crimson",
+          "blocks": [
+            {
+              "id": "h",
+              "kind": "heading",
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 2,
+              "props": {
+                "size": "l"
+              }
+            },
+            {
+              "id": "hp",
+              "kind": "bar",
+              "x": 0,
+              "y": 2,
+              "w": 12,
+              "h": 2,
+              "field": "hp",
+              "props": {
+                "maxField": "max_hp"
+              }
+            },
+            {
+              "id": "th",
+              "kind": "field",
+              "x": 0,
+              "y": 4,
+              "w": 6,
+              "h": 2,
+              "field": "threat"
+            },
+            {
+              "id": "bb",
+              "kind": "field",
+              "x": 6,
+              "y": 4,
+              "w": 6,
+              "h": 2,
+              "field": "bite_bonus"
+            },
+            {
+              "id": "ac",
+              "kind": "actions",
+              "x": 0,
+              "y": 6,
+              "w": 12,
+              "h": 2
+            }
+          ]
+        }
+      ]
     }
   ]
 }
