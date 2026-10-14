@@ -4,7 +4,7 @@ import { evaluate, validateManifest, validateSystem } from '../src/core';
 import { loadPlugins, sha256Hex } from '../src/renderer/plugin-host';
 import type { PluginData, RawPlugin } from '../src/renderer/plugin-host';
 
-const guide = (f: string) => readFileSync(`docs/${f}`, 'utf8');
+const guide = (f: string) => readFileSync(`docs/${f}`, 'utf8').replace(/\r\n/g, '\n'); // на Windows git может отдать CRLF
 const blocks = (text: string, lang: string) => [...text.matchAll(new RegExp('```' + lang + '\\n([\\s\\S]*?)```', 'g'))].map((m) => m[1]);
 
 async function run(manifest: object, code: string) {
