@@ -118,29 +118,17 @@ function Help({ lang }: { lang: string }) {
   );
 }
 
-interface Env { version: string; launcherMode: boolean; updatesEnabled: boolean; lang: string }
-interface Check { available: { version: string } | null; asset: { url: string } | null }
+interface Env { version: string; launcherMode: boolean; lang: string }
 
 function About({ lang, env }: { lang: string; env: Env | null }) {
   const [log, setLog] = useState('');
-  const [msg, setMsg] = useState('');
-  const [check, setCheck] = useState<Check | null>(null);
   useEffect(() => { window.rpi?.changelog().then(setLog); }, []);
-  const run = async () => {
-    try {
-      const c: Check | null = await window.rpi!.checkUpdates();
-      if (!c) setMsg(t('about.noFeed', lang)); else { setCheck(c); setMsg(c.available ? t('about.available', lang, { v: c.available.version }) : t('about.upToDate', lang)); }
-    } catch (e) { setMsg((e as Error).message); }
-  };
   return (
     <>
       <h1>{t('nav.about', lang)}</h1>
       <div className="card">
         <b>{t('about.version', lang, { v: env?.version ?? '—' })}</b>
-        {env?.launcherMode ? <p className="muted">{t('about.launcher', lang)}</p> : (
-          <p><button className="btn" onClick={run}>{t('about.check', lang)}</button> <span className="muted">{msg}</span>
-            {check?.asset && <> <button className="btn" onClick={() => window.rpi!.openRelease(check.asset!.url)}>{t('about.download', lang)}</button></>}</p>
-        )}
+        <p className="muted">{t('about.manual', lang)}</p>
       </div>
       <h3>{t('about.changelog', lang)}</h3>
       <pre className="card" style={{ whiteSpace: 'pre-wrap' }}>{log}</pre>
