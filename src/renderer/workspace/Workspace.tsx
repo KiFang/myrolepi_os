@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from "react";
+import { SCHEMA_VERSION, canFork, forkSystem, isLocked } from "../../core";
 import type { Campaign, GameSystem } from "../../core";
 import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
+import { PanelFrame } from "../PanelFrame";
+import { emitPanelEvent } from "../panelEvents";
+import type { PanelDef } from "../../core";
+import type { PluginInfo } from "../plugin-host";
+import { registerProject, registerProjectApi } from "../projectBridge";
 import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
-import { downloadJson, detectDocument } from "../fileio";
-import { both, copyOf, libraryProblem, newId, newSystem, renameFieldInCampaign, renameFieldInSystem, systemIssues } from "../workspace-model";
+import { ExportDialog } from "../ExportDialog";
+import { ImportError, importData } from "../exchange";
+import { ProtectionBanner } from "../ProtectionBanner";
+import { exchangeApi } from "../rpiApi";
+import { useProtection } from "../useProtection";
+import { both, copyOf, newId, newSystem, renameFieldInCampaign, renameFieldInSystem, systemIssues } from "../workspace-model";
 import { CampaignCanvas, CampaignInspector, useCampaignEditor } from "./CampaignEditor";
 import { SystemCanvas, SystemInspector, useSystemEditor } from "./SystemEditor";
 import type { RollEntry } from "../rolls";
@@ -16,29 +26,59 @@ import "../workspace.css";
 type Selection = { kind: "system" | "campaign"; id: string };
 const same = (a: Selection, b: Selection) => a.kind === b.kind && a.id === b.id;
 
-export function Workspace({ registry, active }: { registry: PluginRegistry; active: boolean }) {
+export interface PanelItem { plugin: PluginInfo; panel: PanelDef }
+
+export function Workspace({ registry, active, panels = [] }: { registry: PluginRegistry; active: boolean; panels?: PanelItem[] }) {
   const { t, label, lang } = useLang();
   const notify = useToast();
   const lib = useLibrary(active);
   const { project, change } = lib;
+  useEffect(() => { registerProject(lib.getProject); return () => registerProject(null); }, [lib.getProject]);
+  const selRef = useRef<Selection | null>(null);
+  useEffect(() => {
+    registerProjectApi({ get: () => lib.getProject() as never, change: (fn) => lib.change(fn), selection: () => selRef.current });
+    return () => registerProjectApi(null);
+  }, [lib.getProject, lib.change]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [openTabs, setOpenTabs] = useState<Selection[]>([]);
   const [treeOpen, setTreeOpen] = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [rolls, setRolls] = useState<RollEntry[]>([]);
-  const [bottomTab, setBottomTab] = useState<"problems" | "rolls">("problems");
+  const [bottomTab, setBottomTab] = useState<string>("problems");
+  const [rightTab, setRightTab] = useState<string>("props");
+  const [seenPanels, setSeenPanels] = useState<string[]>([]);
+  const [exporting, setExporting] = useState(false);
+  const prot = useProtection(project.systems);
+
+  const pKey = (x: PanelItem) => `${x.plugin.id}:${x.panel.id}`;
+  const rightPanels = panels.filter((x) => x.panel.placement === "right");
+  const bottomPanels = panels.filter((x) => x.panel.placement === "bottom");
+  const visiblePanel = (x: PanelItem) => (x.panel.placement === "right" ? rightTab === pKey(x) && inspectorOpen : bottomTab === pKey(x));
+  useEffect(() => {
+    const shown = panels.filter(visiblePanel).map(pKey).filter((k) => !seenPanels.includes(k));
+    if (shown.length) setSeenPanels((s) => [...s, ...shown]);
+  });
+  useEffect(() => { if (rightTab !== "props" && !rightPanels.some((x) => pKey(x) === rightTab)) setRightTab("props"); }, [rightPanels.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (bottomTab !== "problems" && bottomTab !== "rolls" && !bottomPanels.some((x) => pKey(x) === bottomTab)) setBottomTab("problems"); }, [bottomPanels.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const system = selection?.kind === "system" ? project.systems.find((s) => s.id === selection.id) : undefined;
   const campaign = selection?.kind === "campaign" ? project.campaigns.find((c) => c.id === selection.id) : undefined;
+  selRef.current = selection;
+  useEffect(() => { emitPanelEvent("selection", selection); }, [selection?.kind, selection?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const linked = campaign && project.systems.find((s) => s.id === campaign.systemId);
 
-  const updateSystem = (fn: (s: GameSystem) => GameSystem) =>
+  const locked = isLocked(system);
+  const blocked = () => notify(t("prot.readOnly"));
+  // защищённая система открыта только для чтения: любая правка отклоняется
+  const updateSystem = (fn: (s: GameSystem) => GameSystem) => {
+    if (locked) return blocked();
     change((p) => ({ ...p, systems: p.systems.map((s) => (s.id === system?.id ? fn(s) : s)) }));
+  };
   const updateCampaign = (fn: (c: Campaign) => Campaign) =>
     change((p) => ({ ...p, campaigns: p.campaigns.map((c) => (c.id === campaign?.id ? fn(c) : c)) }));
   // переименование параметра: система и все кампании на ней обновляются одним шагом
   const renameField = (typeId: string, from: string, to: string) =>
-    change((p) => ({
+    locked ? blocked() : change((p) => ({
       ...p,
       systems: p.systems.map((s) => (s.id === system?.id ? renameFieldInSystem(s, typeId, from, to) : s)),
       campaigns: p.campaigns.map((c) => (c.systemId === system?.id ? renameFieldInCampaign(c, typeId, from, to) : c)),
@@ -78,7 +118,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   const addCampaign = () => {
     const s = system ?? linked ?? project.systems[0];
     if (!s) return lib.setNotice({ key: "ws.createSystemFirst" });
-    const c: Campaign = { schema: 1, id: newId("campaign"), name: label(both("ws.defaultCampaignName")), systemId: s.id, entities: [], notes: [] };
+    const c: Campaign = { schema: SCHEMA_VERSION, id: newId("campaign"), name: label(both("ws.defaultCampaignName")), systemId: s.id, entities: [], notes: [] };
     change((p) => ({ ...p, campaigns: [...p.campaigns, c] }));
     open({ kind: "campaign", id: c.id });
   };
@@ -95,26 +135,31 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   const fileInput = useRef<HTMLInputElement>(null);
   const importFile = async (file?: File) => {
     if (!file) return;
+    const api = exchangeApi();
     try {
-      const found = detectDocument(JSON.parse(await file.text()));
-      if (!found || libraryProblem(found.kind === "system" ? [found.data] : [], found.kind === "campaign" ? [found.data] : [])) throw new Error("format");
-      if (found.kind === "system") {
-        const s = { ...(found.data as GameSystem), id: newId("system") };
-        change((p) => ({ ...p, systems: [...p.systems, s] }));
-        open({ kind: "system", id: s.id });
-      } else {
-        const c = { ...(found.data as Campaign), id: newId("campaign") };
-        change((p) => ({ ...p, campaigns: [...p.campaigns, c] }));
-        open({ kind: "campaign", id: c.id });
-      }
+      if (!api) throw new ImportError("not-recognized", "no api");
+      const out = await importData(new Uint8Array(await file.arrayBuffer()), { existingSystems: project.systems, newId }, api);
+      change((p) => ({ ...p, systems: [...p.systems, ...out.systems], campaigns: [...p.campaigns, ...out.campaigns] }));
+      open(out.focus);
+      const notes = [
+        out.protectedSystem && !out.duplicateSystem && t("imp.protected"),
+        out.duplicateSystem && t("imp.duplicate"),
+        out.missingSystem && t("imp.missingSystem"),
+        out.lostAssets > 0 && t("imp.lost", { n: out.lostAssets }),
+      ].filter(Boolean);
+      notify([t("imp.done"), ...notes].join("; "));
       lib.setNotice({ key: "ws.imported" });
-    } catch {
+    } catch (e) {
+      notify(e instanceof ImportError ? t(`imp.err.${e.code}`) : t("ws.importFailed"));
       lib.setNotice({ key: "ws.importFailed" });
     }
   };
-  const exportDoc = () => {
-    if (system) downloadJson(label(system.name) || "system", system);
-    else if (campaign) downloadJson(campaign.name || "campaign", campaign);
+  const fork = () => {
+    if (!system) return;
+    const copy = copyOf(forkSystem(system));
+    change((p) => ({ ...p, systems: [...p.systems, copy] }));
+    open({ kind: "system", id: copy.id });
+    notify(t("prot.forked"));
   };
   // команды из палитры (Ctrl+K) приходят событием: новая система, кампания, сохранить, импорт
   const commandsRef = useRef({ addSystem, addCampaign, save: lib.save, pick: () => fileInput.current?.click() });
@@ -133,7 +178,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   }, []);
   // итог важных действий — коротким уведомлением
   useEffect(() => {
-    if (["ws.saved", "ws.imported", "ws.importFailed", "ws.saveError", "ws.fixInvalid", "ws.createSystemFirst"].includes(lib.notice.key)) notify(t(lib.notice.key, lib.notice.params));
+    if (["ws.saved", "ws.migrated", "ws.saveError", "ws.fixInvalid", "ws.createSystemFirst"].includes(lib.notice.key)) notify(t(lib.notice.key, lib.notice.params));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lib.notice]);
   const undo = () => { if (lib.undo()) sys.setFieldIndex(null); };
@@ -161,7 +206,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
         <button className="ws-with-icon" disabled={!lib.ready} onClick={() => addSystem()}><Icon name="system" />{t("ws.newSystem")}</button>
         <button className="ws-with-icon" disabled={!lib.ready || !project.systems.length} onClick={addCampaign}><Icon name="campaign" />{t("ws.newCampaign")}</button>
         <button className="ws-with-icon" disabled={!lib.ready} title={t("ws.importTitle")} onClick={() => fileInput.current?.click()}><Icon name="upload" />{t("ws.import")}</button>
-        <input ref={fileInput} type="file" accept="application/json,.json" hidden aria-label={t("ws.import")} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
+        <input ref={fileInput} type="file" accept=".rolepi,application/zip,application/json,.json" hidden aria-label={t("ws.import")} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
         <span className="ws-separator" />
         <button className="ws-with-icon" disabled={!lib.canUndo} onClick={undo} title={t("ws.undoTitle")}><Icon name="undo" />{t("ws.undo")}</button>
         <button className="ws-with-icon" disabled={!lib.canRedo} onClick={redo} title={t("ws.redoTitle")}><Icon name="redo" />{t("ws.redo")}</button>
@@ -186,7 +231,7 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
                   const sel = { kind, id: it.id };
                   return (
                     <div key={it.id} className={"ws-row" + (selection && same(selection, sel) ? " selected" : "")}>
-                      <button className="ws-row-main" onClick={() => open(sel)}><Icon name={kind} /><span className="ws-ellipsis">{it.title || t("ws.untitled")}</span></button>
+                      <button className="ws-row-main" onClick={() => open(sel)}><Icon name={kind} /><span className="ws-ellipsis">{it.title || t("ws.untitled")}</span>{kind === "system" && prot.status[it.id] && <span className={"ws-lock " + prot.status[it.id].state} title={t(prot.status[it.id].state === "tampered" ? "prot.tamperedTip" : "prot.lockedTip")}><Icon name={prot.status[it.id].state === "tampered" ? "warn" : "shield"} size={13} /></span>}</button>
                       <button className="ws-icon-button ws-row-action" title={t("ws.delete")} aria-label={`${t("ws.delete")}: ${it.title}`} onClick={() => removeDoc(sel)}><Icon name="trash" size={14} /></button>
                     </div>
                   );
@@ -213,7 +258,12 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
                 <p>{t("ws.libraryKept")}</p>
               </div>
             ) : system ? (
-              <div className="ws-anim" key={`s:${system.id}:${sys.mode}`}><SystemCanvas ed={sys} /></div>
+              <>
+                {system.protection && prot.status[system.id] && (
+                  <ProtectionBanner status={prot.status[system.id]} system={system} canFork={canFork(system, prot.status[system.id], prot.author?.keyId)} onFork={fork} />
+                )}
+                <div className="ws-anim" key={`s:${system.id}:${sys.mode}`}><SystemCanvas ed={sys} /></div>
+              </>
             ) : campaign ? (
               <div className="ws-anim" key={`c:${campaign.id}:${cam.tab}`}><CampaignCanvas ed={cam} /></div>
             ) : (
@@ -237,13 +287,17 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
               </div>
             )}
           </div>
-          <div className="ws-diagnostics">
+          <div className={"ws-diagnostics" + (bottomPanels.some((x) => pKey(x) === bottomTab) ? " has-panel" : "")}>
             <div className="ws-panel-title ws-bottom-tabs">
               <button className={bottomTab === "problems" ? "active" : ""} onClick={() => setBottomTab("problems")}>{t("ws.tabProblems")} <span className={errorCount ? "bad" : problems ? "warn" : "ok"}>{problems}</span></button>
               <button className={bottomTab === "rolls" ? "active" : ""} onClick={() => setBottomTab("rolls")}>{t("ws.tabRolls")} <span>{rolls.length}</span></button>
+              {bottomPanels.map((x) => <button key={pKey(x)} className={bottomTab === pKey(x) ? "active" : ""} onClick={() => setBottomTab(pKey(x))}>{label(x.panel.title)}</button>)}
               {bottomTab === "rolls" && !!rolls.length && <button className="ws-clear" onClick={() => setRolls([])}>{t("ws.clearRolls")}</button>}
             </div>
-            <div className="ws-diagnostics-list">
+            {bottomPanels.filter((x) => seenPanels.includes(pKey(x))).map((x) => (
+              <div key={pKey(x) + x.plugin.hash} className="ws-diagnostics-panel" hidden={bottomTab !== pKey(x)}><PanelFrame plugin={x.plugin} panel={x.panel} /></div>
+            ))}
+            <div className="ws-diagnostics-list" hidden={bottomTab !== "problems" && bottomTab !== "rolls"}>
               {bottomTab === "problems" ? (
                 <>
                   {issues.map((issue, i) => (
@@ -275,10 +329,18 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
           </div>
         </section>
         <aside className="ws-inspector" hidden={!inspectorOpen}>
-          <div className="ws-panel-title">{t("ws.inspector")}</div>
-          <div className="ws-inspector-content">
-            {(system || campaign) && <button className="ws-with-icon ws-export" title={t("ws.exportTitle")} onClick={exportDoc}><Icon name="download" />{t("ws.export")}</button>}
-            {system ? <SystemInspector ed={sys} /> : campaign ? <CampaignInspector ed={cam} /> : (
+          {rightPanels.length ? (
+            <div className="ws-panel-title ws-bottom-tabs">
+              <button className={rightTab === "props" ? "active" : ""} onClick={() => setRightTab("props")}>{t("ws.inspector")}</button>
+              {rightPanels.map((x) => <button key={pKey(x)} className={rightTab === pKey(x) ? "active" : ""} onClick={() => setRightTab(pKey(x))}>{label(x.panel.title)}</button>)}
+            </div>
+          ) : <div className="ws-panel-title">{t("ws.inspector")}</div>}
+          {rightPanels.filter((x) => seenPanels.includes(pKey(x))).map((x) => (
+            <div key={pKey(x) + x.plugin.hash} className="ws-inspector-panel" hidden={rightTab !== pKey(x)}><PanelFrame plugin={x.plugin} panel={x.panel} /></div>
+          ))}
+          <div className="ws-inspector-content" hidden={rightTab !== "props"}>
+            {(system || campaign) && <button className="ws-with-icon ws-export" title={t("ws.exportTitle")} onClick={() => setExporting(true)}><Icon name="download" />{t("ws.export")}</button>}
+            {system ? <fieldset className="ws-fieldset" disabled={locked}><SystemInspector ed={sys} /></fieldset> : campaign ? <CampaignInspector ed={cam} /> : (
               <>
                 <p className="ws-hint">{t("ws.inspectorEmpty")}</p>
                 <div className="ws-property-group">{t("ws.hotkeys")}</div>
@@ -288,6 +350,9 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
           </div>
         </aside>
       </div>
+      {exporting && (system || campaign) && (
+        <ExportDialog kind={system ? "system" : "campaign"} system={system ?? linked} campaign={campaign} onClose={() => setExporting(false)} />
+      )}
       <footer className="ws-status" role="status">
         <span className={lib.loadError ? "err" : ""}>● {t(lib.notice.key, lib.notice.params)}</span>
         {doc && <span className={errorCount ? "err" : ""}>{t("ws.rulesErrors", { n: errorCount })}</span>}

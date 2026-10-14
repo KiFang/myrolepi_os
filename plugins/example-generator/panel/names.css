@@ -1,0 +1,4 @@
+.results li b { font-weight: 600; }
+.list li .row { gap: 6px; }
+.list button { padding: 3px 9px; font-size: 12px; }
+#msg { min-height: 1.4em; }

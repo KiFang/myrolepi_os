@@ -1,4 +1,4 @@
-import { computeEntity, loc, renameVariable, t, validateSystem } from "../core";
+import { SCHEMA_VERSION, computeEntity, loc, migrateSystem, renameVariable, schemaState, t, validateSystem } from "../core";
 import type { Campaign, Entity, EntityType, FieldDef, GameSystem, LocalizedString } from "../core";
 import type { PluginRegistry } from "./plugin-host";
 import "./strings";
@@ -31,7 +31,7 @@ export function newType(): EntityType {
   };
 }
 export function newSystem(): GameSystem {
-  return { schema: 1, id: newId("system"), name: both("ws.defaultSystemName"), version: "0.1.0", entityTypes: [newType()] };
+  return { schema: SCHEMA_VERSION, id: newId("system"), name: both("ws.defaultSystemName"), version: "0.1.0", entityTypes: [newType()] };
 }
 export function newField(): FieldDef {
   return { id: newId("field"), label: both("ws.defaultFieldName"), type: "number", default: 0 };
@@ -40,7 +40,7 @@ export function copyOf(template: GameSystem): GameSystem {
   const name = template.name;
   const suffix = both("ws.copySuffix");
   return {
-    ...structuredClone(template),
+    ...migrateSystem(structuredClone(template)),
     id: newId("system"),
     name: typeof name === "object"
       ? Object.fromEntries(Object.entries(name).map(([l, v]) => [l, `${v} — ${suffix[l] ?? suffix.en}`]))
@@ -81,6 +81,16 @@ export function systemIssues(system: GameSystem, lang = "ru"): RuleIssue[] {
 const isObj = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
 const arrayOf = (v: unknown, ok: (x: any) => boolean) => Array.isArray(v) && v.every(ok);
 
+/** true, если среди документов есть созданный более новой версией Rolepi (его нельзя ни читать, ни перезаписывать). */
+export function libraryNewer(systems: unknown[], campaigns: unknown[]): boolean {
+  return [...systems, ...campaigns].some((d) => schemaState(d) === "newer");
+}
+
+/** true, если есть документы старого формата, которые нужно перенести. */
+export function libraryOld(systems: unknown[], campaigns: unknown[]): boolean {
+  return [...systems, ...campaigns].some((d) => schemaState(d) === "old");
+}
+
 /**
  * true, если сохранённые файлы повреждены или другого формата: тогда библиотека
  * открывается только для чтения и ничего не перезаписывает.
@@ -93,11 +103,11 @@ export function libraryProblem(systems: unknown[], campaigns: unknown[]): boolea
     (t.actions === undefined || arrayOf(t.actions, isObj)) &&
     (t.children === undefined || arrayOf(t.children, isObj));
   const okSystem = (s: any) =>
-    isObj(s) && s.schema === 1 && !!s.id &&
+    isObj(s) && schemaState(s) !== 'invalid' && !!s.id &&
     (s.macros === undefined || arrayOf(s.macros, (m) => isObj(m) && typeof m.name === "string" && Array.isArray(m.params))) &&
     arrayOf(s.entityTypes, okType);
   const okCampaign = (c: any) =>
-    isObj(c) && c.schema === 1 && !!c.id &&
+    isObj(c) && schemaState(c) !== 'invalid' && !!c.id &&
     arrayOf(c.entities, (e) => isObj(e) && typeof e.id === "string" && isObj(e.values)) &&
     arrayOf(c.notes, (n) => isObj(n) && typeof n.id === "string" && typeof n.title === "string" && typeof n.body === "string");
   return !systems.every(okSystem) || !campaigns.every(okCampaign);

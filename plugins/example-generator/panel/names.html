@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Генератор имён</title>
+  <link rel="stylesheet" href="@sdk.css">
+  <link rel="stylesheet" href="names.css">
+</head>
+<body>
+  <h2 id="title"></h2>
+  <label><span id="lblStyle"></span>
+    <select id="style"></select>
+  </label>
+  <div class="row">
+    <button class="primary" id="gen"></button>
+    <button id="d6"></button>
+  </div>
+  <ul class="list" id="results"></ul>
+  <h3 id="lblTarget"></h3>
+  <p class="muted" id="target"></p>
+  <label id="typeBox" hidden><span id="lblType"></span><select id="type"></select></label>
+  <p id="msg" class="muted" role="status"></p>
+  <script src="@sdk.js"></script>
+  <script src="names.js"></script>
+</body>
+</html>

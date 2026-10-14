@@ -8,7 +8,7 @@ import { aiPrompt, pluginTemplate } from "./pluginTemplate";
 import type { PluginsApi } from "./usePlugins";
 
 const CONTRIB_ICONS: [keyof PluginInfo["contributes"], string][] = [
-  ["functions", "formula"], ["blocks", "studio"], ["systems", "system"], ["themes", "wand"], ["commands", "command"], ["dice", "dice"], ["locales", "book"],
+  ["functions", "formula"], ["blocks", "studio"], ["systems", "system"], ["themes", "wand"], ["commands", "command"], ["dice", "dice"], ["locales", "book"], ["panels", "panel"],
 ];
 
 function SettingField({ plugin, def, api }: { plugin: PluginInfo; def: SettingDef; api: PluginsApi }) {
@@ -63,6 +63,7 @@ function PluginCard({ p, api }: { p: PluginInfo; api: PluginsApi }) {
         <div className="plugin-consent">
           <div className="plugin-consent-title"><Icon name="shield" size={16} />{t("plugins.consentTitle")}</div>
           <ul>{p.permissions.map((perm) => <li key={perm}>{t(PERMISSION_KEYS[perm])}</li>)}</ul>
+          {p.panels.length > 0 || p.permissions.includes("ui") ? <p className="muted">{t("plugins.panelsHint")}</p> : null}
           <p className="muted">{t("plugins.consentWarn")}</p>
           <button className="ws-primary ws-with-icon" onClick={() => void api.approve(p.id, p.hash)}><Icon name="check" size={14} />{t("plugins.approve")}</button>
         </div>

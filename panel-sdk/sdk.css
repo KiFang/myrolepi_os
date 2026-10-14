@@ -1,0 +1,27 @@
+/* Rolepi panel SDK — оформление под тему приложения: <link rel="stylesheet" href="@sdk.css"> */
+:root { color-scheme: dark light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--panel, #1b1e26); color: var(--fg, #e7e9ee); font: 13.5px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 12px; }
+h1, h2, h3 { margin: 0 0 8px; line-height: 1.25; }
+h1 { font-size: 17px; } h2 { font-size: 15px; } h3 { font-size: 13.5px; color: var(--muted, #9aa1b2); text-transform: uppercase; letter-spacing: .04em; }
+p { margin: 0 0 10px; }
+.muted, small { color: var(--muted, #9aa1b2); }
+a { color: var(--accent, #7aa2ff); }
+button, input, select, textarea { font: inherit; color: var(--fg, #e7e9ee); }
+button { background: var(--surface, #262a35); border: 1px solid var(--border-strong, #3a4050); border-radius: 8px; padding: 6px 12px; cursor: pointer; transition: background .12s, transform .08s; }
+button:hover:not(:disabled) { background: var(--hover, #2f3441); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: .5; cursor: default; }
+button.primary { background: var(--accent, #7aa2ff); color: var(--on-accent, #0d1117); border-color: transparent; font-weight: 600; }
+button.primary:hover:not(:disabled) { background: var(--accent-strong, #94b4ff); }
+input, select, textarea { background: var(--sunken, #14161c); border: 1px solid var(--border, #323846); border-radius: 8px; padding: 6px 9px; width: 100%; }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--accent, #7aa2ff); outline-offset: 1px; }
+label { display: block; margin-bottom: 8px; }
+label > span { display: block; margin-bottom: 3px; color: var(--muted, #9aa1b2); font-size: 12px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row > .grow { flex: 1; min-width: 0; }
+.card { background: var(--surface, #262a35); border: 1px solid var(--border, #323846); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border, #323846); }
+.err { color: var(--danger, #ff6b6b); }

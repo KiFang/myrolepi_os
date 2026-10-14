@@ -41,7 +41,39 @@ const ROOT = path.resolve(__dirname, '..');
     if (sys.length !== 1 || cam.length !== 1) throw new Error(sys + '|' + cam);
     if (JSON.parse(fs.readFileSync(path.join(tmp, 'data', 'systems', sys[0]), 'utf8')).entityTypes.length < 4) throw new Error('битый JSON');
   });
-  await step('«О программе»: версия и changelog', async () => { await page.getByRole('button', { name: 'О программе', exact: true }).click(); await page.waitForSelector('text=Версия 0.1.0'); if (!/0\.1\.0/.test(await page.locator('.ws-page pre').innerText())) throw new Error('нет changelog'); });
+  await step('панельный плагин: согласие, изоляция рамки, создание героя из панели', async () => {
+    fs.cpSync(path.join(ROOT, 'plugins', 'example-generator'), path.join(plugins, 'example-generator'), { recursive: true });
+    await page.getByRole('button', { name: 'Плагины', exact: true }).click();
+    await page.getByRole('button', { name: 'Перезагрузить' }).click();
+    await page.waitForSelector('.plugin-card:has-text("генератор имён").state-needs-approval');
+    await page.locator('.plugin-card:has-text("генератор имён")').getByRole('button', { name: 'Разрешить и включить' }).click(); await page.waitForSelector('.plugin-card:has-text("генератор имён").state-active');
+    await page.getByRole('button', { name: 'Студия', exact: true }).click();
+    await page.locator('.ws-inspector .ws-bottom-tabs button', { hasText: 'Имена' }).click();
+    const frame = await (async () => { for (let i = 0; i < 40; i++) { const f = page.frames().find((x) => x.url().startsWith('rolepi-plugin://example-generator/')); if (f) return f; await new Promise((r) => setTimeout(r, 250)); } throw new Error('рамка панели не открылась'); })();
+    await frame.waitForSelector('#target:has-text("ампани")', { timeout: 10000 });
+    const iso = await frame.evaluate(async () => {
+      const r = {};
+      try { await fetch('https://example.com'); r.fetch = 'ok'; } catch (e) { r.fetch = 'blocked'; }
+      try { r.parent = window.parent.document.title; } catch (e) { r.parent = 'blocked'; }
+      try { r.ls = String(localStorage.length); } catch (e) { r.ls = 'blocked'; }
+      r.rpi = typeof window.rpi; r.require = typeof window.require; r.process = typeof window.process;
+      return r;
+    });
+    if (iso.fetch !== 'blocked' || iso.parent !== 'blocked' || iso.ls !== 'blocked' || iso.rpi !== 'undefined' || iso.require !== 'undefined' || iso.process !== 'undefined') throw new Error('рамка не изолирована: ' + JSON.stringify(iso));
+    await frame.click('#gen');
+    await frame.locator('#results li button').first().click();
+    await frame.waitForSelector('#msg:has-text("Готово")');
+    await page.getByRole('button', { name: 'Сохранить', exact: true }).click(); await page.waitForSelector('.ws-status >> text=Сохранено', { timeout: 6000 });
+    const cam = fs.readdirSync(path.join(tmp, 'data', 'campaigns'));
+    if (JSON.parse(fs.readFileSync(path.join(tmp, 'data', 'campaigns', cam[0]), 'utf8')).notes.length + JSON.parse(fs.readFileSync(path.join(tmp, 'data', 'campaigns', cam[0]), 'utf8')).entities.length < 1) throw new Error('ничего не создано');
+  });
+  await step('правка файлов панели после согласия сбрасывает согласие', async () => {
+    fs.appendFileSync(path.join(plugins, 'example-generator', 'panel', 'names.js'), '\n// изменено\n');
+    await page.getByRole('button', { name: 'Плагины', exact: true }).click();
+    await page.getByRole('button', { name: 'Перезагрузить' }).click();
+    await page.waitForSelector('.plugin-card:has-text("генератор имён").state-needs-approval');
+  });
+  await step('«О программе»: версия и changelog', async () => { await page.getByRole('button', { name: 'О программе', exact: true }).click(); await page.waitForSelector('text=Версия 0.2.0'); if (!/0\.2\.0/.test(await page.locator('.ws-page pre').innerText())) throw new Error('нет changelog'); });
   if (errors.length) { failed++; console.log('  FAIL ошибки страницы:', errors.join('; ')); }
   await browser.close(); app.kill('SIGTERM');
   fs.rmSync(tmp, { recursive: true, force: true });

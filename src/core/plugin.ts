@@ -21,9 +21,24 @@ export type PluginPermission =
   | 'commands'      // команды в палитре команд (Ctrl+K)
   | 'dice'          // пресеты кубиков на странице «Кубики»
   | 'storage'       // личное хранилище плагина (host.storage)
-  | 'ui';           // зарезервировано, пока ничего не открывает
+  | 'ui'            // свои панели в окне приложения; уведомления из панелей
+  | 'project.read'   // панели читают системы и кампании
+  | 'project.write'; // панели создают заметки, героев, системы и меняют значения героев
 
-export const ALL_PERMISSIONS: PluginPermission[] = ['formulas', 'blocks', 'systems', 'locales', 'themes', 'commands', 'dice', 'storage', 'ui'];
+export const ALL_PERMISSIONS: PluginPermission[] = ['formulas', 'blocks', 'systems', 'locales', 'themes', 'commands', 'dice', 'storage', 'ui', 'project.read', 'project.write'];
+
+/** Где живёт панель: отдельная страница, справа рядом со свойствами или внизу рядом с проблемами/бросками. */
+export type PanelPlacement = 'page' | 'right' | 'bottom';
+export const PANEL_PLACEMENTS: PanelPlacement[] = ['page', 'right', 'bottom'];
+
+/** Панель плагина: своя HTML-страница, которая работает в изолированной рамке и общается с приложением через разрешённый API. */
+export interface PanelDef {
+  id: string;
+  title: LocalizedString;
+  /** относительный путь к HTML-файлу внутри папки плагина */
+  entry: string;
+  placement: PanelPlacement;
+}
 
 /** Настройка плагина: приложение само рисует форму и сохраняет значения; плагин читает host.settings.get(id). */
 export interface SettingDef {
@@ -47,7 +62,10 @@ export interface PluginManifest {
   homepage?: string;
   /** минимальная версия приложения, например "0.1.0" */
   minAppVersion?: string;
-  main: string;                       // относительный путь к JS-файлу
+  /** относительный путь к JS-файлу; не нужен, если плагин состоит только из панелей */
+  main?: string;
+  /** панели (право ui) */
+  panels?: PanelDef[];
   permissions: PluginPermission[];
   settings?: SettingDef[];
 }
@@ -134,7 +152,21 @@ export function validateManifest(m: unknown, appVersion?: string): string[] {
   if (!o.name) errs.push(tm('plug.name'));
   if (typeof o.version !== 'string') errs.push(tm('plug.version'));
   if (o.apiVersion !== PLUGIN_API_VERSION) errs.push(tm('plug.apiVersion', { v: PLUGIN_API_VERSION }));
-  if (typeof o.main !== 'string' || o.main.includes('..') || o.main.startsWith('/') || /^[a-zA-Z]:/.test(o.main)) errs.push(tm('plug.main'));
+  const badPath = (x: unknown) => typeof x !== 'string' || !x || x.includes('..') || x.includes('\\') || x.startsWith('/') || /^[a-zA-Z]:/.test(x);
+  const hasPanels = Array.isArray(o.panels) && o.panels.length > 0;
+  if (o.main === undefined ? !hasPanels : badPath(o.main)) errs.push(tm('plug.main'));
+  if (o.panels !== undefined) {
+    if (!Array.isArray(o.panels)) errs.push(tm('plug.panels'));
+    else {
+      const seen = new Set<string>();
+      for (const pn of o.panels) {
+        const ok = !!pn && typeof pn.id === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(pn.id) && !seen.has(pn.id) && !!pn.title && !badPath(pn.entry) && /\.html?$/i.test(pn.entry) && PANEL_PLACEMENTS.includes(pn.placement);
+        if (!ok) errs.push(tm('plug.panelBad', { id: String((pn as PanelDef | undefined)?.id ?? '?') }));
+        else seen.add(pn.id);
+      }
+      if (o.panels.length && Array.isArray(o.permissions) && !o.permissions.includes('ui')) errs.push(tm('plug.panelNeedsUi'));
+    }
+  }
   if (!Array.isArray(o.permissions) || o.permissions.some((p) => !ALL_PERMISSIONS.includes(p))) errs.push(tm('plug.permissions', { list: ALL_PERMISSIONS.join(', ') }));
   if (o.settings !== undefined) {
     const ids = new Set<string>();
@@ -155,4 +187,5 @@ export function validateManifest(m: unknown, appVersion?: string): string[] {
 export const PERMISSION_KEYS: Record<PluginPermission, string> = {
   formulas: 'perm.formulas', blocks: 'perm.blocks', systems: 'perm.systems', locales: 'perm.locales', themes: 'perm.themes',
   commands: 'perm.commands', dice: 'perm.dice', storage: 'perm.storage', ui: 'perm.ui',
+  'project.read': 'perm.project.read', 'project.write': 'perm.project.write',
 };

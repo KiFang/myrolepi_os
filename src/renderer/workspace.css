@@ -1044,3 +1044,59 @@
   .workspace .ws-lang { min-width: 0; padding-left: 6px; padding-right: 6px; }
   .ws-wordmark { display: none; }
 }
+
+/* ── страница «Данные» ── */
+.data-card { padding: 16px 18px; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(180deg, var(--panel2), var(--panel)); margin-bottom: 12px; }
+.data-card p { margin: 0 0 10px; line-height: 1.55; }
+.data-create { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ws-page .data-create input { flex: 1; min-width: 220px; }
+.data-list { display: flex; flex-direction: column; gap: 8px; }
+.data-row { display: grid; grid-template-columns: minmax(200px, 1.1fr) 1.4fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); animation: rp-item 0.2s ease both; }
+.data-when { display: flex; flex-direction: column; gap: 4px; }
+.data-reason { font-size: 11px; color: var(--muted); }
+.data-reason.manual { color: var(--accent); }
+.data-what { font-size: 12.5px; line-height: 1.5; }
+.data-actions { display: flex; gap: 6px; align-items: center; }
+@media (max-width: 900px) { .data-row { grid-template-columns: 1fr; } }
+
+/* окна */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:50;animation:fade-in .15s ease-out}
+.modal{background:var(--panel);color:var(--fg);border:1px solid var(--border-strong);border-radius:12px;width:min(480px,92vw);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.4);animation:pop-in .16s ease-out}
+.modal.wide{width:min(680px,94vw)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.modal-body{padding:14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 14px;border-top:1px solid var(--border)}
+.exp-row{display:flex;gap:8px;align-items:center}
+.exp-protect{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--sunken)}
+.exp-warn,.exp-note{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;margin:0;color:var(--muted)}
+.exp-warn svg{color:var(--warn);flex:none}
+/* защищённые системы */
+.protect-banner{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--sunken)}
+.protect-banner.ok{border-left:3px solid var(--ok)}
+.protect-banner.warn{border-left:3px solid var(--warn)}
+.protect-banner.bad{border-left:3px solid var(--danger)}
+.protect-text{display:flex;flex-direction:column;flex:1;font-size:12.5px;gap:2px}
+.protect-text span,.protect-nofork{color:var(--muted)}
+.ws-lock{margin-left:auto;display:inline-flex;color:var(--ok)}
+.ws-lock.tampered{color:var(--danger)}
+.ws-lock.unverified{color:var(--warn)}
+.ws-fieldset{border:0;padding:0;margin:0;min-width:0}
+.ws-fieldset:disabled{opacity:.7}
+@keyframes pop-in{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.ws-file-button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);cursor:pointer}
+.ws-file-button:hover{background:var(--hover)}
+
+/* панели плагинов */
+.panel-frame{position:relative;width:100%;height:100%;min-height:0}
+.panel-frame iframe{width:100%;height:100%;border:0;display:block;background:var(--panel)}
+.panel-status{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--muted);background:var(--panel);font-size:13px}
+.ws-inspector-panel{flex:1;min-height:0}
+.ws-inspector-panel[hidden],.ws-diagnostics-panel[hidden],.ws-inspector-content[hidden],.ws-diagnostics-list[hidden]{display:none}
+.ws-inspector{display:flex;flex-direction:column}
+.ws-diagnostics.has-panel{max-height:none;height:300px}
+.ws-diagnostics-panel{flex:1;min-height:0}
+.panels-page{background:var(--bg)}
+.panels-stage{flex:1;min-height:0;display:flex}
+.panels-slot{flex:1;min-width:0}
+.panels-slot[hidden]{display:none}

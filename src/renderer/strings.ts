@@ -347,7 +347,7 @@ registerLocale('ru', {
   'blk.heading': 'Заголовок', 'blk.field': 'Параметр', 'blk.text': 'Текст', 'blk.divider': 'Линия', 'blk.image': 'Картинка', 'blk.bar': 'Шкала', 'blk.actions': 'Действия',
   'ws.chooseField': 'Выберите параметр', 'ws.groupView': 'Вид карточки', 'ws.viewName': 'Название вида', 'ws.cardTheme': 'Оформление',
   'ws.bgColor': 'Цвет фона', 'ws.reset': 'Сбросить', 'ws.bgImage': 'Картинка на фоне', 'ws.bgFit': 'Как вписать', 'ws.fitCover': 'Заполнить', 'ws.fitContain': 'Вместить', 'ws.fitTile': 'Мозаикой',
-  'ws.bgOpacity': 'Прозрачность картинки', 'ws.removeImage': 'Убрать картинку', 'ws.imageTooBig': 'Картинка слишком большая (максимум 2 МБ).',
+  'ws.bgOpacity': 'Прозрачность картинки', 'ws.removeImage': 'Убрать картинку', 'ws.imageTooBig': 'Картинка слишком большая (максимум 8 МБ).',
   'ws.deleteView': 'Удалить вид', 'ws.deleteViewConfirm': 'Удалить вид карточки «{name}»?',
   'ws.groupBlock': 'Блок', 'ws.blockField': 'Какой параметр показывать', 'ws.showLabel': 'Показывать название', 'ws.barMaxField': 'Параметр с максимумом', 'ws.barMax': 'Или число-максимум',
   'ws.blockText': 'Текст блока', 'ws.headingSize': 'Размер', 'ws.sizeMedium': 'Обычный', 'ws.sizeLarge': 'Крупный',
@@ -369,7 +369,7 @@ registerLocale('en', {
   'blk.heading': 'Heading', 'blk.field': 'Parameter', 'blk.text': 'Text', 'blk.divider': 'Line', 'blk.image': 'Picture', 'blk.bar': 'Bar', 'blk.actions': 'Actions',
   'ws.chooseField': 'Choose a parameter', 'ws.groupView': 'Card view', 'ws.viewName': 'View name', 'ws.cardTheme': 'Style',
   'ws.bgColor': 'Background colour', 'ws.reset': 'Reset', 'ws.bgImage': 'Background picture', 'ws.bgFit': 'Fit', 'ws.fitCover': 'Fill', 'ws.fitContain': 'Fit inside', 'ws.fitTile': 'Tile',
-  'ws.bgOpacity': 'Picture opacity', 'ws.removeImage': 'Remove picture', 'ws.imageTooBig': 'The picture is too large (2 MB maximum).',
+  'ws.bgOpacity': 'Picture opacity', 'ws.removeImage': 'Remove picture', 'ws.imageTooBig': 'The picture is too large (8 MB maximum).',
   'ws.deleteView': 'Delete view', 'ws.deleteViewConfirm': 'Delete the card view "{name}"?',
   'ws.groupBlock': 'Block', 'ws.blockField': 'Which parameter to show', 'ws.showLabel': 'Show the name', 'ws.barMaxField': 'Parameter with the maximum', 'ws.barMax': 'Or a fixed maximum',
   'ws.blockText': 'Block text', 'ws.headingSize': 'Size', 'ws.sizeMedium': 'Normal', 'ws.sizeLarge': 'Large',
@@ -413,12 +413,12 @@ registerLocale('en', {
 });
 
 registerLocale('ru', {
-  'ws.import': 'Импорт', 'ws.importTitle': 'Добавить систему или кампанию из файла JSON', 'ws.imported': 'Файл добавлен в проекты', 'ws.importFailed': 'Не получилось прочитать файл: это не система и не кампания',
-  'ws.export': 'Сохранить в файл', 'ws.exportTitle': 'Выгрузить открытый документ в файл JSON, чтобы отправить другу или сохранить копию',
+  'ws.import': 'Импорт', 'ws.importTitle': 'Добавить систему или кампанию из файла .rolepi или JSON', 'ws.imported': 'Файл добавлен в проекты', 'ws.importFailed': 'Не получилось прочитать файл: это не система и не кампания',
+  'ws.export': 'Сохранить в файл', 'ws.exportTitle': 'Выгрузить открытый документ в файл .rolepi (с картинками), чтобы отправить другу или сохранить копию',
 });
 registerLocale('en', {
-  'ws.import': 'Import', 'ws.importTitle': 'Add a system or campaign from a JSON file', 'ws.imported': 'File added to your projects', 'ws.importFailed': 'Could not read the file: it is neither a system nor a campaign',
-  'ws.export': 'Save to file', 'ws.exportTitle': 'Export the open document to a JSON file to share it or keep a copy',
+  'ws.import': 'Import', 'ws.importTitle': 'Add a system or campaign from a .rolepi or JSON file', 'ws.imported': 'File added to your projects', 'ws.importFailed': 'Could not read the file: it is neither a system nor a campaign',
+  'ws.export': 'Save to file', 'ws.exportTitle': 'Export the open document to a .rolepi file (with its pictures) to share it or keep a copy',
 });
 
 registerLocale('ru', {
@@ -475,3 +475,95 @@ registerLocale('en', { 'ws.idTaken': 'The name "{id}" is already used by another
 
 registerLocale('ru', { 'plugins.createGo': 'Создать', 'plugins.cancel': 'Отмена' });
 registerLocale('en', { 'plugins.createGo': 'Create', 'plugins.cancel': 'Cancel' });
+
+registerLocale('ru', {
+  'ws.imageBadType': 'Подходят картинки PNG, JPEG, WebP и GIF.', 'ws.imageFailed': 'Не удалось сохранить картинку.',
+  'ws.migrated': 'Проекты обновлены до нового формата. Копия прежнего состояния сохранена в разделе «Данные».',
+  'ws.newerFormat': 'Часть файлов создана более новой версией Rolepi. Обновите программу — ваши файлы не тронуты.',
+});
+registerLocale('en', {
+  'ws.imageBadType': 'Use PNG, JPEG, WebP or GIF pictures.', 'ws.imageFailed': 'Could not save the picture.',
+  'ws.migrated': 'Projects were upgraded to the new format. A copy of the previous state is saved in the Data section.',
+  'ws.newerFormat': 'Some files were created by a newer version of Rolepi. Update the app — your files were not touched.',
+});
+
+registerLocale('ru', {
+  'data.title': 'Данные', 'data.intro': 'Ваши проекты хранятся в обычных файлах на этом компьютере. Здесь — резервные копии и файлы проекта.',
+  'data.desktopOnly': 'Резервные копии работают только в настольном приложении.',
+  'data.backups': 'Резервные копии', 'data.backupsHint': 'Копия создаётся автоматически после сохранения (не чаще раза в 10 минут), перед переносом на новый формат и перед восстановлением. Свои копии можно подписать и хранить дольше.',
+  'data.notePlaceholder': 'Пометка к копии (необязательно)', 'data.createNow': 'Создать копию сейчас', 'data.openFolder': 'Открыть папку копий',
+  'data.created': 'Копия создана', 'data.noBackups': 'Копий пока нет. Они появятся после первого сохранения.',
+  'data.reason.auto': 'автоматически', 'data.reason.manual': 'вручную', 'data.reason.before-migration': 'перед обновлением формата', 'data.reason.before-restore': 'перед восстановлением', 'data.reason.before-import': 'перед импортом',
+  'data.counts': 'Систем: {systems} · кампаний: {campaigns} · {size}',
+  'data.restore': 'Восстановить', 'data.restoreConfirm': 'Вернуть проекты к состоянию на {date}? Всё, что не сохранено, и последующие изменения заменятся. Перед этим приложение само сохранит копию текущего состояния — восстановление можно будет отменить.',
+  'data.restored': 'Копия восстановлена', 'data.restoreFailed': 'Не удалось восстановить копию', 'data.deleteConfirm': 'Удалить эту копию?',
+  'data.files': 'Файлы проекта', 'data.filesStat': 'Картинок: {n} · {size}', 'data.filesHint': 'Картинки хранятся отдельно от документов. Если вы удалили героя или карточку, файл может остаться — его можно очистить. Файлы из резервных копий не трогаются.',
+  'data.clean': 'Очистить неиспользуемые файлы', 'data.cleaned': 'Удалено файлов: {n} ({size})', 'data.nothingToClean': 'Неиспользуемых файлов нет',
+});
+registerLocale('en', {
+  'data.title': 'Data', 'data.intro': 'Your projects are stored as plain files on this computer. Here are backups and project files.',
+  'data.desktopOnly': 'Backups work in the desktop app only.',
+  'data.backups': 'Backups', 'data.backupsHint': 'A copy is made automatically after saving (at most once per 10 minutes), before moving to a new format and before restoring. Your own copies can be annotated and are kept longer.',
+  'data.notePlaceholder': 'A note for the copy (optional)', 'data.createNow': 'Create a copy now', 'data.openFolder': 'Open the backups folder',
+  'data.created': 'Copy created', 'data.noBackups': 'No copies yet. They appear after the first save.',
+  'data.reason.auto': 'automatic', 'data.reason.manual': 'manual', 'data.reason.before-migration': 'before a format upgrade', 'data.reason.before-restore': 'before a restore', 'data.reason.before-import': 'before an import',
+  'data.counts': 'Systems: {systems} · campaigns: {campaigns} · {size}',
+  'data.restore': 'Restore', 'data.restoreConfirm': 'Return projects to the state of {date}? Anything unsaved and later changes will be replaced. The app first saves a copy of the current state — so the restore can be undone.',
+  'data.restored': 'Copy restored', 'data.restoreFailed': 'Could not restore the copy', 'data.deleteConfirm': 'Delete this copy?',
+  'data.files': 'Project files', 'data.filesStat': 'Pictures: {n} · {size}', 'data.filesHint': 'Pictures are stored apart from documents. If you delete a hero or a card, the file may stay — you can clean it up. Files used by backups are not touched.',
+  'data.clean': 'Clean up unused files', 'data.cleaned': 'Files removed: {n} ({size})', 'data.nothingToClean': 'No unused files',
+});
+
+registerLocale('ru', {
+  'modal.close': 'Закрыть',
+  'exp.title': 'Сохранить в файл', 'exp.intro': 'Пакет «{name}» (.rolepi) — обычный архив: в нём документ и все его картинки. Его можно отправить другу и загрузить кнопкой «Импорт».',
+  'exp.includeSystem': 'Положить в пакет и систему «{name}»', 'exp.noSystem': 'Система этой кампании не найдена, поэтому в пакет попадёт только кампания.',
+  'exp.alreadyProtected': 'Эта система уже защищена подписью автора — она сохранится в пакет как есть.',
+  'exp.protect': 'Защитить систему от правки', 'exp.protectHint': 'Получатель сможет играть по системе и проводить кампании, но не сможет её править: приложение заблокирует редактирование, покажет автора и лицензию и заметит любые изменения файла.',
+  'exp.author': 'Имя автора', 'exp.authorPlaceholder': 'Как вас подписать', 'exp.license': 'Лицензия', 'exp.licenseText': 'Текст лицензии',
+  'exp.allowFork': 'Разрешить получателям делать свою правимую копию',
+  'exp.keyKnown': 'Подпись ставится вашим ключом автора {id}.', 'exp.keyNew': 'Ключ автора создастся автоматически и останется на этом компьютере. Сохраните его копию в разделе «Данные».',
+  'exp.honest': 'Это не защита от копирования: файл лежит у получателя, и он может открыть и поправить его вручную. Подпись не даёт выдать правку за оригинал.',
+  'exp.save': 'Сохранить файл', 'exp.done': 'Файл «{name}» сохранён', 'exp.doneProtected': 'Защищённый файл «{name}» сохранён', 'exp.failed': 'Не удалось сохранить: {msg}', 'exp.desktopOnly': 'Сохранение пакетов работает в настольном приложении.',
+  'imp.done': 'Файл добавлен в проекты', 'imp.lost': 'не все картинки удалось сохранить: {n}', 'imp.duplicate': 'такая защищённая система уже есть, использована она', 'imp.missingSystem': 'системы этой кампании нет — загрузите её тоже', 'imp.protected': 'система защищена подписью автора',
+  'imp.err.not-recognized': 'Не получилось прочитать файл: это не система и не кампания', 'imp.err.broken': 'Содержимое файла повреждено', 'imp.err.newer': 'Файл создан более новой версией Rolepi — обновите программу',
+  'imp.err.not-zip': 'Файл не похож на пакет Rolepi', 'imp.err.bad-manifest': 'В файле нет описания Rolepi', 'imp.err.too-big': 'Файл слишком большой или содержит слишком много частей', 'imp.err.bad-entry': 'В пакете есть недопустимые файлы — импорт отменён', 'imp.err.bad-json': 'Пакет повреждён', 'imp.err.newer-format': 'Пакет создан более новой версией Rolepi — обновите программу', 'imp.err.empty': 'В пакете нет ни системы, ни кампании',
+  'prot.valid.title': 'Защищённая система', 'prot.valid.text': 'Автор: {author} · ключ {key} · лицензия: {license}. Подпись верна. Править систему нельзя — можно сделать свою копию.',
+  'prot.tampered.title': 'Подпись не подтверждена', 'prot.tampered.text': 'Файл системы изменён после подписи автора ({author}, ключ {key}) или подпись повреждена. Система открыта только для чтения.',
+  'prot.unverified.title': 'Защищённая система', 'prot.unverified.text': 'Автор: {author} · ключ {key}. Проверить подпись можно только в настольном приложении. Система открыта только для чтения.',
+  'prot.fork': 'Сделать правимую копию', 'prot.noFork': 'Автор не разрешил правимые копии', 'prot.forked': 'Создана правимая копия',
+  'prot.lockedTip': 'Защищена подписью автора', 'prot.tamperedTip': 'Подпись не подтверждена',
+  'key.title': 'Ключ автора', 'key.intro': 'Ключ нужен, чтобы подписывать защищённые системы. Он создаётся сам, когда вы впервые защищаете систему, и хранится на этом компьютере.',
+  'key.none': 'Ключа пока нет.', 'key.create': 'Создать ключ', 'key.name': 'Имя автора', 'key.fingerprint': 'Отпечаток ключа', 'key.copy': 'Копировать', 'key.copied': 'Скопировано',
+  'key.export': 'Сохранить ключ в файл', 'key.import': 'Загрузить ключ из файла', 'key.exportWarn': 'Файл ключа никому не показывайте: с ним можно подписывать от вашего имени. Потеряете ключ — не сможете подписывать от того же имени.',
+  'key.importConfirm': 'Заменить текущий ключ автора ключом из файла? Прежний ключ пропадёт, если у вас нет его копии.', 'key.imported': 'Ключ загружен', 'key.importFailed': 'Не удалось загрузить ключ: файл повреждён или не подходит', 'key.saved': 'Имя сохранено',
+});
+registerLocale('en', {
+  'modal.close': 'Close',
+  'exp.title': 'Save to file', 'exp.intro': 'The "{name}" package (.rolepi) is a plain archive: the document and all its pictures. Send it to a friend and load it with the Import button.',
+  'exp.includeSystem': 'Include the system "{name}" in the package', 'exp.noSystem': 'This campaign\'s system was not found, so only the campaign goes into the package.',
+  'exp.alreadyProtected': 'This system is already protected by its author\'s signature — it is saved to the package as is.',
+  'exp.protect': 'Protect the system from editing', 'exp.protectHint': 'The recipient can play the system and run campaigns, but cannot edit it: the app locks editing, shows the author and licence and notices any change to the file.',
+  'exp.author': 'Author name', 'exp.authorPlaceholder': 'How to sign you', 'exp.license': 'Licence', 'exp.licenseText': 'Licence text',
+  'exp.allowFork': 'Allow recipients to make their own editable copy',
+  'exp.keyKnown': 'The signature uses your author key {id}.', 'exp.keyNew': 'An author key is created automatically and stays on this computer. Save a copy of it in the Data section.',
+  'exp.honest': 'This is not copy protection: the file is on the recipient\'s computer and they can open and edit it by hand. The signature prevents passing off an edit as the original.',
+  'exp.save': 'Save the file', 'exp.done': 'File "{name}" saved', 'exp.doneProtected': 'Protected file "{name}" saved', 'exp.failed': 'Could not save: {msg}', 'exp.desktopOnly': 'Saving packages works in the desktop app.',
+  'imp.done': 'File added to your projects', 'imp.lost': 'some pictures could not be saved: {n}', 'imp.duplicate': 'this protected system is already here, so it was reused', 'imp.missingSystem': 'the campaign\'s system is missing — load it too', 'imp.protected': 'the system is protected by its author\'s signature',
+  'imp.err.not-recognized': 'Could not read the file: it is neither a system nor a campaign', 'imp.err.broken': 'The file content is damaged', 'imp.err.newer': 'The file was created by a newer version of Rolepi — update the app',
+  'imp.err.not-zip': 'The file does not look like a Rolepi package', 'imp.err.bad-manifest': 'The file has no Rolepi description', 'imp.err.too-big': 'The file is too large or has too many parts', 'imp.err.bad-entry': 'The package contains disallowed files — import cancelled', 'imp.err.bad-json': 'The package is damaged', 'imp.err.newer-format': 'The package was created by a newer version of Rolepi — update the app', 'imp.err.empty': 'The package has neither a system nor a campaign',
+  'prot.valid.title': 'Protected system', 'prot.valid.text': 'Author: {author} · key {key} · licence: {license}. The signature is valid. The system cannot be edited — you can make your own copy.',
+  'prot.tampered.title': 'Signature not confirmed', 'prot.tampered.text': 'The system file was changed after its author\'s signature ({author}, key {key}) or the signature is damaged. The system is read-only.',
+  'prot.unverified.title': 'Protected system', 'prot.unverified.text': 'Author: {author} · key {key}. The signature can only be checked in the desktop app. The system is read-only.',
+  'prot.fork': 'Make an editable copy', 'prot.noFork': 'The author did not allow editable copies', 'prot.forked': 'Editable copy created',
+  'prot.lockedTip': 'Protected by the author\'s signature', 'prot.tamperedTip': 'Signature not confirmed',
+  'key.title': 'Author key', 'key.intro': 'The key is used to sign protected systems. It is created automatically when you first protect a system and stays on this computer.',
+  'key.none': 'No key yet.', 'key.create': 'Create a key', 'key.name': 'Author name', 'key.fingerprint': 'Key fingerprint', 'key.copy': 'Copy', 'key.copied': 'Copied',
+  'key.export': 'Save the key to a file', 'key.import': 'Load a key from a file', 'key.exportWarn': 'Show the key file to nobody: with it anyone can sign in your name. If you lose the key you cannot sign under the same name.',
+  'key.importConfirm': 'Replace the current author key with the key from the file? The old key is lost if you have no copy of it.', 'key.imported': 'Key loaded', 'key.importFailed': 'Could not load the key: the file is damaged or does not fit', 'key.saved': 'Name saved',
+});
+registerLocale('ru', { 'prot.readOnly': 'Система защищена автором — править её нельзя. Сделайте свою копию.' });
+registerLocale('en', { 'prot.readOnly': 'The system is protected by its author and cannot be edited. Make your own copy.' });
+
+registerLocale('ru', { 'panel.loading': 'Панель загружается…', 'panel.slow': 'Панель не отвечает. Проверьте, что страница подключает @sdk.js, и перечитайте плагины.', 'plugins.adds.panels': 'Панели', 'plugins.panelsHint': 'Панели плагина работают в изолированной рамке: у них нет доступа к сети и файлам, только к тому, что вы разрешили.' });
+registerLocale('en', { 'panel.loading': 'Loading panel…', 'panel.slow': 'The panel is not responding. Check that the page includes @sdk.js and reload the plugins.', 'plugins.adds.panels': 'Panels', 'plugins.panelsHint': 'Plugin panels run in an isolated frame: no network or file access, only what you allowed.' });

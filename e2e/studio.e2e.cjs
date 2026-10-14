@@ -58,8 +58,9 @@ module.exports = { name: 'Студия: система → карточки → 
   await step('сохранение пишет систему, кампанию и бой', async () => { await page.keyboard.press('Control+s'); await page.waitForSelector('.ws-status >> text=Сохранено'); const db = await page.evaluate(() => window.__db); const c = Object.values(db.campaigns)[0]; if (!c.encounters || c.encounters.length !== 1) throw new Error('encounters'); if (!JSON.stringify(Object.values(db.systems)[0]).includes('"power"')) throw new Error('rename not saved'); });
   await step('импорт/экспорт: скачанный файл читается обратно', async () => {
     const fs = require('fs'), os = require('os'), path = require('path');
-    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Сохранить в файл/ }).click()]);
-    const file = path.join(os.tmpdir(), 'rolepi-e2e-export.json'); fs.copyFileSync(await dl.path(), file);
+    await page.getByRole('button', { name: /Сохранить в файл/ }).click();
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Сохранить файл' }).click()]);
+    const file = path.join(os.tmpdir(), 'rolepi-e2e-export.rolepi'); fs.copyFileSync(await dl.path(), file);
     await page.locator('input[type=file][hidden]').setInputFiles(file); await page.waitForSelector('.ws-status >> text=добавлен');
     fs.writeFileSync(file, '{"hello":1}'); await page.locator('input[type=file][hidden]').setInputFiles(file); await page.waitForSelector('.ws-status >> text=Не получилось прочитать');
   });

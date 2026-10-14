@@ -1,4 +1,4 @@
-import { StrictMode, useCallback, useEffect, useMemo, useState } from "react";
+import { StrictMode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { availableLocales, evaluate, loc, setCoreLang, t as translate } from "../core";
 import type { CommandContext } from "../core";
@@ -6,6 +6,10 @@ import { CommandPalette } from "./CommandPalette";
 import type { PaletteCommand } from "./CommandPalette";
 import { Icon } from "./icons";
 import { HelpContext, LangContext, rememberLang, savedLang } from "./lang";
+import { DataPage } from "./DataPage";
+import { PanelFrame, PanelsContext } from "./PanelFrame";
+import { currentProjectApi } from "./projectBridge";
+import { newId } from "./workspace-model";
 import { Plugins } from "./PluginsPage";
 import "./strings";
 import { THEMES, fromPlugin, rememberTheme, savedTheme } from "./themes";
@@ -15,9 +19,9 @@ import { usePlugins } from "./usePlugins";
 import { Workspace } from "./workspace/Workspace";
 import "./styles.css";
 
-type Page = "workspace" | "dice" | "formulas" | "plugins" | "help" | "about";
-const PAGES: Page[] = ["workspace", "dice", "formulas", "plugins", "help", "about"];
-const PAGE_ICONS: Record<Page, string> = { workspace: "studio", dice: "dice", formulas: "formula", plugins: "plugin", help: "help", about: "info" };
+type Page = "workspace" | "panels" | "dice" | "formulas" | "plugins" | "data" | "help" | "about";
+const PAGES: Page[] = ["workspace", "panels", "dice", "formulas", "plugins", "data", "help", "about"];
+const PAGE_ICONS: Record<Page, string> = { workspace: "studio", panels: "panel", dice: "dice", formulas: "formula", plugins: "plugin", data: "folder", help: "help", about: "info" };
 const LANG_NAMES: Record<string, string> = { ru: "Русский", en: "English" };
 
 function pickLang(candidate: string | null | undefined): string {
@@ -86,16 +90,45 @@ function Shell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang, themes, reg, plugins.plugins, ctxForPlugins]);
 
+  // панели плагинов: «страницы» живут в разделе «Панели», «справа» и «внизу» — в студии
+  const panelItems = useMemo(() => plugins.plugins.filter((p) => p.state === "active").flatMap((p) => p.panels.map((panel) => ({ plugin: p, panel }))), [plugins.plugins]);
+  const pagePanels = panelItems.filter((x) => x.panel.placement === "page");
+  const live = useRef({ lang, notify, reg, version: plugins.version, ctxForPlugins, panelStorage: plugins.panelStorage });
+  live.current = { lang, notify, reg, version: plugins.version, ctxForPlugins, panelStorage: plugins.panelStorage };
+  const panelsCtx = useMemo(() => ({
+    vars: { ...(theme.vars as Record<string, string>) },
+    lang,
+    deps: (plugin: { id: string }) => ({
+      lang: () => live.current.lang,
+      get appVersion() { return live.current.version; },
+      getProject: () => (currentProjectApi()?.get() ?? { systems: [], campaigns: [] }) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      change: (fn: (p: any) => any) => currentProjectApi()?.change(fn), // eslint-disable-line @typescript-eslint/no-explicit-any
+      selection: () => currentProjectApi()?.selection() ?? null,
+      notify: (m: string) => live.current.notify(m),
+      openPage: (p: string) => setPage(p as Page),
+      roll: (f: string) => live.current.ctxForPlugins().roll(f),
+      storage: live.current.panelStorage(plugin.id),
+      newId,
+    }),
+  }), [theme, lang]);
+  const [panelTab, setPanelTab] = useState<string>("");
+  const [seenPanels, setSeenPanels] = useState<string[]>([]);
+  const panelKey = (x: { plugin: { id: string }; panel: { id: string } }) => `${x.plugin.id}:${x.panel.id}`;
+  const currentPanel = pagePanels.find((x) => panelKey(x) === panelTab) ?? pagePanels[0];
+  useEffect(() => { if (page === "panels" && currentPanel && !seenPanels.includes(panelKey(currentPanel))) setSeenPanels((s) => [...s, panelKey(currentPanel)]); }); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (page === "panels" && !pagePanels.length) setPage("workspace"); }, [page, pagePanels.length]);
+
   const openHelp = useCallback((topic?: string) => { setHelpTarget(topic); setPage("help"); }, []);
 
   return (
     <LangContext.Provider value={ctx}>
+      <PanelsContext.Provider value={panelsCtx}>
       <HelpContext.Provider value={openHelp}>
       <div className="workspace" data-theme={theme.id} style={{ ...theme.vars, colorScheme: theme.scheme } as React.CSSProperties}>
         <header className="ws-header">
           <div className="ws-brand"><img className="ws-logo-img" src="./logo.svg" alt="" width={30} height={30} /><span className="ws-wordmark">{t("app.name")}</span></div>
           <nav className="ws-menu" aria-label="Main">
-            {PAGES.map((p) => (
+            {PAGES.filter((p) => p !== "panels" || pagePanels.length > 0).map((p) => (
               <button key={p} className={p === page ? "active" : ""} onClick={() => setPage(p)} title={p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}>
                 <Icon name={PAGE_ICONS[p]} size={15} /><span className="lbl">{p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}</span>
               </button>
@@ -109,13 +142,30 @@ function Shell() {
             {availableLocales().map((l) => <option key={l} value={l}>{LANG_NAMES[l] ?? l}</option>)}
           </select>
         </header>
-        <div hidden={page !== "workspace"} className="ws-slot"><Workspace registry={reg} active={page === "workspace" && !paletteOpen} /></div>
-        {page !== "workspace" && (
+        <div hidden={page !== "workspace"} className="ws-slot"><Workspace registry={reg} active={page === "workspace" && !paletteOpen} panels={panelItems.filter((x) => x.panel.placement !== "page")} /></div>
+        <div hidden={page !== "panels"} className="ws-slot panels-page">
+          {pagePanels.length > 1 && (
+            <div className="ws-tabs" role="tablist">
+              {pagePanels.map((x) => (
+                <div key={panelKey(x)} className={"ws-tab" + (currentPanel && panelKey(currentPanel) === panelKey(x) ? " active" : "")}>
+                  <button role="tab" className="ws-tab-main" aria-selected={!!currentPanel && panelKey(currentPanel) === panelKey(x)} onClick={() => setPanelTab(panelKey(x))}><span className="ws-ellipsis">{loc(x.panel.title, lang)}</span></button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="panels-stage">
+            {pagePanels.filter((x) => seenPanels.includes(panelKey(x))).map((x) => (
+              <div key={panelKey(x) + x.plugin.hash} className="panels-slot" hidden={!currentPanel || panelKey(currentPanel) !== panelKey(x)}><PanelFrame plugin={x.plugin} panel={x.panel} /></div>
+            ))}
+          </div>
+        </div>
+        {page !== "workspace" && page !== "panels" && (
           <main className="ws-page" key={page}>
             <div className={"ws-page-inner" + (page === "help" ? " wide" : "")}>
               {page === "dice" && <Dice reg={reg} />}
               {page === "formulas" && <Formulas reg={reg} />}
               {page === "plugins" && <Plugins api={plugins} />}
+              {page === "data" && <DataPage />}
               {page === "help" && <Help reg={reg} target={helpTarget} onOpenFormula={(f) => { sessionStorage.setItem("rpi.formula", f); setPage("formulas"); }} />}
               {page === "about" && <About version={plugins.version} />}
             </div>
@@ -124,6 +174,7 @@ function Shell() {
         <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} commands={commands} />
       </div>
       </HelpContext.Provider>
+      </PanelsContext.Provider>
     </LangContext.Provider>
   );
 }

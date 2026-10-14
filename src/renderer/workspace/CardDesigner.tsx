@@ -4,6 +4,7 @@ import { loc } from "../../core";
 import { BLOCK_KINDS, CardRenderer, cardRows } from "../cards/CardRenderer";
 import type { Geo } from "../cards/CardRenderer";
 import { CARD_CELL, CARD_COLS, CARD_THEMES } from "../cards/themes";
+import { putImage } from "../assets";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
@@ -115,12 +116,11 @@ export function CardInspector({ ed }: { ed: SystemEditorState }) {
   if (!type || !view) return null;
   const bg = view.background ?? {};
   const setBg = (patch: Partial<NonNullable<typeof view.background>>) => ed.updateView((v) => ({ ...v, background: { ...v.background, ...patch } }));
-  const pickImage = (file?: File) => {
+  const pickImage = async (file?: File) => {
     if (!file) return;
-    if (file.size > 2_000_000) return window.alert(t("ws.imageTooBig"));
-    const r = new FileReader();
-    r.onload = () => setBg({ image: String(r.result) });
-    r.readAsDataURL(file);
+    const r = await putImage(file);
+    if (r.ok) setBg({ image: r.ref });
+    else window.alert(t(r.code === "too-big" ? "ws.imageTooBig" : r.code === "bad-type" ? "ws.imageBadType" : "ws.imageFailed"));
   };
   const setProp = (patch: Record<string, unknown>) => block && ed.updateBlock(block.id, { props: { ...block.props, ...patch } });
   const resourceFields = type.fields.filter((f) => f.type === "resource" || f.type === "number");
@@ -140,7 +140,7 @@ export function CardInspector({ ed }: { ed: SystemEditorState }) {
       </div>
       <label className="ws-control">
         <span>{t("ws.bgImage")}</span>
-        <input type="file" accept="image/*" onChange={(e) => { pickImage(e.target.files?.[0]); e.target.value = ""; }} />
+        <input type="file" accept="image/*" onChange={(e) => { void pickImage(e.target.files?.[0]); e.target.value = ""; }} />
       </label>
       {bg.image && (
         <>

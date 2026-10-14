@@ -6,7 +6,12 @@ import type { LocalizedString } from './i18n';
  * которые пользователь (или плагин) объявляет данными.
  */
 
-export const SCHEMA_VERSION = 1;
+/**
+ * Версия формата документов. 2: картинки хранятся отдельными файлами ("asset:<имя>"),
+ * а не встроены в JSON; появились необязательные `meta` и `protection` у системы.
+ * Старые документы переносит core/migrate.ts.
+ */
+export const SCHEMA_VERSION = 2;
 
 export type FieldType =
   | 'number'      // число
@@ -91,8 +96,31 @@ export interface TableDef {
   rollFormula?: string;
 }
 
+/** Сведения об авторе и лицензии системы. Заполняются при публикации. */
+export interface DocMeta {
+  author?: string;
+  /** название лицензии, например «CC BY 4.0» или «Только для личного пользования» */
+  license?: string;
+  /** разрешено ли делать правимую копию защищённой системы */
+  allowFork?: boolean;
+  note?: string;
+  /** откуда произошла правимая копия */
+  derivedFrom?: { title: string; author?: string; keyId?: string };
+}
+
+/** Защита от правки: подпись автора. Проверяется приложением (см. docs: это не защита от копирования). */
+export interface Protection {
+  locked: true;
+  /** открытый ключ автора (base64) и его короткий отпечаток */
+  publicKey: string;
+  keyId: string;
+  /** подпись содержимого системы (base64) */
+  signature: string;
+  signedAt: string;
+}
+
 export interface GameSystem {
-  schema: typeof SCHEMA_VERSION;
+  schema: number;
   id: string;
   name: LocalizedString;
   version: string;
@@ -101,6 +129,8 @@ export interface GameSystem {
   tables?: TableDef[];
   /** пользовательские формулы-макросы, доступны во всех формулах как функции: name(args) */
   macros?: { name: string; params: string[]; formula: string }[];
+  meta?: DocMeta;
+  protection?: Protection;
   /** id плагинов, необходимых системе */
   requires?: string[];
 }
@@ -134,7 +164,7 @@ export interface Encounter {
 
 /** Кампания: набор сущностей, заметок, сцен, ссылающихся на систему. */
 export interface Campaign {
-  schema: typeof SCHEMA_VERSION;
+  schema: number;
   id: string;
   name: string;
   systemId: string;

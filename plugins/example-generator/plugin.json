@@ -1,0 +1,21 @@
+{
+  "id": "example-generator",
+  "name": { "ru": "Пример: генератор имён (панель)", "en": "Example: name generator (panel)" },
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "author": "Rolepi",
+  "minAppVersion": "0.2.0",
+  "description": {
+    "ru": "Панель справа: придумывает имена и создаёт героев и заметки в выбранной кампании.",
+    "en": "A right-hand panel: invents names and creates characters and notes in the selected campaign."
+  },
+  "permissions": ["ui", "project.read", "project.write", "dice", "storage"],
+  "panels": [
+    {
+      "id": "names",
+      "title": { "ru": "Имена", "en": "Names" },
+      "entry": "panel/names.html",
+      "placement": "right"
+    }
+  ]
+}

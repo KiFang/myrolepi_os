@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import type { CSSProperties } from "react";
 import type { ActionDef, CardBlock, CardView, EntityType, FieldDef } from "../../core";
 import { loc } from "../../core";
+import { resolveSrc } from "../assets";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
 import { CARD_CELL, CARD_COLS, cardTheme } from "./themes";
@@ -81,7 +82,7 @@ export function CardRenderer({ type, view, name, values, registry, onRun, overla
       case "divider":
         return <hr className="rpi-divider" />;
       case "image": {
-        const src = (f && typeof values[f.id] === "string" && (values[f.id] as string)) || (typeof b.props?.src === "string" ? b.props.src : "");
+        const src = resolveSrc((f && typeof values[f.id] === "string" && (values[f.id] as string)) || (typeof b.props?.src === "string" ? b.props.src : ""));
         return src ? <img className="rpi-image" src={src} alt="" /> : <div className="rpi-image empty">▣</div>;
       }
       case "bar": {
@@ -118,7 +119,7 @@ export function CardRenderer({ type, view, name, values, registry, onRun, overla
 
   return (
     <div className="rpi-card" style={vars}>
-      <div className="rpi-card-bg" style={{ backgroundImage: bg.image ? `url("${bg.image}")` : undefined, backgroundSize: fit === "tile" ? "auto" : fit, backgroundRepeat: fit === "tile" ? "repeat" : "no-repeat", backgroundPosition: "center", opacity: bg.image ? (bg.opacity ?? 1) : 0 }} />
+      <div className="rpi-card-bg" style={{ backgroundImage: bg.image ? `url("${resolveSrc(bg.image)}")` : undefined, backgroundSize: fit === "tile" ? "auto" : fit, backgroundRepeat: fit === "tile" ? "repeat" : "no-repeat", backgroundPosition: "center", opacity: bg.image ? (bg.opacity ?? 1) : 0 }} />
       {view.blocks.map((b) => {
         const g = geometry?.[b.id] ?? { x: b.x, y: b.y, w: b.w, h: b.h };
         return (

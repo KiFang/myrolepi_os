@@ -4,7 +4,7 @@
 
 ## 1. Инструкция для нейросети
 
-Ты пишешь плагин для настольного приложения Rolepi (конструктор ролевых систем). Плагин — **папка с двумя файлами**: `plugin.json` и `index.js`.
+Ты пишешь плагин для настольного приложения Rolepi (конструктор ролевых систем). Плагин — **папка с двумя файлами**: `plugin.json` и `index.js`. Если нужна своя страница с кнопками и формами (генератор, справочник, помощник), делай **панель** — читай раздел 11 и дополнительно к этим правилам следуй его правилам.
 
 **Формат ответа** — строго такой:
 1. Одно предложение: что делает плагин.
@@ -33,7 +33,7 @@ my-plugin/
 ```
 Папку кладут в каталог плагинов (кнопка «Открыть папку плагинов»). После «Перезагрузить» плагин появляется в списке и **просит разрешение**: пользователь видит, какие права он запрашивает. Если код плагина изменился, разрешение запрашивается заново.
 
-Плагин выполняется с правами приложения: изоляции в песочнице нет, закрытые имена (`window`, `fetch`…) — защита от случайностей, а не от злого умысла. Поэтому пишите честные плагины и не просите лишних прав.
+Код `index.js` выполняется с правами приложения: изоляции в песочнице нет, закрытые имена (`window`, `fetch`…) — защита от случайностей, а не от злого умысла. Панели (раздел 11) — другое дело: они работают в изолированной рамке. Поэтому пишите честные плагины и не просите лишних прав.
 
 ## 3. plugin.json
 
@@ -43,7 +43,8 @@ my-plugin/
 | `name` | да | Название: строка или `{ "ru": "...", "en": "..." }` |
 | `version` | да | Версия плагина, например `"1.0.0"` |
 | `apiVersion` | да | Всегда `1` |
-| `main` | да | Файл кода, обычно `"index.js"` (без `..`, внутри папки) |
+| `main` | да* | Файл кода, обычно `"index.js"` (без `..`, внутри папки). *Не нужен, если у плагина только панели |
+| `panels` | нет | Свои страницы-панели (раздел 11) |
 | `permissions` | да | Список прав (раздел 4) |
 | `description` | нет | Что делает плагин (две локализации) |
 | `author`, `homepage` | нет | Автор и ссылка |
@@ -62,6 +63,8 @@ my-plugin/
 | `commands` | `registerCommand` — команды в палитре (Ctrl+K) |
 | `dice` | `registerDicePreset` — пресеты на странице «Кубики» |
 | `storage` | `host.storage` — личное хранилище плагина |
+| `ui` | панели плагина (раздел 11) |
+| `project.read`, `project.write` | панели читают и меняют проект (раздел 11) |
 
 `host.settings.get`, `host.lang`, `host.log` права не требуют.
 
@@ -191,6 +194,7 @@ module.exports = { activate(host) {
 - [ ] Имена функций и блоков не совпадают со встроенными.
 - [ ] Видимые тексты — на `ru` и `en`.
 - [ ] HTML блоков использует только разрешённые теги и `class`/`title`.
+- [ ] Если есть панели: право `ui`, `entry` — `.html` в папке плагина, страница подключает `@sdk.css` и `@sdk.js`, весь JS — в отдельных файлах (без `onclick=` и встроенных `<script>`), нет сети и `localStorage`, тексты вставляются через `textContent`, каждый вызов `rolepi.*` покрыт правом.
 
 ## 10. Если что-то не работает
 
@@ -201,9 +205,109 @@ module.exports = { activate(host) {
 | Функция "…" уже существует | Имя занято встроенной или чужой функцией — выберите другое |
 | …вернула недопустимый результат | Верните число, строку, true/false, список чисел или `null` |
 | Нужна версия приложения … | Обновите приложение или уменьшите `minAppVersion` |
+| Панель не отвечает / пустая | Страница не подключает `<script src="@sdk.js"></script>`, JS вставлен прямо в HTML, либо файл панели изменился — нажмите «Перезагрузить» |
+| Нет права «…» (в панели) | Добавьте право в `permissions` плагина и заново разрешите плагин |
 | Плагин слишком долго запускается | `activate` работает дольше 3 секунд — не делайте тяжёлых вычислений при запуске |
 
 Подробности ошибок и `host.log` видны в консоли разработчика (Ctrl+Shift+I в окне приложения).
+
+## 11. Панели: плагин со своими страницами
+
+Кроме кода, который расширяет приложение (`index.js`), плагин может показывать **панели** — свои HTML-страницы внутри окна Rolepi: генератор имён, справочник по правилам, помощник мастера. Панель работает в **изолированной рамке**: у неё нет доступа к сети, файлам, браузерному хранилищу и данным приложения. Всё, что ей нужно, она просит у приложения через объект `rolepi`, и только в пределах прав, которые разрешил пользователь.
+
+Плагин может состоять только из панелей (тогда `main` не нужен) или сочетать панели и `index.js`.
+
+```
+my-panel-plugin/
+  plugin.json
+  panel/
+    main.html
+    main.css
+    main.js
+```
+
+В `plugin.json` панели описываются так (нужно право `ui`):
+
+```json
+  "permissions": ["ui", "project.read", "project.write"],
+  "panels": [
+    { "id": "names", "title": { "ru": "Имена", "en": "Names" }, "entry": "panel/main.html", "placement": "right" }
+  ]
+```
+
+`placement` — где живёт панель: `right` — вкладка справа рядом со свойствами, `bottom` — вкладка внизу рядом с «Проблемы» и «Броски», `page` — отдельный раздел «Панели» в верхнем меню.
+
+**Жёсткие правила для страниц панелей:**
+- Подключай `<link rel="stylesheet" href="@sdk.css">` (оформление в цветах выбранной темы) и `<script src="@sdk.js"></script>` (объект `rolepi`). Эти адреса работают из любой папки плагина.
+- **Весь JavaScript — в отдельных `.js`-файлах** плагина. Встроенные `<script>…</script>` и обработчики `onclick="…"` запрещены политикой безопасности и не сработают. Встроенные стили `<style>` и `style="…"` разрешены.
+- Нет сети (`fetch`, `XMLHttpRequest`, `WebSocket`, внешние картинки, шрифты и скрипты по ссылкам) и нет `localStorage`. Свои данные храни через `rolepi.storage` (право `storage`). Картинки — файлами внутри папки плагина или `data:`.
+- Любой текст из данных (имена героев, заметки) вставляй через `textContent`, а не `innerHTML`.
+- Дожидайся `rolepi.ready` перед первым вызовом. Все вызовы возвращают Promise; при отказе (нет права, неверные данные) Promise отклоняется с понятным сообщением — показывай его пользователю.
+- Видимые тексты — на двух языках: язык приходит в `rolepi.ready` (`{ lang }`) и меняется событием `theme`.
+
+### Права панелей
+
+| Право | Что даёт панели |
+|---|---|
+| `ui` | показывать панели; `rolepi.notify(текст)`, `rolepi.openPage(раздел)` |
+| `project.read` | читать системы и кампании, знать выбранный документ (`rolepi.project.*` без `create…`/`update…`) |
+| `project.write` | `createNote`, `createEntity`, `updateEntityValues`, `createSystem` — каждая запись одним шагом «Отменить» |
+| `dice` | `rolepi.roll(формула)` — бросок по формуле Rolepi |
+| `storage` | `rolepi.storage.get/set` — личное хранилище (до 256 КБ) |
+
+Запись ограничена: неизвестные параметры игнорируются, не больше 120 записей в минуту, защищённые системы читать можно, а выдать свою за защищённую — нет.
+
+### Справочник `rolepi`
+
+| Вызов | Возвращает |
+|---|---|
+| `rolepi.ready` | Promise `{ lang, appVersion }` — панель подключена |
+| `rolepi.on('selection', cb)` | вызывает `cb({ kind, id })` или `cb(null)`, когда пользователь открыл другой документ (нужно `project.read`) |
+| `rolepi.on('theme', cb)` | тема или язык сменились (цвета обновляются сами) |
+| `rolepi.project.selection()` | выбранный документ `{ kind: 'system' \| 'campaign', id }` или `null` |
+| `rolepi.project.listSystems()` / `getSystem(id)` | список систем (с типами) / полное описание системы |
+| `rolepi.project.listCampaigns()` / `getCampaign(id)` | список кампаний / кампания с героями и заметками |
+| `rolepi.project.createNote(campaignId, { title, body })` | `{ id }` новой заметки |
+| `rolepi.project.createEntity(campaignId, { typeId, name, values })` | `{ id }` нового героя; `values` — значения параметров типа |
+| `rolepi.project.updateEntityValues(campaignId, entityId, values)` | `true`; значения сливаются с существующими |
+| `rolepi.project.createSystem(system)` | `{ id }` новой системы (формат — раздел 7) |
+
+### Пример: кнопка «Бросить d20 и записать в заметку»
+
+`panel/main.html`:
+
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="@sdk.css">
+</head>
+<body>
+  <button class="primary" id="go">d20 → заметка</button>
+  <p id="msg" class="muted"></p>
+  <script src="@sdk.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+```
+
+`panel/main.js`:
+
+```js
+document.getElementById('go').onclick = async function () {
+  var msg = document.getElementById('msg');
+  try {
+    var sel = await rolepi.project.selection();
+    if (!sel || sel.kind !== 'campaign') { msg.textContent = 'Выберите кампанию'; return; }
+    var r = await rolepi.roll('1d20');
+    await rolepi.project.createNote(sel.id, { title: 'Бросок', body: r.text });
+    msg.textContent = r.text;
+  } catch (e) { msg.textContent = e.message; }
+};
+```
+
+Манифест для примера: `permissions: ["ui", "dice", "project.read", "project.write"]`, панель `placement: "right"`. Готовый рабочий пример — плагин «Пример: генератор имён (панель)» в папке плагинов.
 
 ## Приложение: описание API на TypeScript
 
@@ -259,8 +363,9 @@ interface PluginManifest {
   author?: string;
   homepage?: string;
   minAppVersion?: string;        // например "0.1.0"
-  main: string;                  // "index.js"
-  permissions: ("formulas" | "blocks" | "systems" | "locales" | "themes" | "commands" | "dice" | "storage")[];
+  main?: string;                 // "index.js"; можно не указывать, если у плагина только панели
+  permissions: ("formulas" | "blocks" | "systems" | "locales" | "themes" | "commands" | "dice" | "storage" | "ui" | "project.read" | "project.write")[];
+  panels?: Array<{ id: string; title: LocalizedString; entry: string; placement: "page" | "right" | "bottom" }>;  // право "ui"; entry — .html внутри папки
   settings?: Array<{
     id: string; type: "number" | "text" | "boolean" | "select"; label: LocalizedString; description?: LocalizedString;
     default?: unknown; min?: number; max?: number; options?: { value: string; label: LocalizedString }[];
@@ -285,4 +390,27 @@ interface GameSystem {
         x: number; y: number; w: number; h: number; field?: string; props?: Record<string, unknown> }> }>;
   }>;
 }
+
+/** Объект window.rolepi, который есть на странице панели после <script src="@sdk.js"></script>. Все вызовы асинхронные. */
+interface RolepiPanelSdk {
+  ready: Promise<{ lang: string; appVersion: string }>;
+  lang(): string;
+  on(event: "selection" | "theme", cb: (data: any) => void): () => void;      // selection: { kind: "system" | "campaign", id } | null
+  notify(message: string): Promise<true>;                                       // право "ui"
+  openPage(page: "workspace" | "dice" | "formulas" | "plugins" | "data" | "help" | "about"): Promise<true>;  // право "ui"
+  roll(formula: string): Promise<{ value: unknown; text: string }>;              // право "dice"
+  storage: { get(key: string): Promise<unknown>; set(key: string, value: unknown): Promise<true> };  // право "storage", до 256 КБ
+  project: {                                                                    // читать — право "project.read", писать — "project.write"
+    selection(): Promise<{ kind: "system" | "campaign"; id: string } | null>;
+    listSystems(): Promise<{ id: string; name: string; locked: boolean; types: { id: string; label: string; category: string }[] }[]>;
+    getSystem(id: string): Promise<GameSystem>;
+    listCampaigns(): Promise<{ id: string; name: string; systemId: string; entities: number; notes: number }[]>;
+    getCampaign(id: string): Promise<{ id: string; name: string; systemId: string; entities: { id: string; typeId: string; name: string; values: Record<string, unknown> }[]; notes: { id: string; title: string; body: string }[] }>;
+    createNote(campaignId: string, note: { title: string; body?: string }): Promise<{ id: string }>;
+    createEntity(campaignId: string, entity: { typeId: string; name: string; values?: Record<string, unknown> }): Promise<{ id: string }>;
+    updateEntityValues(campaignId: string, entityId: string, values: Record<string, unknown>): Promise<true>;
+    createSystem(system: GameSystem): Promise<{ id: string }>;                   // id назначается заново, защита снимается
+  };
+}
+declare const rolepi: RolepiPanelSdk;
 ```
