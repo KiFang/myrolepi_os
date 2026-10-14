@@ -12,6 +12,13 @@ module.exports = {
         return '<div class="power-badge"><small>' + title + '</small><br><b>' + stars + '</b></div>';
       },
     });
+    host.registerDicePreset({ label: { ru: 'Атака +5', en: 'Attack +5' }, formula: '1d20 + 5' });
+    host.registerCommand({
+      id: 'quick-roll',
+      title: { ru: 'Быстрый бросок d20', en: 'Quick d20 roll' },
+      keywords: ['d20', 'roll', 'бросок'],
+      run(ctx) { ctx.notify(ctx.roll('1d20').text); },
+    });
     host.registerTheme({
       id: 'sunset',
       name: { ru: 'Закат', en: 'Sunset' },

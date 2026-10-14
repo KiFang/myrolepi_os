@@ -3,7 +3,7 @@ import type { ActionDef } from "../../core";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
 import { newId, rename } from "../workspace-model";
-import { Input } from "./inputs";
+import { HelpLink, Input } from "./inputs";
 import type { SystemEditorState } from "./SystemEditor";
 
 function formulaError(formula: string): string {
@@ -23,7 +23,7 @@ export function ActionsEditor({ ed }: { ed: SystemEditorState }) {
         <h2>{t("ws.actionsOf", { type: label(type.label) })}</h2>
         <button className="ws-with-icon" onClick={() => ed.updateActions((l) => [...l, { id: newId("action"), label: { ru: t("ws.newAction"), en: t("ws.newAction") }, formula: "1d20" }])}><Icon name="plus" />{t("ws.addAction")}</button>
       </div>
-      <p className="ws-hint ws-hint-tight">{t("ws.actionsHint")}</p>
+      <p className="ws-hint ws-hint-tight">{t("ws.actionsHint")} <HelpLink topic="actions" /></p>
       {!actions.length && <div className="ws-empty">{t("ws.noActions")}</div>}
       {actions.map((a, i) => {
         const err = formulaError(a.formula);

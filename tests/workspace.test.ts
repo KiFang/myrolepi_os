@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import type { GameSystem } from "../src/core";
 import {
   createEntity,
+  fieldIdProblem,
+  renameFieldInCampaign,
+  renameFieldInSystem,
   label,
   libraryProblem,
   newSystem,
@@ -8,14 +13,10 @@ import {
   rename,
   systemIssues,
 } from "../src/renderer/workspace-model";
+import { createRegistry } from "../src/renderer/plugin-host";
 import type { PluginRegistry } from "../src/renderer/plugin-host";
 
-const registry: PluginRegistry = {
-  functions: {},
-  blocks: {},
-  systems: [],
-  themes: [],
-};
+const registry: PluginRegistry = createRegistry();
 describe("editable systems and campaigns", () => {
   it("uses campaign input and plugin functions when computing dependent fields", () => {
     const system = newSystem();
@@ -87,5 +88,28 @@ describe("library safety and localization", () => {
     expect(rename(system.name, "Sci-fi", "en")).toEqual({ ru: "Новая система", en: "Sci-fi" });
     expect(rename("plain", "x", "en")).toBe("x");
     expect(systemIssues({ ...system, entityTypes: [{ ...system.entityTypes[0], fields: [{ id: "a b", label: "", type: "number" }] }] }, "en")[0].message).toMatch(/Name in formulas/);
+  });
+});
+
+describe("renaming a parameter keeps everything consistent", () => {
+  const sys = JSON.parse(readFileSync("examples/space-opera.system.json", "utf8")) as GameSystem;
+  it("updates formulas, actions, initiative, card blocks and hero values", () => {
+    const renamed = renameFieldInSystem(sys, "character", "str", "power");
+    const type = renamed.entityTypes[0];
+    expect(type.fields.find((f) => f.id === "power")).toBeTruthy();
+    expect(type.fields.find((f) => f.id === "max_hp")!.formula).toBe("8 + mod(power) + level * 4");
+    expect(type.actions![0].formula).toBe("1d20 + level + mod(power)");
+    expect(type.cardViews[0].blocks.find((b) => b.field === "power")).toBeTruthy();
+    expect(systemIssues(renamed).filter((i) => i.level === "error")).toEqual([]);
+    const camp = renameFieldInCampaign({ schema: 1, id: "c", name: "c", systemId: sys.id, notes: [], entities: [{ id: "e", typeId: "character", name: "A", values: { str: 16, level: 2 } }, { id: "m", typeId: "monster", name: "M", values: { str: 1 } }] }, "character", "str", "power");
+    expect(camp.entities[0].values).toEqual({ level: 2, power: 16 });
+    expect(camp.entities[1].values).toEqual({ str: 1 });
+  });
+  it("validates the new name", () => {
+    const type = sys.entityTypes[0];
+    expect(fieldIdProblem(type, "str", "str")).toBe("");
+    expect(fieldIdProblem(type, "str", "level")).toMatch(/занято/);
+    expect(fieldIdProblem(type, "str", "bad name")).toMatch(/Имя в формулах/);
+    expect(fieldIdProblem(type, "str", "сила")).toBe("");
   });
 });

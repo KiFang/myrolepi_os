@@ -3,7 +3,7 @@ import { registerLocale } from '../core';
 /** Тексты интерфейса студии (RU/EN). Базовые тексты инструментов — в core/i18n.ts, ошибки ядра — в core/messages.ts. */
 registerLocale('ru', {
   // разделы и общие
-  'app.name': 'MyRolePi',
+  'app.name': 'Rolepi',
   'ws.tabWorkspace': 'Студия',
   'ws.storage': 'Данные хранятся на этом компьютере',
   'ws.statusFooter': 'Всё сохраняется только у вас',
@@ -105,7 +105,7 @@ registerLocale('ru', {
   'ws.groupField': 'Параметр',
   'ws.fieldName': 'Название',
   'ws.fieldId': 'Имя в формулах',
-  'ws.fieldIdHint': 'По этому имени параметр вызывают в формулах. Лучше короткое: strength, hp, сила.',
+  'ws.fieldIdHint': 'По этому имени параметр вызывают в формулах (strength, hp, сила). Применится по Enter или при уходе из поля — все ссылки на него обновятся сами.',
   'ws.fieldType': 'Вид параметра',
   'ws.group': 'Раздел листа',
   'ws.groupPlaceholder': 'Например: Характеристики',
@@ -177,7 +177,7 @@ registerLocale('ru', {
 });
 
 registerLocale('en', {
-  'app.name': 'MyRolePi',
+  'app.name': 'Rolepi',
   'ws.tabWorkspace': 'Studio',
   'ws.storage': 'Your data is stored on this computer',
   'ws.statusFooter': 'Everything stays with you',
@@ -272,7 +272,7 @@ registerLocale('en', {
   'ws.groupField': 'Parameter',
   'ws.fieldName': 'Name',
   'ws.fieldId': 'Name in formulas',
-  'ws.fieldIdHint': 'Formulas refer to the parameter by this name. Keep it short: strength, hp, level.',
+  'ws.fieldIdHint': 'Formulas refer to the parameter by this name (strength, hp, level). Applies on Enter or when you leave the field — all references update automatically.',
   'ws.fieldType': 'Parameter kind',
   'ws.group': 'Sheet section',
   'ws.groupPlaceholder': 'E.g. Attributes',
@@ -420,3 +420,58 @@ registerLocale('en', {
   'ws.import': 'Import', 'ws.importTitle': 'Add a system or campaign from a JSON file', 'ws.imported': 'File added to your projects', 'ws.importFailed': 'Could not read the file: it is neither a system nor a campaign',
   'ws.export': 'Save to file', 'ws.exportTitle': 'Export the open document to a JSON file to share it or keep a copy',
 });
+
+registerLocale('ru', {
+  'plugins.intro': 'Плагины добавляют новые функции в формулы, блоки в карточки, темы, готовые системы, команды и пресеты кубиков.',
+  'plugins.trust': 'Плагин выполняется с правами приложения. Включайте только те, которым доверяете: после изменения кода плагина приложение снова спросит разрешение.',
+  'plugins.create': 'Создать шаблон', 'plugins.examples': 'Добавить примеры', 'plugins.reload': 'Перезагрузить',
+  'plugins.newName': 'Название нового плагина', 'plugins.newNameDefault': 'Мой плагин', 'plugins.created': 'Шаблон создан в папке «{dir}». Откройте файлы и правьте; потом нажмите «Перезагрузить».',
+  'plugins.examplesCopied': 'Добавлено примеров: {n}. Они выключены, пока вы их не разрешите.',
+  'plugins.aiTitle': 'Сделать плагин с помощью нейросети',
+  'plugins.ai1': 'Опишите, что должен делать плагин.', 'plugins.ai2': 'Скопируйте готовый запрос и отправьте его нейросети (в нём уже вся инструкция).', 'plugins.ai3': 'Ответ — два файла: plugin.json и index.js. Положите их в новую папку плагинов и нажмите «Перезагрузить».',
+  'plugins.aiPlaceholder': 'Например: добавь функцию crit(x), которая удваивает урон при выпадении 20, и тему оформления «Закат»',
+  'plugins.copyPrompt': 'Скопировать запрос', 'plugins.copied': 'Скопировано', 'plugins.savePrompt': 'Сохранить в файл', 'plugins.copyFailed': 'Не удалось скопировать — нажмите «Сохранить в файл».',
+  'plugins.installed': 'Установленные плагины', 'plugins.loading': 'Загружаю…',
+  'plugins.state.active': 'Работает', 'plugins.state.needs-approval': 'Нужно разрешение', 'plugins.state.disabled': 'Выключен', 'plugins.state.error': 'Ошибка',
+  'plugins.consentTitle': 'Этот плагин просит права:', 'plugins.consentWarn': 'Разрешайте, только если доверяете автору. Кнопка ниже запускает код плагина.', 'plugins.approve': 'Разрешить и включить',
+  'plugins.enable': 'Включить', 'plugins.disable': 'Выключить', 'plugins.allowed': 'Разрешено', 'plugins.settings': 'Настройки плагина',
+  'plugins.adds.functions': 'Функции', 'plugins.adds.blocks': 'Блоки', 'plugins.adds.systems': 'Системы', 'plugins.adds.themes': 'Темы', 'plugins.adds.commands': 'Команды', 'plugins.adds.dice': 'Кубики', 'plugins.adds.locales': 'Языки',
+});
+registerLocale('en', {
+  'plugins.intro': 'Plugins add formula functions, card blocks, themes, ready-made systems, commands and dice presets.',
+  'plugins.trust': 'A plugin runs with the app\'s privileges. Enable only plugins you trust: if a plugin\'s code changes, the app asks for permission again.',
+  'plugins.create': 'Create a template', 'plugins.examples': 'Add examples', 'plugins.reload': 'Reload',
+  'plugins.newName': 'Name of the new plugin', 'plugins.newNameDefault': 'My plugin', 'plugins.created': 'Template created in the folder "{dir}". Open the files and edit them, then press "Reload".',
+  'plugins.examplesCopied': 'Examples added: {n}. They stay off until you allow them.',
+  'plugins.aiTitle': 'Make a plugin with an AI',
+  'plugins.ai1': 'Describe what the plugin should do.', 'plugins.ai2': 'Copy the ready-made prompt and send it to an AI (it already contains the whole guide).', 'plugins.ai3': 'The answer is two files: plugin.json and index.js. Put them into a new plugin folder and press "Reload".',
+  'plugins.aiPlaceholder': 'E.g. add a crit(x) function that doubles damage on a natural 20, and a "Sunset" colour theme',
+  'plugins.copyPrompt': 'Copy the prompt', 'plugins.copied': 'Copied', 'plugins.savePrompt': 'Save to file', 'plugins.copyFailed': 'Could not copy — press "Save to file".',
+  'plugins.installed': 'Installed plugins', 'plugins.loading': 'Loading…',
+  'plugins.state.active': 'Running', 'plugins.state.needs-approval': 'Needs permission', 'plugins.state.disabled': 'Off', 'plugins.state.error': 'Error',
+  'plugins.consentTitle': 'This plugin asks for permission to:', 'plugins.consentWarn': 'Allow it only if you trust its author. The button below runs the plugin\'s code.', 'plugins.approve': 'Allow and enable',
+  'plugins.enable': 'Turn on', 'plugins.disable': 'Turn off', 'plugins.allowed': 'Allowed', 'plugins.settings': 'Plugin settings',
+  'plugins.adds.functions': 'Functions', 'plugins.adds.blocks': 'Blocks', 'plugins.adds.systems': 'Systems', 'plugins.adds.themes': 'Themes', 'plugins.adds.commands': 'Commands', 'plugins.adds.dice': 'Dice', 'plugins.adds.locales': 'Languages',
+});
+
+registerLocale('ru', {
+  'palette.title': 'Палитра команд', 'palette.placeholder': 'Что сделать? Например: новая система, тема, кубик…', 'palette.hint': 'Быстрые команды', 'palette.none': 'Ничего не найдено',
+  'palette.go': 'Перейти', 'palette.groupGo': 'Разделы', 'palette.groupStudio': 'Студия', 'palette.groupDice': 'Кубики', 'palette.groupLook': 'Оформление',
+  'palette.rollD20': 'Бросить d20', 'palette.theme': 'Тема', 'palette.language': 'Язык',
+  'help.search': 'Поиск по справочнику', 'help.nothing': 'Ничего не найдено. Попробуйте другое слово.', 'help.fn': 'Функция', 'help.what': 'Что делает', 'help.example': 'Пример', 'help.try': 'Попробовать в калькуляторе', 'help.fromPlugin': 'плагин {id}',
+});
+registerLocale('en', {
+  'palette.title': 'Command palette', 'palette.placeholder': 'What to do? E.g. new system, theme, dice…', 'palette.hint': 'Quick commands', 'palette.none': 'Nothing found',
+  'palette.go': 'Go to', 'palette.groupGo': 'Sections', 'palette.groupStudio': 'Studio', 'palette.groupDice': 'Dice', 'palette.groupLook': 'Appearance',
+  'palette.rollD20': 'Roll a d20', 'palette.theme': 'Theme', 'palette.language': 'Language',
+  'help.search': 'Search the reference', 'help.nothing': 'Nothing found. Try another word.', 'help.fn': 'Function', 'help.what': 'What it does', 'help.example': 'Example', 'help.try': 'Try in the calculator', 'help.fromPlugin': 'plugin {id}',
+});
+
+registerLocale('ru', { 'help.more': 'Подробнее в справочнике' });
+registerLocale('en', { 'help.more': 'More in the reference' });
+
+registerLocale('ru', { 'ws.idTaken': 'Имя «{id}» уже занято другим параметром этого типа', 'ws.fieldIdHint2': 'Применится по Enter или когда вы уйдёте из поля. Все ссылки на него обновятся сами.' });
+registerLocale('en', { 'ws.idTaken': 'The name "{id}" is already used by another parameter of this type', 'ws.fieldIdHint2': 'Applies on Enter or when you leave the field. All references to it update automatically.' });
+
+registerLocale('ru', { 'plugins.createGo': 'Создать', 'plugins.cancel': 'Отмена' });
+registerLocale('en', { 'plugins.createGo': 'Create', 'plugins.cancel': 'Cancel' });

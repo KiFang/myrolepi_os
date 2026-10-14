@@ -35,7 +35,7 @@ export function t(key: string, lang: string, params?: Record<string, string | nu
 }
 
 registerLocale('ru', {
-  'app.title': 'MyRolePi OS',
+  'app.title': 'Rolepi',
   'nav.dice': 'Кубики',
   'nav.formulas': 'Формулы',
   'nav.systems': 'Системы',
@@ -67,7 +67,7 @@ registerLocale('ru', {
 });
 
 registerLocale('en', {
-  'app.title': 'MyRolePi OS',
+  'app.title': 'Rolepi',
   'nav.dice': 'Dice',
   'nav.formulas': 'Formulas',
   'nav.systems': 'Systems',

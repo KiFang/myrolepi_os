@@ -1,8 +1,22 @@
 {
   "id": "example-extras",
-  "name": { "ru": "Пример: блок карточки и тема", "en": "Example: card block and theme" },
+  "name": {
+    "ru": "Пример: блок карточки и тема",
+    "en": "Example: card block and theme"
+  },
   "version": "1.0.0",
   "apiVersion": 1,
   "main": "index.js",
-  "permissions": ["blocks", "themes"]
+  "permissions": [
+    "blocks",
+    "themes",
+    "commands",
+    "dice"
+  ],
+  "author": "Rolepi",
+  "minAppVersion": "0.1.0",
+  "description": {
+    "ru": "Показывает, как добавить блок карточки, тему, команду и пресет кубиков.",
+    "en": "Shows how to add a card block, a theme, a command and a dice preset."
+  }
 }

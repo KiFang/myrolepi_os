@@ -17,7 +17,7 @@ type Tok =
   | { t: 'num'; v: number }
   | { t: 'str'; v: string }
   | { t: 'dice'; v: string }
-  | { t: 'id'; v: string }
+  | { t: 'id'; v: string; s: number; e: number }
   | { t: 'op'; v: string }
   | { t: 'eof' };
 
@@ -40,7 +40,7 @@ function lex(src: string): Tok[] {
     const nm = /^\d+(\.\d+)?/.exec(rest);
     if (nm) { out.push({ t: 'num', v: parseFloat(nm[0]) }); i += nm[0].length; continue; }
     const im = /^@?[\p{L}_][\p{L}\p{N}_]*(\.[\p{L}_][\p{L}\p{N}_]*)*/u.exec(rest);
-    if (im) { out.push({ t: 'id', v: im[0].replace(/^@/, '') }); i += im[0].length; continue; }
+    if (im) { out.push({ t: 'id', v: im[0].replace(/^@/, ''), s: i, e: i + im[0].length }); i += im[0].length; continue; }
     if (c === '"' || c === "'") {
       const end = src.indexOf(c, i + 1);
       if (end < 0) throw new FormulaError(tm('err.strOpen'));
@@ -132,6 +132,29 @@ export function parse(src: string): Node {
   const ast = expr(0);
   if (peek().t !== 'eof') throw new FormulaError(tm('err.trailing'));
   return ast;
+}
+
+/**
+ * Переименовывает переменную `from` в `to` во всех местах формулы (в том числе в путях `from.sub`
+ * и с префиксом @). Кубики, функции, строки и похожие имена не затрагиваются. Некорректная
+ * формула возвращается как есть.
+ */
+export function renameVariable(formula: string, from: string, to: string): string {
+  let toks: Tok[];
+  try { toks = lex(formula); } catch { return formula; }
+  let out = '';
+  let last = 0;
+  toks.forEach((t, i) => {
+    if (t.t !== 'id') return;
+    const isCall = toks[i + 1]?.t === 'op' && (toks[i + 1] as { v: string }).v === '(';
+    if (isCall) return;
+    const [root, ...rest] = t.v.split('.');
+    if (root !== from) return;
+    const prefix = formula[t.s] === '@' ? '@' : '';
+    out += formula.slice(last, t.s) + prefix + [to, ...rest].join('.');
+    last = t.e;
+  });
+  return out + formula.slice(last);
 }
 
 /** Все переменные, на которые ссылается формула (для графа зависимостей). */

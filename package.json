@@ -1,6 +1,6 @@
 {
   "name": "myrolepi-os",
-  "productName": "MyRolePi OS",
+  "productName": "Rolepi",
   "version": "0.1.0",
   "description": "Конструктор настольных ролевых систем и кампаний (модуль лаунчера Asteia Alltools)",
   "main": "dist-electron/main/main.js",
@@ -13,7 +13,9 @@
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "dist:mac": "npm run build && electron-builder --mac",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "e2e": "node e2e/run.cjs",
+    "e2e:electron": "node e2e/electron.e2e.cjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -25,6 +27,7 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.1.8",
     "happy-dom": "^15.11.7",
+    "playwright-core": "^1.64.1",
     "typescript": "^5.6.0",
     "vite": "^5.4.0",
     "vitest": "^2.1.0",
@@ -36,7 +39,7 @@
   },
   "build": {
     "appId": "com.asteia.myrolepi-os",
-    "productName": "MyRolePi OS",
+    "productName": "Rolepi",
     "copyright": "Asteia",
     "directories": {
       "output": "release",

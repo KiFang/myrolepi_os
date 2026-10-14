@@ -25,3 +25,7 @@ export function savedLang(): string | null {
 export function rememberLang(lang: string): void {
   try { localStorage.setItem(LANG_KEY, lang); } catch { /* приватный режим и т.п. */ }
 }
+
+/** Открыть справочник на нужной статье из любого места интерфейса. */
+export const HelpContext = createContext<(topic?: string) => void>(() => {});
+export const useHelp = () => useContext(HelpContext);

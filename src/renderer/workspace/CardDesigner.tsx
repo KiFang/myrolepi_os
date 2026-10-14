@@ -8,7 +8,7 @@ import { Icon } from "../icons";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
 import { rename } from "../workspace-model";
-import { Input } from "./inputs";
+import { HelpLink, Input } from "./inputs";
 import type { SystemEditorState } from "./SystemEditor";
 
 interface Drag { id: string; mode: "move" | "resize"; px: number; py: number; orig: Geo; cur: Geo }
@@ -58,7 +58,7 @@ export function CardDesigner({ ed, registry }: { ed: SystemEditorState; registry
         ))}
         <button className="ws-with-icon" onClick={ed.addView}><Icon name="plus" />{t("ws.addView")}</button>
       </div>
-      <p className="ws-hint ws-hint-tight">{t("ws.cardsHint")}</p>
+      <p className="ws-hint ws-hint-tight">{t("ws.cardsHint")} <HelpLink topic="cards" /></p>
       <div className="ws-palette">
         <span className="muted">{t("ws.addBlock")}:</span>
         {[...BLOCK_KINDS, ...extraKinds].map((k) => (
