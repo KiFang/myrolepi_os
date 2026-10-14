@@ -1058,3 +1058,31 @@
 .data-what { font-size: 12.5px; line-height: 1.5; }
 .data-actions { display: flex; gap: 6px; align-items: center; }
 @media (max-width: 900px) { .data-row { grid-template-columns: 1fr; } }
+
+/* окна */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;z-index:50;animation:fade-in .15s ease-out}
+.modal{background:var(--panel);color:var(--fg);border:1px solid var(--border-strong);border-radius:12px;width:min(480px,92vw);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.4);animation:pop-in .16s ease-out}
+.modal.wide{width:min(680px,94vw)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.modal-body{padding:14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 14px;border-top:1px solid var(--border)}
+.exp-row{display:flex;gap:8px;align-items:center}
+.exp-protect{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--sunken)}
+.exp-warn,.exp-note{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;margin:0;color:var(--muted)}
+.exp-warn svg{color:var(--warn);flex:none}
+/* защищённые системы */
+.protect-banner{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--sunken)}
+.protect-banner.ok{border-left:3px solid var(--ok)}
+.protect-banner.warn{border-left:3px solid var(--warn)}
+.protect-banner.bad{border-left:3px solid var(--danger)}
+.protect-text{display:flex;flex-direction:column;flex:1;font-size:12.5px;gap:2px}
+.protect-text span,.protect-nofork{color:var(--muted)}
+.ws-lock{margin-left:auto;display:inline-flex;color:var(--ok)}
+.ws-lock.tampered{color:var(--danger)}
+.ws-lock.unverified{color:var(--warn)}
+.ws-fieldset{border:0;padding:0;margin:0;min-width:0}
+.ws-fieldset:disabled{opacity:.7}
+@keyframes pop-in{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.ws-file-button{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);cursor:pointer}
+.ws-file-button:hover{background:var(--hover)}

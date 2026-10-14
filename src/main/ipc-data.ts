@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AssetError, gcAssets, listAssets, putAsset, readAsset } from './lib/assets';
 import { BackupReason, autoBackup, backupsDir, createBackup, deleteBackup, listBackups, restoreBackup } from './lib/backups';
+import { ensureAuthor, exportAuthorKey, getAuthor, importAuthorKey, setAuthorName, signPayload, verifyPayload } from './lib/keys';
 import { dataDir } from './paths';
 
 /** Имена каталогов и файлов не должны выходить за пределы папки данных. */
@@ -38,6 +39,15 @@ export function registerDataHandlers() {
   ipcMain.handle('assets:read', (_e, id: string) => readAsset(dataDir, id));
   ipcMain.handle('assets:list', () => listAssets(dataDir));
   ipcMain.handle('assets:gc', (_e, extraRefs: string[]) => gcAssets(dataDir, Array.isArray(extraRefs) ? extraRefs : []));
+
+  // ключ автора и подписи (закрытый ключ из главного процесса не выходит)
+  ipcMain.handle('keys:author', () => getAuthor(dataDir));
+  ipcMain.handle('keys:ensure', (_e, name?: string) => ensureAuthor(dataDir, typeof name === 'string' ? name : undefined));
+  ipcMain.handle('keys:setName', (_e, name: string) => setAuthorName(dataDir, String(name)));
+  ipcMain.handle('keys:sign', (_e, payload: string) => signPayload(dataDir, String(payload)));
+  ipcMain.handle('keys:verify', (_e, publicKey: string, payload: string, signature: string) => verifyPayload(publicKey, String(payload), signature));
+  ipcMain.handle('keys:export', () => exportAuthorKey(dataDir));
+  ipcMain.handle('keys:import', (_e, text: string) => importAuthorKey(dataDir, String(text)));
 
   // резервные копии
   ipcMain.handle('backups:list', () => listBackups(dataDir));

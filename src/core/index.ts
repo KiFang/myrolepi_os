@@ -10,3 +10,6 @@ export * from './updates';
 import './messages';
 export * from './actions';
 export * from './migrate';
+export * from './assetRef';
+export * from './bundle';
+export * from './protection';

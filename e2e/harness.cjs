@@ -46,6 +46,25 @@ async function run(name, port, opts, scenario) {
   page.on('pageerror', (e) => errors.push('PAGEERROR ' + e.message));
   // confirm() в Electron работает, prompt() — нет: приложение его не использует, поэтому prompt-диалог считаем ошибкой
   page.on('dialog', (d) => (d.type() === 'prompt' ? (errors.push('используется window.prompt(), которого нет в Electron'), d.dismiss()) : d.accept()));
+  // ключ автора: подписи Ed25519 считает Node (в приложении — главный процесс)
+  const nodeCrypto = require('crypto');
+  let author = null;
+  const keyIdOf = (pub) => nodeCrypto.createHash('sha256').update(Buffer.from(pub, 'base64')).digest('hex').slice(0, 16);
+  const info = () => (author ? { publicKey: author.publicKey, keyId: keyIdOf(author.publicKey), name: author.name } : null);
+  await page.exposeFunction('__keysOp', (op, a, b, c) => {
+    if (op === 'author') return info();
+    if (op === 'ensure') {
+      if (!author) { const k = nodeCrypto.generateKeyPairSync('ed25519'); author = { publicKey: k.publicKey.export({ type: 'spki', format: 'der' }).toString('base64'), privateKey: k.privateKey.export({ type: 'pkcs8', format: 'der' }).toString('base64'), name: a || undefined }; }
+      else if (a) author.name = a;
+      return info();
+    }
+    if (op === 'setName') { if (author) author.name = a; return info(); }
+    if (op === 'sign') return nodeCrypto.sign(null, Buffer.from(a), nodeCrypto.createPrivateKey({ key: Buffer.from(author.privateKey, 'base64'), format: 'der', type: 'pkcs8' })).toString('base64');
+    if (op === 'verify') { try { return nodeCrypto.verify(null, Buffer.from(b), nodeCrypto.createPublicKey({ key: Buffer.from(a, 'base64'), format: 'der', type: 'spki' }), Buffer.from(c, 'base64')); } catch { return false; } }
+    if (op === 'export') return author ? JSON.stringify(author) : null;
+    if (op === 'import') { try { const j = JSON.parse(a); if (!j.publicKey || !j.privateKey) return null; author = j; return info(); } catch { return null; } }
+    return null;
+  });
   await page.addInitScript(({ plugins, seed }) => {
     const db = JSON.parse(JSON.stringify(seed || {}));
     const scaffolds = [];
@@ -63,7 +82,9 @@ async function run(name, port, opts, scenario) {
       const m = { id: `${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}-${String(backups.length).padStart(3, '0')}-${reason}`, createdAt: new Date().toISOString(), reason, note, app: '0.2.0', systems: Object.keys(data.systems).length, campaigns: Object.keys(data.campaigns).length, bytes: JSON.stringify(data).length };
       backups.push({ m, data }); return m;
     };
+    const K = (op) => (...a) => window.__keysOp(op, ...a);
     window.rpi = {
+      keys: { author: K('author'), ensure: K('ensure'), setName: K('setName'), sign: K('sign'), verify: K('verify'), export: K('export'), import: K('import') },
       env: async () => ({ version: '0.2.0', launcherMode: false, lang: navigator.language }),
       plugins: async () => plugins, changelog: async () => '## 0.2.0\n- test', openPluginsFolder: async () => {},
       scaffoldPlugin: async (id, f) => { scaffolds.push({ id, files: f }); return id; }, installExamples: async () => 2,

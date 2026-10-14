@@ -7,8 +7,8 @@ import * as path from 'node:path';
  * имя = sha256 + расширение. Одинаковые файлы хранятся один раз, а ссылки в документах
  * ("asset:<имя>") не ломаются при копировании, экспорте и восстановлении из резервной копии.
  */
-export const ASSET_ID_RE = /^[a-f0-9]{64}\.(png|jpg|webp|gif)$/;
-export const ASSET_REF_RE = /asset:([a-f0-9]{64}\.(?:png|jpg|webp|gif))/g;
+import { ASSET_ID_RE, ASSET_REF_RE } from '../../core/assetRef';
+export { ASSET_ID_RE, ASSET_REF_RE };
 export const MAX_ASSET_BYTES = 10 * 1024 * 1024;
 
 export class AssetError extends Error {

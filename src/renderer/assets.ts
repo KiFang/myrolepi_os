@@ -1,8 +1,9 @@
-/** Работа с файлами проекта: ссылки "asset:<имя>" в документах превращаются в адреса для показа. */
-export const ASSET_REF = /^asset:([a-f0-9]{64}\.(?:png|jpg|webp|gif))$/;
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+import { collectAssetRefs, isAssetRef } from "../core";
 
-export const isAssetRef = (v: unknown): v is string => typeof v === "string" && ASSET_REF.test(v);
+/** Работа с файлами проекта: ссылки "asset:<имя>" в документах превращаются в адреса для показа. */
+export { collectAssetRefs, isAssetRef };
+const ASSET_REF = /^asset:([a-f0-9]{64}\.(?:png|jpg|webp|gif))$/;
+export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 /** Адрес для <img> и CSS: asset:… → rolepi-asset://…; обычные адреса и data: проходят как есть. */
 export function resolveSrc(src?: string): string | undefined {
@@ -28,9 +29,4 @@ export async function putImage(file: File): Promise<PutResult> {
   const r = await window.rpi.assets.put(bytes);
   if (r.ok) return { ok: true, ref: `asset:${r.id}` };
   return { ok: false, code: r.code === "too-big" || r.code === "bad-type" ? r.code : "failed" };
-}
-
-/** Все ссылки на файлы в любом JSON-значении. */
-export function collectAssetRefs(value: unknown): string[] {
-  return [...new Set([...JSON.stringify(value ?? null).matchAll(/asset:([a-f0-9]{64}\.(?:png|jpg|webp|gif))/g)].map((m) => m[1]))];
 }

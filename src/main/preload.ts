@@ -22,6 +22,16 @@ const api = {
     gc: (extraRefs: string[]) => ipcRenderer.invoke('assets:gc', extraRefs) as Promise<{ deleted: number; bytes: number; kept: number }>,
     url: (id: string) => `rolepi-asset://${id}`,
   },
+  /** Ключ автора для подписи защищённых систем. */
+  keys: {
+    author: () => ipcRenderer.invoke('keys:author') as Promise<{ publicKey: string; keyId: string; name?: string } | null>,
+    ensure: (name?: string) => ipcRenderer.invoke('keys:ensure', name) as Promise<{ publicKey: string; keyId: string; name?: string }>,
+    setName: (name: string) => ipcRenderer.invoke('keys:setName', name) as Promise<{ publicKey: string; keyId: string; name?: string } | null>,
+    sign: (payload: string) => ipcRenderer.invoke('keys:sign', payload) as Promise<string>,
+    verify: (publicKey: string, payload: string, signature: string) => ipcRenderer.invoke('keys:verify', publicKey, payload, signature) as Promise<boolean>,
+    export: () => ipcRenderer.invoke('keys:export') as Promise<string | null>,
+    import: (text: string) => ipcRenderer.invoke('keys:import', text) as Promise<{ publicKey: string; keyId: string; name?: string } | null>,
+  },
   backups: {
     list: () => ipcRenderer.invoke('backups:list') as Promise<BackupManifest[]>,
     create: (reason?: 'manual' | 'before-migration' | 'before-import', note?: string) => ipcRenderer.invoke('backups:create', reason ?? 'manual', note) as Promise<BackupManifest>,

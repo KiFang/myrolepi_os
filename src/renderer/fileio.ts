@@ -20,3 +20,18 @@ export function detectDocument(data: unknown): Imported {
   if (Array.isArray(o.entities) && Array.isArray(o.notes)) return { kind: "campaign", data };
   return null;
 }
+
+/** Сохранить двоичные данные (например, пакет .rolepi) через диалог загрузки. */
+export function downloadBytes(filename: string, bytes: Uint8Array, type = "application/octet-stream"): void {
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+}
+
+export function downloadText(filename: string, text: string, type = "application/json"): void {
+  downloadBytes(filename, new TextEncoder().encode(text), type);
+}
