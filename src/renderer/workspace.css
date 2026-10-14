@@ -1179,9 +1179,7 @@ button[aria-pressed=true].ws-icon-button { color: var(--accent); }
 
 /* выпадающие панели, готовые параметры, бестиарий */
 .popover { position: relative; display: inline-block; }
-.popover-panel { position: absolute; top: calc(100% + 6px); z-index: 30; width: min(420px, 90vw); max-height: min(60vh, 520px); overflow: auto; padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); animation: rp-grow 0.14s ease both; transform-origin: top; }
-.popover-panel.right { right: 0; }
-.popover-panel.left { left: 0; }
+.popover-panel { position: fixed; z-index: 60; width: min(420px, calc(100vw - 16px)); overflow: auto; padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); animation: rp-grow 0.14s ease both; transform-origin: top; }
 .preset-groups { display: flex; flex-direction: column; gap: 10px; margin: 8px 0; }
 .preset-group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
 .preset-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; cursor: pointer; }
@@ -1207,3 +1205,10 @@ button[aria-pressed=true].ws-icon-button { color: var(--accent); }
 .simple-hint { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 14px 16px; margin: 14px 0; max-width: 620px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--panel2); }
 .simple-hint > div { flex: 1; min-width: 220px; }
 .simple-hint b { display: block; margin-bottom: 2px; }
+
+.ws-document-heading { flex-wrap: wrap; gap: 10px 16px; }
+.ws-document-heading > .ws-inline { flex: none; }
+.ws-document-heading button, .ws-section-heading button, .popover > button { white-space: nowrap; }
+
+.scene-head .ws-control { flex: 1 1 160px; }
+.scene-head button { white-space: nowrap; }

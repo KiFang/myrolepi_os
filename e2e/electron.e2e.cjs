@@ -98,7 +98,7 @@ const ROOT = path.resolve(__dirname, '..');
     if (r.bad.status !== 416) throw new Error('за пределами: ' + JSON.stringify(r.bad));
     for (const k of ['up', 'other', 'notAudio']) if (r[k].status !== 404) throw new Error(k + ': ' + JSON.stringify(r[k]));
   });
-  await step('«О программе»: версия и changelog', async () => { await page.getByRole('button', { name: 'О программе', exact: true }).click(); await page.waitForSelector('text=Версия 0.3.0'); if (!/0\.3\.0/.test(await page.locator('.ws-page pre').innerText())) throw new Error('нет changelog'); });
+  await step('«О программе»: версия и changelog', async () => { await page.getByRole('button', { name: 'О программе', exact: true }).click(); await page.waitForSelector('text=Версия 0.4.0'); if (!/0\.4\.0/.test(await page.locator('.ws-page pre').innerText())) throw new Error('нет changelog'); });
   if (errors.length) { failed++; console.log('  FAIL ошибки страницы:', errors.join('; ')); }
   await browser.close(); app.kill('SIGTERM');
   fs.rmSync(tmp, { recursive: true, force: true });

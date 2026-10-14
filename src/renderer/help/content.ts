@@ -159,6 +159,20 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
+    id: "templates", icon: "wand", title: l("Шаблоны, бестиарий и простой режим", "Templates, bestiary and simple mode"),
+    summary: l("Как быстро собрать систему и не бояться формул.", "How to build a system fast without fearing formulas."),
+    keywords: "template preset bestiary simple mode шаблон готовые параметры бестиарий простой режим",
+    blocks: [
+      { t: "h", text: l("Готовые параметры и шаблоны", "Ready-made parameters and templates") },
+      { t: "p", text: l("В системе у каждого типа есть кнопка «Готовые параметры»: отметьте характеристики, здоровье, броню, ману и другое — они появятся в таблице и на карточке. «Из шаблона» создаёт целый тип: персонаж, существо, корабль, город, предмет, место или фракцию — с параметрами, карточкой и кнопками действий.", "Each type in a system has a Ready-made parameters button: tick ability scores, health, armor, mana and more — they appear in the table and on the card. From a template creates a whole type: character, creature, ship, town, item, location or faction — with parameters, a card and action buttons.") },
+      { t: "h", text: l("Бестиарий", "Bestiary") },
+      { t: "p", text: l("Вкладка «Бестиарий» у типа хранит заготовки: волка, стражника, корабль-разведчик. В кампании на вкладке «Герои» выберите «Из бестиария…» — заготовка копируется в кампанию, и её можно менять, не трогая оригинал.", "A type's Bestiary tab keeps ready-made entries: a wolf, a guard, a scout ship. In a campaign, on the Heroes tab, choose “From bestiary…” — the entry is copied into the campaign and can be changed without touching the original.") },
+      { t: "h", text: l("Простой режим", "Simple mode") },
+      { t: "p", text: l("Переключатель в шапке («Простой режим») прячет формулы, «имена в формулах», действия, страницы «Формулы», «Плагины» и «Данные». Инициатива выбирается из списка. Всё вернётся, когда вы выключите режим.", "The switch in the header (Simple mode) hides formulas, formula names, actions and the Formulas, Plugins and Data pages. Initiative is picked from a list. Everything returns when you turn the mode off.") },
+      { t: "tip", text: l("Советы показываются по месту и закрываются кнопкой «Понятно». Вернуть их можно в статье «С чего начать».", "Tips appear in context and close with Got it. You can bring them back in the Getting started article.") },
+    ],
+  },
+  {
     id: "scenes", icon: "scene", title: l("Сцены, карты и звук", "Scenes, maps and sound"),
     summary: l("Сцена соединяет карту, участников, музыку и звуки.", "A scene joins a map, participants, music and sounds."),
     keywords: "scene map marker music sound audio сцена карта метка музыка звук",

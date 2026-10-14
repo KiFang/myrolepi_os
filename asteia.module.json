@@ -1,7 +1,7 @@
 {
   "id": "myrolepi-os",
   "name": { "ru": "Rolepi — конструктор настольных ролевых игр", "en": "Rolepi — tabletop RPG builder" },
-  "version": "0.3.0",
+  "version": "0.4.0",
   "launcher": "Asteia Alltools",
   "platforms": ["win", "mac", "linux"],
   "updateFeed": "latest.json (формат UpdateFeed в src/core/updates.ts)",

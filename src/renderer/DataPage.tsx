@@ -11,7 +11,7 @@ import { useToast } from "./toasts";
 const fmtBytes = (n: number) => (n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 
 /** Раздел «Данные»: резервные копии и файлы проекта. */
-export function DataPage() {
+export default function DataPage() {
   const { t, lang } = useLang();
   const notify = useToast();
   const [backups, setBackups] = useState<BackupManifest[]>([]);

@@ -644,3 +644,9 @@ registerLocale('en', {
   'simple.initiative': 'Initiative', 'simple.initiativeNone': 'No roll', 'simple.initiativeD20': 'Roll d20', 'simple.initiativePlus': 'd20 + {name}', 'simple.initiativeCustom': 'Custom formula: {f}', 'simple.initiativeHint': 'Who goes first in combat.',
   'simple.defaultValue': 'Default value',
 });
+
+registerLocale('ru', { 'loading': 'Загрузка…' });
+registerLocale('en', { 'loading': 'Loading…' });
+
+registerLocale('ru', { 'bestiary.discover': 'Совет: в системе можно завести бестиарий — заготовки существ и объектов (вкладка «Бестиарий» у типа). Тогда здесь появится список «Из бестиария…».' });
+registerLocale('en', { 'bestiary.discover': 'Tip: a system can have a bestiary — ready-made creatures and objects (the Bestiary tab of a type). Then a “From bestiary…” list appears here.' });

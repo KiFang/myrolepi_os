@@ -1,4 +1,4 @@
-import { StrictMode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { StrictMode, Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { availableLocales, evaluate, loc, setCoreLang, t as translate } from "../core";
 import type { CommandContext } from "../core";
@@ -6,21 +6,28 @@ import { CommandPalette } from "./CommandPalette";
 import type { PaletteCommand } from "./CommandPalette";
 import { Icon } from "./icons";
 import { HelpContext, LangContext, rememberLang, savedLang } from "./lang";
-import { AudioPage, MiniPlayer } from "./AudioPage";
+import { MiniPlayer } from "./audio/MiniPlayer";
 import { useAudioLibrary } from "./audio/useAudio";
-import { DataPage } from "./DataPage";
 import { PanelFrame, PanelsContext } from "./PanelFrame";
 import { SimpleContext, rememberSimple, savedSimple } from "./simple";
 import { currentProjectApi } from "./projectBridge";
 import { newId } from "./workspace-model";
-import { Plugins } from "./PluginsPage";
 import "./strings";
 import { THEMES, fromPlugin, rememberTheme, savedTheme } from "./themes";
 import { ToastProvider, useToast } from "./toasts";
-import { About, Dice, Formulas, Help } from "./tools";
+
 import { usePlugins } from "./usePlugins";
 import { Workspace } from "./workspace/Workspace";
 import "./styles.css";
+
+// страницы, которые нужны не сразу, подгружаются при первом открытии: приложение стартует быстрее
+const AudioPage = lazy(() => import("./AudioPage"));
+const DataPage = lazy(() => import("./DataPage"));
+const Plugins = lazy(() => import("./PluginsPage"));
+const Help = lazy(() => import("./help/HelpPage").then((m) => ({ default: m.HelpPage })));
+const Dice = lazy(() => import("./tools").then((m) => ({ default: m.Dice })));
+const Formulas = lazy(() => import("./tools").then((m) => ({ default: m.Formulas })));
+const About = lazy(() => import("./tools").then((m) => ({ default: m.About })));
 
 type Page = "workspace" | "panels" | "audio" | "dice" | "formulas" | "plugins" | "data" | "help" | "about";
 const PAGES: Page[] = ["workspace", "panels", "audio", "dice", "formulas", "plugins", "data", "help", "about"];
@@ -81,11 +88,14 @@ function Shell() {
     openPage: (p) => setPage(p),
   }), [lang, notify, reg]);
 
+  // панели плагинов: «страницы» живут в разделе «Панели», «справа» и «внизу» — в студии
+  const panelItems = useMemo(() => plugins.plugins.filter((p) => p.state === "active").flatMap((p) => p.panels.map((panel) => ({ plugin: p, panel }))), [plugins.plugins]);
+  const pagePanels = panelItems.filter((x) => x.panel.placement === "page");
   const commands = useMemo<PaletteCommand[]>(() => {
     const go = (p: Page, icon: string): PaletteCommand => ({ id: `go:${p}`, title: `${t("palette.go")}: ${p === "workspace" ? t("ws.tabWorkspace") : t(`nav.${p}`)}`, group: t("palette.groupGo"), icon, keywords: p, run: () => setPage(p) });
     const emit = (name: string) => () => { setPage("workspace"); setTimeout(() => window.dispatchEvent(new CustomEvent("rolepi:command", { detail: name })), 30); };
     const list: PaletteCommand[] = [
-      ...PAGES.map((p) => go(p, PAGE_ICONS[p])),
+      ...PAGES.filter((p) => (p !== "panels" || pagePanels.length > 0) && !(simple && hiddenInSimple.includes(p))).map((p) => go(p, PAGE_ICONS[p])),
       { id: "new-system", title: t("ws.newSystem"), group: t("palette.groupStudio"), icon: "system", keywords: "new create система создать", run: emit("new-system") },
       { id: "new-campaign", title: t("ws.newCampaign"), group: t("palette.groupStudio"), icon: "campaign", keywords: "new create кампания создать", run: emit("new-campaign") },
       { id: "save", title: t("ws.save"), group: t("palette.groupStudio"), icon: "save", keywords: "save сохранить", run: emit("save") },
@@ -97,11 +107,8 @@ function Shell() {
     ];
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, themes, reg, plugins.plugins, ctxForPlugins]);
+  }, [lang, themes, reg, plugins.plugins, ctxForPlugins, simple, pagePanels.length]);
 
-  // панели плагинов: «страницы» живут в разделе «Панели», «справа» и «внизу» — в студии
-  const panelItems = useMemo(() => plugins.plugins.filter((p) => p.state === "active").flatMap((p) => p.panels.map((panel) => ({ plugin: p, panel }))), [plugins.plugins]);
-  const pagePanels = panelItems.filter((x) => x.panel.placement === "page");
   const live = useRef({ lang, notify, reg, version: plugins.version, ctxForPlugins, panelStorage: plugins.panelStorage });
   live.current = { lang, notify, reg, version: plugins.version, ctxForPlugins, panelStorage: plugins.panelStorage };
   const panelsCtx = useMemo(() => ({
@@ -174,6 +181,7 @@ function Shell() {
         {page !== "workspace" && page !== "panels" && (
           <main className="ws-page" key={page}>
             <div className={"ws-page-inner" + (page === "help" ? " wide" : "")}>
+              <Suspense fallback={<p className="muted ws-loading">{t("loading")}</p>}>
               {page === "dice" && <Dice reg={reg} />}
               {page === "formulas" && <Formulas reg={reg} />}
               {page === "plugins" && <Plugins api={plugins} />}
@@ -181,6 +189,7 @@ function Shell() {
               {page === "data" && <DataPage />}
               {page === "help" && <Help reg={reg} target={helpTarget} onOpenFormula={(f) => { sessionStorage.setItem("rpi.formula", f); setPage("formulas"); }} />}
               {page === "about" && <About version={plugins.version} />}
+              </Suspense>
             </div>
           </main>
         )}

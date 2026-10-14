@@ -139,7 +139,7 @@ Types: `number`, `text`, `boolean`, `select`. The app draws the form on the plug
 ## 7. Game system format (for `registerSystem`)
 
 The full type description is in the appendix at the end of the file. In short:
-- **System** → `entityTypes` (object types), `macros` (your own formula functions: `{ name, params, formula }`).
+- **System** → `entityTypes` (object types), `macros` (your own formula functions: `{ name, params, formula }`), `bestiary` (optional: ready-made creatures `{ id, typeId, name, values, notes? }` that the game master adds to a campaign).
 - **Type** → `fields` (parameters), `actions`, `cardViews` (card views), `initiative` (initiative formula).
 - **Parameter** (`field`): `id` (the name in formulas), `label`, `type` (`number text longtext boolean select resource list reference image`), `default`, `formula` (if set the value is calculated automatically), `min`/`max`, `options` (for `select`).
 - **Action**: `formula` (the roll), `inputs` (what to ask), `effects` (`{ field, op: "add"|"set", formula }` — in an effect formula `result` is the roll total).
@@ -375,6 +375,8 @@ interface PluginManifest {
 interface GameSystem {
   schema: 1; id: string; name: LocalizedString; version: string; description?: LocalizedString;
   macros?: { name: string; params: string[]; formula: string }[];
+  /** бестиарий: заготовки существ и объектов, которые мастер добавляет в кампанию одним нажатием */
+  bestiary?: { id: string; typeId: string; name: string; values: Record<string, unknown>; notes?: string }[];
   entityTypes: Array<{
     id: string; label: LocalizedString;
     category: "character" | "creature" | "vehicle" | "structure" | "settlement" | "item" | "location" | "faction" | "custom";

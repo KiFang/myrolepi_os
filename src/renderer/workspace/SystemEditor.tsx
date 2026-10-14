@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import type { ActionDef, CardBlock, CardView, EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from "../../core";
 import { useLang } from "../lang";
 import { useSimple } from "../simple";
@@ -7,7 +7,8 @@ import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { both, fieldIdProblem, newField, newId, newType, preview, rename } from "../workspace-model";
 import { ActionsEditor } from "./ActionsEditor";
-import { CardDesigner, CardInspector } from "./CardDesigner";
+const CardDesigner = lazy(() => import("./CardDesigner").then((m) => ({ default: m.CardDesigner })));
+const CardInspector = lazy(() => import("./CardDesigner").then((m) => ({ default: m.CardInspector })));
 import { Icon } from "../icons";
 import { CommitInput, HelpLink, Input, JsonInput } from "./inputs";
 import { appendToView, uniqueTypeId } from "../templates";
@@ -111,7 +112,7 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
       setMode("fields");
     },
     removeType: () => {
-      updateSystem((s) => ({ ...s, entityTypes: s.entityTypes.filter((_, i) => i !== typeIndex) }));
+      updateSystem((s) => ({ ...s, entityTypes: s.entityTypes.filter((_, i) => i !== typeIndex), bestiary: s.bestiary?.filter((b) => b.typeId !== type?.id) }));
       setFieldIndex(null);
     },
     removeField: () => {
@@ -158,7 +159,7 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
         </div>
       )}
       {type && <TipBar context={`system.${mode}`} />}
-      {type && mode === "cards" && <CardDesigner ed={ed} registry={ed.registry} />}
+      {type && mode === "cards" && <Suspense fallback={<p className="muted">{t("loading")}</p>}><CardDesigner ed={ed} registry={ed.registry} /></Suspense>}
       {type && mode === "actions" && <ActionsEditor ed={ed} />}
       {type && mode === "bestiary" && <BestiaryEditor ed={ed} />}
       {type && mode === "fields" && (
@@ -238,7 +239,7 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
           <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteTypeConfirm", { name: label(type.label) })) && ed.removeType()}><Icon name="trash" />{t("ws.deleteType")}</button>
         </>
       )}
-      {mode === "cards" ? <CardInspector ed={ed} /> : mode === "actions" || mode === "bestiary" ? null : field ? (
+      {mode === "cards" ? <Suspense fallback={null}><CardInspector ed={ed} /></Suspense> : mode === "actions" || mode === "bestiary" ? null : field ? (
         <>
           <div className="ws-property-group">{t("ws.groupField")}</div>
           <Input title={t("ws.fieldName")} value={label(field.label)} onChange={(v) => ed.updateField({ label: rename(field.label, v, lang) })} />

@@ -84,7 +84,7 @@ function PluginCard({ p, api }: { p: PluginInfo; api: PluginsApi }) {
   );
 }
 
-export function Plugins({ api }: { api: PluginsApi }) {
+export default function Plugins({ api }: { api: PluginsApi }) {
   const { t, lang } = useLang();
   const [idea, setIdea] = useState("");
   const [copied, setCopied] = useState(false);

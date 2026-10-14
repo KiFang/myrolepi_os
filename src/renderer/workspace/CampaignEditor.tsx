@@ -181,6 +181,7 @@ function Heroes({ ed }: { ed: CampaignEditorState }) {
         ))}
         {!campaign.entities.length && <div className="ws-empty">{system?.entityTypes.length ? t("ws.noEntities") : t("ws.noTypesForCampaign")}</div>}
       </div>
+      {!!system?.entityTypes.length && !system.bestiary?.length && <p className="ws-hint ws-hint-tight">{t("bestiary.discover")}</p>}
       {entity && (
         <div className="ws-sheet">
           <div className="ws-sheet-head">
