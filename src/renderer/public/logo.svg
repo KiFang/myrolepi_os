@@ -1,24 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Rolepi">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#27346b"/>
-      <stop offset="1" stop-color="#0d1226"/>
-    </linearGradient>
-    <linearGradient id="die" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#b6caff"/>
-      <stop offset="1" stop-color="#5b7fe6"/>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="48" y1="16" x2="208" y2="240">
+      <stop offset="0" stop-color="#9db8ff"/>
+      <stop offset="1" stop-color="#4f72e0"/>
     </linearGradient>
   </defs>
-  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/>
-  <rect x="8.5" y="8.5" width="239" height="239" rx="55.5" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
-  <polygon points="128,40 203,84 203,172 128,216 53,172 53,84" fill="url(#die)" fill-opacity="0.16" stroke="url(#die)" stroke-width="9" stroke-linejoin="round"/>
-  <g fill="none" stroke="url(#die)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.85">
-    <polygon points="128,70 182,162 74,162"/>
-    <path d="M128 40V70M74 162L53 172M74 162L53 84M182 162L203 172M182 162L203 84M74 162L128 216M182 162L128 216"/>
+  <polygon points="128,16 225,72 225,184 128,240 31,184 31,72" fill="url(#g)" fill-opacity="0.16" stroke="url(#g)" stroke-width="10" stroke-linejoin="round"/>
+  <g fill="none" stroke="url(#g)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.9">
+    <polygon points="128,54 197,171 59,171"/>
+    <path d="M128 16V54M59 171L31 184M59 171L31 72M197 171L225 184M197 171L225 72M59 171L128 240M197 171L128 240"/>
   </g>
-  <g fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M107 112H149"/>
-    <path d="M118 112V142"/>
-    <path d="M139 112V138Q139 144 145 144"/>
+  <g fill="none" stroke="url(#g)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M101 108H155"/>
+    <path d="M115 108V146"/>
+    <path d="M142 108V141Q142 148 150 148"/>
   </g>
 </svg>

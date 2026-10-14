@@ -2,17 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import type { ActionDef, CardBlock, CardView, EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from "../../core";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
-import { newField, newId, newType, preview, rename, both } from "../workspace-model";
+import { both, fieldIdProblem, newField, newId, newType, preview, rename } from "../workspace-model";
 import { ActionsEditor } from "./ActionsEditor";
 import { CardDesigner, CardInspector } from "./CardDesigner";
 import { Icon } from "../icons";
-import { Input, JsonInput } from "./inputs";
+import { CommitInput, HelpLink, Input, JsonInput } from "./inputs";
 
 const CATEGORIES: EntityCategory[] = ["character", "creature", "vehicle", "structure", "settlement", "item", "location", "faction", "custom"];
 const FIELD_TYPES: FieldType[] = ["number", "text", "longtext", "boolean", "select", "resource", "list", "reference", "image"];
 
 /** Состояние редактора выбранной системы: какой тип и поле открыты, правки и предпросмотр. */
-export function useSystemEditor(system: GameSystem | undefined, updateSystem: (fn: (s: GameSystem) => GameSystem) => void, registry: PluginRegistry) {
+export function useSystemEditor(system: GameSystem | undefined, updateSystem: (fn: (s: GameSystem) => GameSystem) => void, registry: PluginRegistry, onRenameField: (typeId: string, from: string, to: string) => void) {
   const [typeIndex, setTypeIndex] = useState(0);
   const [fieldIndex, setFieldIndex] = useState<number | null>(null);
   const [mode, setMode] = useState<"fields" | "cards" | "actions">("fields");
@@ -61,6 +61,8 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
       setBlockId(b.id);
     },
     removeBlock: () => { if (blockId) { updateView((v) => ({ ...v, blocks: v.blocks.filter((b) => b.id !== blockId) })); setBlockId(null); } },
+    /** Переименование «имени в формулах» с обновлением всех ссылок (одной правкой, её можно отменить). */
+    renameField: (to: string) => { if (type && field) onRenameField(type.id, field.id, to); },
     updateActions: (fn: (a: ActionDef[]) => ActionDef[]) => updateType((t) => ({ ...t, actions: fn(t.actions ?? []) })),
     setTypeIndex: (i: number) => { setTypeIndex(i); setFieldIndex(null); setViewIndex(0); setBlockId(null); },
     setFieldIndex,
@@ -183,7 +185,7 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
         <>
           <div className="ws-property-group">{t("ws.groupField")}</div>
           <Input title={t("ws.fieldName")} value={label(field.label)} onChange={(v) => ed.updateField({ label: rename(field.label, v, lang) })} />
-          <Input title={t("ws.fieldId")} value={field.id} hint={t("ws.fieldIdHint")} onChange={(id) => ed.updateField({ id })} />
+          <CommitInput title={t("ws.fieldId")} value={field.id} hint={t("ws.fieldIdHint")} validate={(next) => (type ? fieldIdProblem(type, field.id, next, lang) : "")} onCommit={ed.renameField} />
           <label className="ws-control">
             <span>{t("ws.fieldType")}</span>
             <select
@@ -202,7 +204,7 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
           </label>
           <Input title={t("ws.group")} value={field.group ?? ""} placeholder={t("ws.groupPlaceholder")} onChange={(group) => ed.updateField({ group })} />
           <Input title={t("ws.formula")} value={field.formula ?? ""} placeholder={t("ws.formulaPlaceholder")} onChange={(formula) => ed.updateField({ formula: formula || undefined })} />
-          <p className="ws-hint ws-hint-tight">{t("ws.formulaHint")}</p>
+          <p className="ws-hint ws-hint-tight">{t("ws.formulaHint")} <HelpLink topic="formulas" /></p>
           <JsonInput title={t("ws.default")} value={field.default} onChange={(value) => ed.updateField({ default: value })} />
           {(field.type === "number" || field.type === "resource") && (
             <div className="ws-inline">

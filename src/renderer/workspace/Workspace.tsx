@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Campaign, GameSystem } from "../../core";
 import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
+import { useToast } from "../toasts";
 import type { PluginRegistry } from "../plugin-host";
 import { downloadJson, detectDocument } from "../fileio";
-import { both, copyOf, libraryProblem, newId, newSystem, systemIssues } from "../workspace-model";
+import { both, copyOf, libraryProblem, newId, newSystem, renameFieldInCampaign, renameFieldInSystem, systemIssues } from "../workspace-model";
 import { CampaignCanvas, CampaignInspector, useCampaignEditor } from "./CampaignEditor";
 import { SystemCanvas, SystemInspector, useSystemEditor } from "./SystemEditor";
 import type { RollEntry } from "../rolls";
@@ -17,6 +18,7 @@ const same = (a: Selection, b: Selection) => a.kind === b.kind && a.id === b.id;
 
 export function Workspace({ registry, active }: { registry: PluginRegistry; active: boolean }) {
   const { t, label, lang } = useLang();
+  const notify = useToast();
   const lib = useLibrary(active);
   const { project, change } = lib;
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -34,7 +36,14 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
     change((p) => ({ ...p, systems: p.systems.map((s) => (s.id === system?.id ? fn(s) : s)) }));
   const updateCampaign = (fn: (c: Campaign) => Campaign) =>
     change((p) => ({ ...p, campaigns: p.campaigns.map((c) => (c.id === campaign?.id ? fn(c) : c)) }));
-  const sys = useSystemEditor(system, updateSystem, registry);
+  // переименование параметра: система и все кампании на ней обновляются одним шагом
+  const renameField = (typeId: string, from: string, to: string) =>
+    change((p) => ({
+      ...p,
+      systems: p.systems.map((s) => (s.id === system?.id ? renameFieldInSystem(s, typeId, from, to) : s)),
+      campaigns: p.campaigns.map((c) => (c.systemId === system?.id ? renameFieldInCampaign(c, typeId, from, to) : c)),
+    }));
+  const sys = useSystemEditor(system, updateSystem, registry, renameField);
   const cam = useCampaignEditor(campaign, linked, updateCampaign, registry, (entry) => {
     setRolls((r) => [{ ...entry, id: newId("roll"), time: Date.now() }, ...r].slice(0, 100));
     setBottomTab("rolls");
@@ -107,6 +116,26 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
     if (system) downloadJson(label(system.name) || "system", system);
     else if (campaign) downloadJson(campaign.name || "campaign", campaign);
   };
+  // команды из палитры (Ctrl+K) приходят событием: новая система, кампания, сохранить, импорт
+  const commandsRef = useRef({ addSystem, addCampaign, save: lib.save, pick: () => fileInput.current?.click() });
+  commandsRef.current = { addSystem, addCampaign, save: lib.save, pick: () => fileInput.current?.click() };
+  useEffect(() => {
+    const on = (e: Event) => {
+      const c = (e as CustomEvent<string>).detail;
+      const h = commandsRef.current;
+      if (c === "new-system") h.addSystem();
+      else if (c === "new-campaign") h.addCampaign();
+      else if (c === "save") void h.save();
+      else if (c === "import") h.pick();
+    };
+    window.addEventListener("rolepi:command", on);
+    return () => window.removeEventListener("rolepi:command", on);
+  }, []);
+  // итог важных действий — коротким уведомлением
+  useEffect(() => {
+    if (["ws.saved", "ws.imported", "ws.importFailed", "ws.saveError", "ws.fixInvalid", "ws.createSystemFirst"].includes(lib.notice.key)) notify(t(lib.notice.key, lib.notice.params));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lib.notice]);
   const undo = () => { if (lib.undo()) sys.setFieldIndex(null); };
   const redo = () => { if (lib.redo()) sys.setFieldIndex(null); };
 
@@ -184,9 +213,9 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
                 <p>{t("ws.libraryKept")}</p>
               </div>
             ) : system ? (
-              <SystemCanvas ed={sys} />
+              <div className="ws-anim" key={`s:${system.id}:${sys.mode}`}><SystemCanvas ed={sys} /></div>
             ) : campaign ? (
-              <CampaignCanvas ed={cam} />
+              <div className="ws-anim" key={`c:${campaign.id}:${cam.tab}`}><CampaignCanvas ed={cam} /></div>
             ) : (
               <div className="ws-welcome">
                 <img className="ws-hero-logo" src="./logo.svg" alt="" width={72} height={72} />

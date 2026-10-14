@@ -1,4 +1,4 @@
-import { computeEntity, loc, t, validateSystem } from "../core";
+import { computeEntity, loc, renameVariable, t, validateSystem } from "../core";
 import type { Campaign, Entity, EntityType, FieldDef, GameSystem, LocalizedString } from "../core";
 import type { PluginRegistry } from "./plugin-host";
 import "./strings";
@@ -101,4 +101,56 @@ export function libraryProblem(systems: unknown[], campaigns: unknown[]): boolea
     arrayOf(c.entities, (e) => isObj(e) && typeof e.id === "string" && isObj(e.values)) &&
     arrayOf(c.notes, (n) => isObj(n) && typeof n.id === "string" && typeof n.title === "string" && typeof n.body === "string");
   return !systems.every(okSystem) || !campaigns.every(okCampaign);
+}
+
+const VALID_ID = /^[\p{L}_][\p{L}\p{N}_]*$/u;
+
+/** Почему новое имя в формулах нельзя принять (или пустая строка, если можно). */
+export function fieldIdProblem(type: EntityType, current: string, next: string, lang = "ru"): string {
+  if (next === current) return "";
+  if (!VALID_ID.test(next)) return t("ws.invalidId", lang);
+  if (type.fields.some((f) => f.id === next)) return t("ws.idTaken", lang, { id: next });
+  return "";
+}
+
+/** Переименовывает параметр и все ссылки на него внутри системы: формулы, действия, инициатива, блоки карточек. */
+export function renameFieldInSystem(system: GameSystem, typeId: string, from: string, to: string): GameSystem {
+  const fx = (f?: string) => (f ? renameVariable(f, from, to) : f);
+  const swap = (id?: string) => (id === from ? to : id);
+  return {
+    ...system,
+    entityTypes: system.entityTypes.map((type) => {
+      if (type.id !== typeId) return type;
+      return {
+        ...type,
+        initiative: fx(type.initiative),
+        fields: type.fields.map((f) => ({ ...f, id: swap(f.id) as string, formula: fx(f.formula) })),
+        actions: type.actions?.map((a) => ({
+          ...a,
+          formula: fx(a.formula) as string,
+          effects: a.effects?.map((e) => ({ ...e, field: swap(e.field) as string, formula: fx(e.formula) as string })),
+        })),
+        cardViews: type.cardViews.map((v) => ({
+          ...v,
+          blocks: v.blocks.map((b) => ({
+            ...b,
+            field: swap(b.field),
+            props: b.props && typeof b.props.maxField === "string" ? { ...b.props, maxField: swap(b.props.maxField as string) } : b.props,
+          })),
+        })),
+      };
+    }),
+  };
+}
+
+/** Переносит значения героев этого типа на новое имя параметра. */
+export function renameFieldInCampaign(campaign: Campaign, typeId: string, from: string, to: string): Campaign {
+  return {
+    ...campaign,
+    entities: campaign.entities.map((e) => {
+      if (e.typeId !== typeId || !(from in e.values)) return e;
+      const { [from]: moved, ...rest } = e.values;
+      return { ...e, values: { ...rest, [to]: moved } };
+    }),
+  };
 }

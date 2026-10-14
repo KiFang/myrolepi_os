@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { adjustResource, computeEntity, evaluate, loc, parseDice, rollDice, rollInitiative, runAction, seededRng, setCoreLang, turnOrder, t, validateSystem, validateManifest, GameSystem } from '../src/core';
+import { adjustResource, computeEntity, evaluate, loc, parseDice, rollDice, renameVariable, rollInitiative, runAction, seededRng, setCoreLang, turnOrder, t, validateSystem, validateManifest, GameSystem } from '../src/core';
 
 const rngOf = (...vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]; };
 
@@ -179,5 +179,16 @@ describe('resource adjustment', () => {
     expect(adjustResource(undefined, 4)).toBe(4);
     expect(adjustResource(2, -5, { min: 0 })).toBe(0);
     expect(adjustResource(2, 50, { min: 0, max: 10 })).toBe(10);
+  });
+});
+
+describe('renaming variables in formulas', () => {
+  it('renames only real references', () => {
+    expect(renameVariable('str * 2 + 1d6 + max(str, 3)', 'str', 'power')).toBe('power * 2 + 1d6 + max(power, 3)');
+    expect(renameVariable('@str + ship.hull + strong', 'ship', 'boat')).toBe('@str + boat.hull + strong');
+    expect(renameVariable('@str + 1', 'str', 'power')).toBe('@power + 1');
+    expect(renameVariable('"str" + str', 'str', 'x')).toBe('"str" + x');
+    expect(renameVariable('floor(floor)', 'floor', 'x')).toBe('floor(x)');
+    expect(renameVariable('1 +', 'a', 'b')).toBe('1 +');
   });
 });

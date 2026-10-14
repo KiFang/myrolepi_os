@@ -1,8 +1,38 @@
 {
   "id": "example-hello",
-  "name": { "ru": "Пример: формулы d100 и тема", "en": "Example: d100 formulas & theme" },
+  "name": {
+    "ru": "Пример: формулы d100 и тема",
+    "en": "Example: d100 formulas & theme"
+  },
   "version": "1.0.0",
   "apiVersion": 1,
   "main": "index.js",
-  "permissions": ["formulas", "locales"]
+  "permissions": [
+    "formulas",
+    "locales",
+    "storage"
+  ],
+  "author": "Rolepi",
+  "minAppVersion": "0.1.0",
+  "description": {
+    "ru": "Добавляет функцию формул percent(шанс).",
+    "en": "Adds the formula function percent(chance)."
+  },
+  "settings": [
+    {
+      "id": "bonus",
+      "type": "number",
+      "label": {
+        "ru": "Бонус к шансу",
+        "en": "Chance bonus"
+      },
+      "default": 0,
+      "min": -50,
+      "max": 50,
+      "description": {
+        "ru": "Прибавляется к шансу в percent().",
+        "en": "Added to the chance in percent()."
+      }
+    }
+  ]
 }

@@ -3,12 +3,13 @@ import type { DiceRoll } from "../core";
 import { evaluate } from "../core";
 import { Icon } from "./icons";
 import { useLang } from "./lang";
-import type { PluginRegistry, PluginStatus } from "./plugin-host";
+import { HelpPage } from "./help/HelpPage";
+import type { PluginRegistry } from "./plugin-host";
 
 const PRESETS = ["d20", "2d6", "4d6kh3", "d100", "3d8!", "4dF"];
 
 export function Dice({ reg }: { reg: PluginRegistry }) {
-  const { t, lang } = useLang();
+  const { t, lang, label } = useLang();
   const [expr, setExpr] = useState("d20");
   const [hist, setHist] = useState<{ expr: string; total: unknown; rolls: DiceRoll[] }[]>([]);
   const [error, setError] = useState("");
@@ -32,6 +33,9 @@ export function Dice({ reg }: { reg: PluginRegistry }) {
         {PRESETS.map((p) => (
           <button key={p} className="chip" onClick={() => { setExpr(p); roll(p); }}>{p}</button>
         ))}
+        {reg.dicePresets.map((d) => (
+          <button key={d.id} className="chip plugin" title={d.formula} onClick={() => { setExpr(d.formula); roll(d.formula); }}>{label(d.label)}</button>
+        ))}
       </div>
       {error && <p className="err">{error}</p>}
       <h3>{t("dice.history")}</h3>
@@ -42,7 +46,7 @@ export function Dice({ reg }: { reg: PluginRegistry }) {
           <div>
             <div className="muted">{h.expr}</div>
             {h.rolls.map((r, j) => (
-              <div key={j}>{r.rolls.map((v, k) => <span key={k} className={"die" + (r.kept.includes(k) ? "" : " drop")}>{v}</span>)}</div>
+              <div key={j}>{r.rolls.map((v, k) => <span key={k} className={"die" + (r.kept.includes(k) ? "" : " drop")} style={{ "--i": k } as React.CSSProperties}>{v}</span>)}</div>
             ))}
           </div>
         </div>
@@ -54,7 +58,11 @@ export function Dice({ reg }: { reg: PluginRegistry }) {
 
 export function Formulas({ reg }: { reg: PluginRegistry }) {
   const { t, lang } = useLang();
-  const [src, setSrc] = useState("2d6 + floor((str - 10) / 2)");
+  const [src, setSrc] = useState(() => {
+    // формула, присланная из справочника кнопкой «Попробовать»
+    try { const f = sessionStorage.getItem("rpi.formula"); if (f) { sessionStorage.removeItem("rpi.formula"); return f; } } catch { /* нет доступа к хранилищу */ }
+    return "2d6 + floor((str - 10) / 2)";
+  });
   const [scopeSrc, setScopeSrc] = useState('{ "str": 16 }');
   const out = useMemo(() => {
     try {
@@ -78,39 +86,8 @@ export function Formulas({ reg }: { reg: PluginRegistry }) {
   );
 }
 
-export function Plugins({ status }: { status: PluginStatus[] }) {
-  const { t } = useLang();
-  return (
-    <>
-      <h1><Icon name="plugin" size={24} />{t("plugins.title")}</h1>
-      <button className="ws-primary" onClick={() => window.rpi?.openPluginsFolder()}>{t("plugins.folder")}</button>
-      <p />
-      {!status.length && <p className="muted">{t("plugins.none")}</p>}
-      {status.map((p) => (
-        <div className="card" key={p.id}>
-          <b>{p.name}</b> <span className="muted">{p.id}</span>
-          <div className={p.ok ? "muted" : "err"}>{p.ok ? "✓" : p.errors.join("; ")}</div>
-        </div>
-      ))}
-    </>
-  );
-}
-
-export function Help() {
-  const { t } = useLang();
-  return (
-    <>
-      <h1><Icon name="help" size={24} />{t("help.title")}</h1>
-      <p className="muted">{t("help.intro")}</p>
-      {[1, 2, 5, 3, 4].map((n) => (
-        <div className="card" key={n}>
-          <b>{t(`help.q${n}`)}</b>
-          <p>{t(`help.a${n}`)}</p>
-        </div>
-      ))}
-      <p className="muted">{t("help.files")}</p>
-    </>
-  );
+export function Help({ reg, target, onOpenFormula }: { reg: PluginRegistry; target?: string; onOpenFormula: (formula: string) => void }) {
+  return <HelpPage reg={reg} target={target} onOpenFormula={onOpenFormula} />;
 }
 
 export function About({ version }: { version?: string }) {

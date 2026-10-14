@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Rolepi">
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="48" y1="16" x2="208" y2="240">
+      <stop offset="0" stop-color="#9db8ff"/>
+      <stop offset="1" stop-color="#4f72e0"/>
+    </linearGradient>
+  </defs>
+  <polygon points="128,16 225,72 225,184 128,240 31,184 31,72" fill="url(#g)" fill-opacity="0.16" stroke="url(#g)" stroke-width="10" stroke-linejoin="round"/>
+  <g fill="none" stroke="url(#g)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" stroke-opacity="0.9">
+    <polygon points="128,54 197,171 59,171"/>
+    <path d="M128 16V54M59 171L31 184M59 171L31 72M197 171L225 184M197 171L225 72M59 171L128 240M197 171L128 240"/>
+  </g>
+  <g fill="none" stroke="url(#g)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M101 108H155"/>
+    <path d="M115 108V146"/>
+    <path d="M142 108V141Q142 148 150 148"/>
+  </g>
+</svg>
