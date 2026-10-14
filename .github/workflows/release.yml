@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    # проверки на всех трёх системах ДО сборки: если что-то падает на Windows, релиз не публикуется наполовину
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,6 +25,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Browser e2e checks
+        if: matrix.os == 'ubuntu-latest'
         env:
           CHROME_PATH: /usr/bin/google-chrome
         run: npm run e2e
@@ -51,7 +57,7 @@ jobs:
   notes:
     # заметки релиза берутся из раздела этой версии в CHANGELOG.md — их показывает и лаунчер
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ always() && needs.build.result != 'skipped' && startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { registerAudioHandlers } from './ipc-audio';
 import { registerDataHandlers } from './ipc-data';
 import { arg, dataDir, launcherMode, pluginsDir, resDir } from './paths';
 import { registerPluginHandlers } from './plugins';
@@ -14,6 +15,7 @@ ipcMain.handle('changelog:read', () => {
   return fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
 });
 registerDataHandlers();
+registerAudioHandlers();
 registerPluginHandlers();
 
 function createWindow() {
@@ -30,6 +32,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      autoplayPolicy: 'no-user-gesture-required', // музыку сцены запускает приложение, а не нажатие на странице
     },
   });
   win.webContents.on('will-prevent-unload', (event) => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
 import type { CampaignEditorState } from "./CampaignEditor";
@@ -9,6 +9,7 @@ export function CampaignNotes({ ed }: { ed: CampaignEditorState }) {
   const { t } = useLang();
   const { campaign } = ed;
   const [query, setQuery] = useState("");
+  useEffect(() => { if (ed.focusNote) document.getElementById(`note-${ed.focusNote}`)?.scrollIntoView({ block: "center", behavior: "smooth" }); }, [ed.focusNote]);
   if (!campaign) return null;
   const q = query.trim().toLowerCase();
   const notes = campaign.notes.filter((n) => !q || n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
@@ -28,8 +29,8 @@ export function CampaignNotes({ ed }: { ed: CampaignEditorState }) {
       {notes.map((n) => {
         const linkable = [...campaign.entities.map((e) => ({ id: e.id, name: e.name })), ...campaign.notes.filter((x) => x.id !== n.id).map((x) => ({ id: x.id, name: x.title }))].filter((x) => !(n.links ?? []).includes(x.id));
         return (
-          <div className="ws-note" key={n.id}>
-            <button className="ws-icon-button ws-note-delete" title={t("ws.deleteNote")} aria-label={t("ws.deleteNote")} onClick={() => ed.updateCampaign((c) => ({ ...c, notes: c.notes.filter((x) => x.id !== n.id).map((x) => ({ ...x, links: x.links?.filter((l) => l !== n.id) })) }))}><Icon name="trash" /></button>
+          <div className={"ws-note" + (ed.focusNote === n.id ? " focus" : "")} id={`note-${n.id}`} key={n.id}>
+            <button className="ws-icon-button ws-note-delete" title={t("ws.deleteNote")} aria-label={t("ws.deleteNote")} onClick={() => ed.updateCampaign((c) => ({ ...c, notes: c.notes.filter((x) => x.id !== n.id).map((x) => ({ ...x, links: x.links?.filter((l) => l !== n.id) })), maps: c.maps?.map((m) => ({ ...m, markers: m.markers.map((k) => (k.noteId === n.id ? { ...k, noteId: undefined } : k)) })) }))}><Icon name="trash" /></button>
             <Input title={t("ws.noteTitle")} value={n.title} onChange={(title) => set(n.id, { title })} />
             <Input title={t("ws.noteBody")} value={n.body} multiline onChange={(body) => set(n.id, { body })} />
             <div className="ws-links">

@@ -109,7 +109,9 @@ export function libraryProblem(systems: unknown[], campaigns: unknown[]): boolea
   const okCampaign = (c: any) =>
     isObj(c) && schemaState(c) !== 'invalid' && !!c.id &&
     arrayOf(c.entities, (e) => isObj(e) && typeof e.id === "string" && isObj(e.values)) &&
-    arrayOf(c.notes, (n) => isObj(n) && typeof n.id === "string" && typeof n.title === "string" && typeof n.body === "string");
+    arrayOf(c.notes, (n) => isObj(n) && typeof n.id === "string" && typeof n.title === "string" && typeof n.body === "string") &&
+    (c.scenes === undefined || arrayOf(c.scenes, (x) => isObj(x) && typeof x.id === "string" && typeof x.title === "string" && Array.isArray(x.entityIds))) &&
+    (c.maps === undefined || arrayOf(c.maps, (m) => isObj(m) && typeof m.id === "string" && typeof m.name === "string" && typeof m.image === "string" && arrayOf(m.markers, (k) => isObj(k) && typeof k.id === "string" && typeof k.x === "number" && typeof k.y === "number")));
   return !systems.every(okSystem) || !campaigns.every(okCampaign);
 }
 

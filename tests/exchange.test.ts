@@ -134,3 +134,23 @@ describe('import', () => {
     expect(r.lostAssets).toBe(1);
   });
 });
+
+describe('scenes and maps in bundles', () => {
+  const withMap = (): Campaign => ({ ...campaign(), maps: [{ id: 'm1', name: 'Мир', image: `asset:${ID}`, markers: [{ id: 'k1', x: 0.2, y: 0.4, label: 'Город', sceneId: 'sc1' }] }], scenes: [{ id: 'sc1', title: 'Рынок', entityIds: [], mapId: 'm1', music: 'music/Город/рынок.mp3', sounds: ['sounds/шаги.wav'] }] });
+  it('includes map pictures and keeps scene audio as plain references', async () => {
+    const { api } = fakeApi();
+    const { bytes } = await buildBundle({ kind: 'campaign', campaign: withMap(), appVersion: '0.3.0', title: 'Поход' }, api);
+    const out = unpackBundle(bytes);
+    expect(Object.keys(out.assets)).toEqual([ID]);
+    expect(out.campaign!.scenes![0].music).toBe('music/Город/рынок.mp3');
+  });
+  it('import keeps maps, markers and scenes intact', async () => {
+    const { api } = fakeApi();
+    const { bytes } = await buildBundle({ kind: 'campaign', campaign: withMap(), appVersion: '0.3.0', title: 'Поход' }, api);
+    const out = await importData(bytes, ctx(), api);
+    const c = out.campaigns[0];
+    expect(c.maps![0].markers[0]).toMatchObject({ x: 0.2, y: 0.4, sceneId: 'sc1' });
+    expect(c.scenes![0]).toMatchObject({ mapId: 'm1', music: 'music/Город/рынок.mp3' });
+    expect(collectAssetRefs(c)).toEqual([ID]);
+  });
+});

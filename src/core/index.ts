@@ -13,3 +13,4 @@ export * from './migrate';
 export * from './assetRef';
 export * from './bundle';
 export * from './protection';
+export * from './audio';
