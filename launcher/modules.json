@@ -8,7 +8,7 @@
   {
     "id": "facet-os",
     "name": "Facet OS",
-    "description": { "ru": "Заглушка: укажите репозиторий в repo", "en": "Placeholder: set the repo field" },
-    "repo": null
+    "description": { "ru": "Проект Facet OS", "en": "Facet OS project" },
+    "repo": "KiFang/facet"
   }
 ]
