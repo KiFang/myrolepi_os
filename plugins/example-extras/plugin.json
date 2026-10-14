@@ -1,0 +1,8 @@
+{
+  "id": "example-extras",
+  "name": { "ru": "Пример: блок карточки и тема", "en": "Example: card block and theme" },
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "main": "index.js",
+  "permissions": ["blocks", "themes"]
+}

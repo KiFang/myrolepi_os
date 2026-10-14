@@ -62,6 +62,7 @@ registerLocale('ru', {
   'plugins.folder': 'Открыть папку плагинов',
   'help.title': 'Справка',
   'lang': 'Язык',
+  'theme': 'Тема оформления',
   'error': 'Ошибка',
 });
 
@@ -93,5 +94,6 @@ registerLocale('en', {
   'plugins.folder': 'Open plugins folder',
   'help.title': 'Help',
   'lang': 'Language',
+  'theme': 'Theme',
   'error': 'Error',
 });

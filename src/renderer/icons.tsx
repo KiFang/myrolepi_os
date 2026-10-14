@@ -17,6 +17,8 @@ const PATHS: Record<string, string> = {
   studio: "M4 5h7v7H4zM13 5h7v4h-7zM13 11h7v8h-7zM4 14h7v5H4z",
   warn: "M12 4 3 20h18zM12 10v5M12 17.5h.01",
   check: "m5 12 5 5L19 7",
+  upload: "M12 16V4M7 9l5-5 5 5M5 20h14",
+  download: "M12 4v12M7 11l5 5 5-5M5 20h14",
 };
 
 export function Icon({ name, size = 16 }: { name: keyof typeof PATHS | string; size?: number }) {

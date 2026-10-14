@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { computeEntity, evaluate, loc, parseDice, rollDice, seededRng, setCoreLang, t, validateSystem, validateManifest, GameSystem } from '../src/core';
+import { adjustResource, computeEntity, evaluate, loc, parseDice, rollDice, rollInitiative, runAction, seededRng, setCoreLang, turnOrder, t, validateSystem, validateManifest, GameSystem } from '../src/core';
 
 const rngOf = (...vals: number[]) => { let i = 0; return () => vals[i++ % vals.length]; };
 
@@ -137,5 +137,47 @@ describe('localized core errors', () => {
       setCoreLang('ru');
     }
     expect(() => evaluate('nope')).toThrow(/Неизвестная переменная/);
+  });
+});
+
+describe('actions and initiative', () => {
+  const sys = JSON.parse(readFileSync('examples/space-opera.system.json', 'utf8')) as GameSystem;
+  const type = sys.entityTypes[0];
+  it('runs an action against entity values', () => {
+    const r = runAction(type, type.actions![0], { level: 3, tech: 16 }, {}, { system: sys, rng: seededRng(1) });
+    expect(typeof r.value).toBe('number');
+    expect(r.rolls).toHaveLength(1);
+    expect(Number(r.value)).toBeGreaterThanOrEqual(1 + 3 + 3);
+  });
+  it('computes effects without mutating the entity', () => {
+    const attack = { id: 'hit', label: 'Hit', formula: '5', effects: [{ field: 'hp', op: 'add' as const, formula: '-result' }] };
+    const values = { hp: { current: 8, max: 12 } };
+    const r = runAction(type, attack, values, {}, { system: sys });
+    expect(r.effects[0].to).toEqual({ current: 3, max: 12 });
+    expect(values.hp).toEqual({ current: 8, max: 12 });
+    const plain = runAction(type, attack, { hp: 8 }, {}, { system: sys });
+    expect(plain.effects[0].to).toBe(3);
+  });
+  it('uses action inputs', () => {
+    const a = { id: 'x', label: 'X', formula: 'bonus * 2', inputs: [{ id: 'bonus', label: 'Bonus', type: 'number' as const, default: 4 }] };
+    expect(runAction(type, a, {}, {}).value).toBe(8);
+    expect(runAction(type, a, {}, { bonus: 5 }).value).toBe(10);
+  });
+  it('rolls initiative by formula and orders turns', () => {
+    expect(rollInitiative({ ...type, initiative: 'level * 10' }, { level: 3 }, { system: sys })).toBe(30);
+    const d20 = rollInitiative(undefined, {}, { rng: () => 0.99 });
+    expect(d20).toBe(20);
+    expect(turnOrder([{ initiative: 5, n: 'a' }, { initiative: 12, n: 'b' }, { initiative: 5, n: 'c' }]).map((x) => x.n)).toEqual(['b', 'a', 'c']);
+  });
+});
+
+describe('resource adjustment', () => {
+  it('clamps resources between 0 and max', () => {
+    expect(adjustResource({ current: 8, max: 12 }, -20)).toEqual({ current: 0, max: 12 });
+    expect(adjustResource({ current: 8, max: 12 }, 20)).toEqual({ current: 12, max: 12 });
+    expect(adjustResource(5, -2)).toBe(3);
+    expect(adjustResource(undefined, 4)).toBe(4);
+    expect(adjustResource(2, -5, { min: 0 })).toBe(0);
+    expect(adjustResource(2, 50, { min: 0, max: 10 })).toBe(10);
   });
 });

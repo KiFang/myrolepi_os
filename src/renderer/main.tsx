@@ -7,6 +7,7 @@ import { PluginRegistry, PluginStatus, RawPlugin, loadPlugins } from "./plugin-h
 import "./strings";
 import { About, Dice, Formulas, Help, Plugins } from "./tools";
 import { Workspace } from "./workspace/Workspace";
+import { THEMES, fromPlugin, rememberTheme, savedTheme } from "./themes";
 import "./styles.css";
 
 type Page = "workspace" | "dice" | "formulas" | "plugins" | "help" | "about";
@@ -26,7 +27,11 @@ function App() {
   const [reg, setReg] = useState<PluginRegistry>(emptyRegistry);
   const [status, setStatus] = useState<PluginStatus[]>([]);
   const [version, setVersion] = useState<string>();
+  const [themeId, setThemeId] = useState(() => savedTheme() ?? "night");
 
+  const themes = useMemo(() => [...THEMES, ...reg.themes.map((th) => fromPlugin(th, lang))], [reg, lang]);
+  const theme = themes.find((x) => x.id === themeId) ?? THEMES[0];
+  const setTheme = (id: string) => { setThemeId(id); rememberTheme(id); };
   const setLang = (l: string) => { setLangState(l); rememberLang(l); };
   const ctx = useMemo(() => ({ lang, setLang }), [lang]);
   const t = (key: string) => translate(key, lang);
@@ -47,7 +52,7 @@ function App() {
 
   return (
     <LangContext.Provider value={ctx}>
-      <div className="workspace">
+      <div className="workspace" data-theme={theme.id} style={{ ...theme.vars, colorScheme: theme.scheme } as React.CSSProperties}>
         <header className="ws-header">
           <div className="ws-brand"><img className="ws-logo-img" src="./logo.svg" alt="" width={30} height={30} />{t("app.name")} <span>OS</span></div>
           <nav className="ws-menu" aria-label="Main">
@@ -57,7 +62,10 @@ function App() {
               </button>
             ))}
           </nav>
-                    <select className="ws-lang" aria-label={t("lang")} value={lang} onChange={(e) => setLang(e.target.value)}>
+                    <select className="ws-lang ws-theme" aria-label={t("theme")} value={theme.id} onChange={(e) => setTheme(e.target.value)}>
+            {themes.map((th) => <option key={th.id} value={th.id}>{th.name[lang === "ru" ? "ru" : "en"]}</option>)}
+          </select>
+          <select className="ws-lang" aria-label={t("lang")} value={lang} onChange={(e) => setLang(e.target.value)}>
             {availableLocales().map((l) => <option key={l} value={l}>{LANG_NAMES[l] ?? l}</option>)}
           </select>
         </header>

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import type { EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from "../../core";
+import type { ActionDef, CardBlock, CardView, EntityCategory, EntityType, FieldDef, FieldType, GameSystem } from "../../core";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
-import { newField, newType, preview, rename } from "../workspace-model";
+import { newField, newId, newType, preview, rename, both } from "../workspace-model";
+import { ActionsEditor } from "./ActionsEditor";
+import { CardDesigner, CardInspector } from "./CardDesigner";
 import { Icon } from "../icons";
 import { Input, JsonInput } from "./inputs";
 
@@ -13,11 +15,17 @@ const FIELD_TYPES: FieldType[] = ["number", "text", "longtext", "boolean", "sele
 export function useSystemEditor(system: GameSystem | undefined, updateSystem: (fn: (s: GameSystem) => GameSystem) => void, registry: PluginRegistry) {
   const [typeIndex, setTypeIndex] = useState(0);
   const [fieldIndex, setFieldIndex] = useState<number | null>(null);
+  const [mode, setMode] = useState<"fields" | "cards" | "actions">("fields");
+  const [viewIndexRaw, setViewIndex] = useState(0);
+  const [blockId, setBlockId] = useState<string | null>(null);
   useEffect(() => {
     if (system && typeIndex >= system.entityTypes.length) setTypeIndex(Math.max(0, system.entityTypes.length - 1));
   }, [system, typeIndex]);
   const type = system?.entityTypes[typeIndex];
   const field = fieldIndex === null ? undefined : type?.fields[fieldIndex];
+  const viewIndex = type ? Math.min(viewIndexRaw, Math.max(0, type.cardViews.length - 1)) : 0;
+  const view = type?.cardViews[viewIndex];
+  const block = view?.blocks.find((b) => b.id === blockId);
   const { lang } = useLang();
   // lang в зависимостях: сообщения об ошибках формул зависят от языка
   const computed = useMemo(() => (system && type ? preview(type, {}, system, registry) : undefined), [system, type, registry, lang]);
@@ -27,11 +35,36 @@ export function useSystemEditor(system: GameSystem | undefined, updateSystem: (f
   const updateField = (patch: Partial<FieldDef>) =>
     updateType((t) => ({ ...t, fields: t.fields.map((f, i) => (i === fieldIndex ? { ...f, ...patch } : f)) }));
 
+  const updateView = (fn: (v: CardView) => CardView) =>
+    updateType((t) => ({ ...t, cardViews: t.cardViews.map((v, i) => (i === viewIndex ? fn(v) : v)) }));
+  const BLOCK_SIZE: Record<string, [number, number]> = { heading: [12, 2], field: [6, 2], text: [12, 2], divider: [12, 1], image: [4, 4], bar: [12, 2], actions: [12, 2] };
+
   return {
-    system, type, field, typeIndex, fieldIndex, computed,
-    setTypeIndex: (i: number) => { setTypeIndex(i); setFieldIndex(null); },
+    system, type, field, typeIndex, fieldIndex, computed, registry,
+    mode, setMode, viewIndex, view, block, blockId, setBlockId,
+    setViewIndex: (i: number) => { setViewIndex(i); setBlockId(null); },
+    updateView,
+    updateBlock: (id: string, patch: Partial<CardBlock>) => updateView((v) => ({ ...v, blocks: v.blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
+    addView: () => {
+      if (!type) return;
+      updateType((t) => ({ ...t, cardViews: [...t.cardViews, { id: newId("view"), name: both("ws.newView"), blocks: [] }] }));
+      setViewIndex(type.cardViews.length);
+      setBlockId(null);
+    },
+    removeView: () => { updateType((t) => ({ ...t, cardViews: t.cardViews.filter((_, i) => i !== viewIndex) })); setBlockId(null); },
+    addBlock: (kind: string) => {
+      if (!view) return;
+      const [w, h] = BLOCK_SIZE[kind] ?? [6, 2];
+      const y = Math.max(0, ...view.blocks.map((b) => b.y + b.h));
+      const b: CardBlock = { id: newId("block"), kind, x: 0, y, w, h, field: kind === "field" || kind === "bar" ? type?.fields.find((f) => kind === "bar" ? f.type === "resource" || f.type === "number" : true)?.id : undefined };
+      updateView((v) => ({ ...v, blocks: [...v.blocks, b] }));
+      setBlockId(b.id);
+    },
+    removeBlock: () => { if (blockId) { updateView((v) => ({ ...v, blocks: v.blocks.filter((b) => b.id !== blockId) })); setBlockId(null); } },
+    updateActions: (fn: (a: ActionDef[]) => ActionDef[]) => updateType((t) => ({ ...t, actions: fn(t.actions ?? []) })),
+    setTypeIndex: (i: number) => { setTypeIndex(i); setFieldIndex(null); setViewIndex(0); setBlockId(null); },
     setFieldIndex,
-    reset: () => { setTypeIndex(0); setFieldIndex(null); },
+    reset: () => { setTypeIndex(0); setFieldIndex(null); setViewIndex(0); setBlockId(null); },
     updateSystem, updateType, updateField,
     addType: () => {
       if (!system) return;
@@ -79,6 +112,15 @@ export function SystemCanvas({ ed }: { ed: SystemEditorState }) {
         ))}
       </div>
       {type && (
+        <div className="ws-mode-tabs" role="tablist">
+          {(["fields", "cards", "actions"] as const).map((m) => (
+            <button key={m} role="tab" aria-selected={ed.mode === m} className={ed.mode === m ? "active" : ""} onClick={() => ed.setMode(m)}>{t(`ws.mode.${m}`)}</button>
+          ))}
+        </div>
+      )}
+      {type && ed.mode === "cards" && <CardDesigner ed={ed} registry={ed.registry} />}
+      {type && ed.mode === "actions" && <ActionsEditor ed={ed} />}
+      {type && ed.mode === "fields" && (
         <>
           <div className="ws-section-heading">
             <h2>{t("ws.fieldsOf", { type: label(type.label) })}</h2>
@@ -133,10 +175,11 @@ export function SystemInspector({ ed }: { ed: SystemEditorState }) {
               {CATEGORIES.map((c) => <option key={c} value={c}>{t(`cat.${c}`)}</option>)}
             </select>
           </label>
+          <Input title={t("ws.initiative")} value={type.initiative ?? ""} placeholder="1d20" hint={t("ws.initiativeHint")} onChange={(v) => ed.updateType((x) => ({ ...x, initiative: v || undefined }))} />
           <button className="ws-danger ws-with-icon" onClick={() => window.confirm(t("ws.deleteTypeConfirm", { name: label(type.label) })) && ed.removeType()}><Icon name="trash" />{t("ws.deleteType")}</button>
         </>
       )}
-      {field ? (
+      {ed.mode === "cards" ? <CardInspector ed={ed} /> : ed.mode === "actions" ? null : field ? (
         <>
           <div className="ws-property-group">{t("ws.groupField")}</div>
           <Input title={t("ws.fieldName")} value={label(field.label)} onChange={(v) => ed.updateField({ label: rename(field.label, v, lang) })} />

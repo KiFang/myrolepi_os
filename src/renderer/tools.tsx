@@ -102,7 +102,7 @@ export function Help() {
     <>
       <h1><Icon name="help" size={24} />{t("help.title")}</h1>
       <p className="muted">{t("help.intro")}</p>
-      {[1, 2, 3, 4].map((n) => (
+      {[1, 2, 5, 3, 4].map((n) => (
         <div className="card" key={n}>
           <b>{t(`help.q${n}`)}</b>
           <p>{t(`help.a${n}`)}</p>

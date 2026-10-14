@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Campaign, GameSystem } from "../../core";
 import example from "../../../examples/space-opera.system.json";
 import { Icon } from "../icons";
 import { useLang } from "../lang";
 import type { PluginRegistry } from "../plugin-host";
-import { both, copyOf, newId, newSystem, systemIssues } from "../workspace-model";
+import { downloadJson, detectDocument } from "../fileio";
+import { both, copyOf, libraryProblem, newId, newSystem, systemIssues } from "../workspace-model";
 import { CampaignCanvas, CampaignInspector, useCampaignEditor } from "./CampaignEditor";
 import { SystemCanvas, SystemInspector, useSystemEditor } from "./SystemEditor";
+import type { RollEntry } from "../rolls";
 import { useLibrary } from "./useLibrary";
 import "../workspace.css";
 
@@ -21,6 +23,8 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   const [openTabs, setOpenTabs] = useState<Selection[]>([]);
   const [treeOpen, setTreeOpen] = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [rolls, setRolls] = useState<RollEntry[]>([]);
+  const [bottomTab, setBottomTab] = useState<"problems" | "rolls">("problems");
 
   const system = selection?.kind === "system" ? project.systems.find((s) => s.id === selection.id) : undefined;
   const campaign = selection?.kind === "campaign" ? project.campaigns.find((c) => c.id === selection.id) : undefined;
@@ -31,7 +35,15 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
   const updateCampaign = (fn: (c: Campaign) => Campaign) =>
     change((p) => ({ ...p, campaigns: p.campaigns.map((c) => (c.id === campaign?.id ? fn(c) : c)) }));
   const sys = useSystemEditor(system, updateSystem, registry);
-  const cam = useCampaignEditor(campaign, linked, updateCampaign, registry);
+  const cam = useCampaignEditor(campaign, linked, updateCampaign, registry, (entry) => {
+    setRolls((r) => [{ ...entry, id: newId("roll"), time: Date.now() }, ...r].slice(0, 100));
+    setBottomTab("rolls");
+  });
+  const applyRoll = (entry: RollEntry) => {
+    if (!entry.entityId) return;
+    cam.applyEffects(entry.entityId, entry.effects);
+    setRolls((r) => r.map((x) => (x.id === entry.id ? { ...x, applied: true } : x)));
+  };
 
   const open = (sel: Selection) => {
     setSelection(sel);
@@ -71,6 +83,30 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
     }));
     closeTab(sel);
   };
+  const fileInput = useRef<HTMLInputElement>(null);
+  const importFile = async (file?: File) => {
+    if (!file) return;
+    try {
+      const found = detectDocument(JSON.parse(await file.text()));
+      if (!found || libraryProblem(found.kind === "system" ? [found.data] : [], found.kind === "campaign" ? [found.data] : [])) throw new Error("format");
+      if (found.kind === "system") {
+        const s = { ...(found.data as GameSystem), id: newId("system") };
+        change((p) => ({ ...p, systems: [...p.systems, s] }));
+        open({ kind: "system", id: s.id });
+      } else {
+        const c = { ...(found.data as Campaign), id: newId("campaign") };
+        change((p) => ({ ...p, campaigns: [...p.campaigns, c] }));
+        open({ kind: "campaign", id: c.id });
+      }
+      lib.setNotice({ key: "ws.imported" });
+    } catch {
+      lib.setNotice({ key: "ws.importFailed" });
+    }
+  };
+  const exportDoc = () => {
+    if (system) downloadJson(label(system.name) || "system", system);
+    else if (campaign) downloadJson(campaign.name || "campaign", campaign);
+  };
   const undo = () => { if (lib.undo()) sys.setFieldIndex(null); };
   const redo = () => { if (lib.redo()) sys.setFieldIndex(null); };
 
@@ -95,6 +131,8 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
         <span className="ws-separator" />
         <button className="ws-with-icon" disabled={!lib.ready} onClick={() => addSystem()}><Icon name="system" />{t("ws.newSystem")}</button>
         <button className="ws-with-icon" disabled={!lib.ready || !project.systems.length} onClick={addCampaign}><Icon name="campaign" />{t("ws.newCampaign")}</button>
+        <button className="ws-with-icon" disabled={!lib.ready} title={t("ws.importTitle")} onClick={() => fileInput.current?.click()}><Icon name="upload" />{t("ws.import")}</button>
+        <input ref={fileInput} type="file" accept="application/json,.json" hidden aria-label={t("ws.import")} onChange={(e) => { void importFile(e.target.files?.[0]); e.target.value = ""; }} />
         <span className="ws-separator" />
         <button className="ws-with-icon" disabled={!lib.canUndo} onClick={undo} title={t("ws.undoTitle")}><Icon name="undo" />{t("ws.undo")}</button>
         <button className="ws-with-icon" disabled={!lib.canRedo} onClick={redo} title={t("ws.redoTitle")}><Icon name="redo" />{t("ws.redo")}</button>
@@ -171,24 +209,46 @@ export function Workspace({ registry, active }: { registry: PluginRegistry; acti
             )}
           </div>
           <div className="ws-diagnostics">
-            <div className="ws-panel-title">{t("ws.diagnostics")} <span className={errorCount ? "bad" : problems ? "warn" : "ok"}>{problems}</span></div>
+            <div className="ws-panel-title ws-bottom-tabs">
+              <button className={bottomTab === "problems" ? "active" : ""} onClick={() => setBottomTab("problems")}>{t("ws.tabProblems")} <span className={errorCount ? "bad" : problems ? "warn" : "ok"}>{problems}</span></button>
+              <button className={bottomTab === "rolls" ? "active" : ""} onClick={() => setBottomTab("rolls")}>{t("ws.tabRolls")} <span>{rolls.length}</span></button>
+              {bottomTab === "rolls" && !!rolls.length && <button className="ws-clear" onClick={() => setRolls([])}>{t("ws.clearRolls")}</button>}
+            </div>
             <div className="ws-diagnostics-list">
-              {issues.map((issue, i) => (
-                <div key={i} className={"ws-issue " + issue.level}>
-                  <Icon name={issue.level === "error" ? "warn" : "info"} size={14} />
-                  <span>{issue.message} <small>{issue.path}</small></span>
-                </div>
-              ))}
-              {computedErrors.map(([id, error]) => (
-                <div className="ws-issue error" key={id}><Icon name="warn" size={14} /><span>{error} <small>{id}</small></span></div>
-              ))}
-              {!problems && <div className="ws-issue ok"><Icon name="check" size={14} /><span>{doc ? t("ws.systemOk") : t("ws.openToCheck")}</span></div>}
+              {bottomTab === "problems" ? (
+                <>
+                  {issues.map((issue, i) => (
+                    <div key={i} className={"ws-issue " + issue.level}>
+                      <Icon name={issue.level === "error" ? "warn" : "info"} size={14} />
+                      <span>{issue.message} <small>{issue.path}</small></span>
+                    </div>
+                  ))}
+                  {computedErrors.map(([id, error]) => (
+                    <div className="ws-issue error" key={id}><Icon name="warn" size={14} /><span>{error} <small>{id}</small></span></div>
+                  ))}
+                  {!problems && <div className="ws-issue ok"><Icon name="check" size={14} /><span>{doc ? t("ws.systemOk") : t("ws.openToCheck")}</span></div>}
+                </>
+              ) : (
+                <>
+                  {!rolls.length && <div className="ws-issue"><Icon name="dice" size={14} /><span>{t("ws.noRolls")}</span></div>}
+                  {rolls.map((r) => (
+                    <div className="ws-roll" key={r.id}>
+                      <strong className="ws-roll-total">{String(r.value)}</strong>
+                      <span className="ws-roll-what"><b>{r.who}</b> · {r.action}
+                        <small>{r.rolls.map((x) => `${x.notation}: ${x.rolls.map((v, k) => (x.kept.includes(k) ? v : `(${v})`)).join(" ")}`).join(" · ")}</small>
+                      </span>
+                      {!!r.effects.length && (r.applied ? <span className="muted">{t("ws.applied")}</span> : <button onClick={() => applyRoll(r)}>{t("ws.applyEffects")}: {r.effects.map((e) => `${e.field} → ${typeof e.to === "object" ? (e.to as { current?: number }).current : String(e.to)}`).join(", ")}</button>)}
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         </section>
         <aside className="ws-inspector" hidden={!inspectorOpen}>
           <div className="ws-panel-title">{t("ws.inspector")}</div>
           <div className="ws-inspector-content">
+            {(system || campaign) && <button className="ws-with-icon ws-export" title={t("ws.exportTitle")} onClick={exportDoc}><Icon name="download" />{t("ws.export")}</button>}
             {system ? <SystemInspector ed={sys} /> : campaign ? <CampaignInspector ed={cam} /> : (
               <>
                 <p className="ws-hint">{t("ws.inspectorEmpty")}</p>

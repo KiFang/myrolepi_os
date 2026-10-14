@@ -70,6 +70,8 @@ export type EntityCategory = 'character' | 'creature' | 'vehicle' | 'structure' 
 
 export interface EntityType {
   id: string;
+  /** формула инициативы для трекера боя, напр. "1d20 + dex_mod" (по умолчанию 1d20) */
+  initiative?: string;
   label: LocalizedString;
   category: EntityCategory;
   icon?: string;
@@ -114,6 +116,22 @@ export interface Entity {
   tags?: string[];
 }
 
+/** Участник боя: ссылка на сущность кампании и её инициатива. */
+export interface Combatant {
+  id: string;
+  entityId: string;
+  initiative: number;
+}
+
+export interface Encounter {
+  id: string;
+  name: string;
+  round: number;
+  /** индекс текущего участника в порядке инициативы */
+  turn: number;
+  combatants: Combatant[];
+}
+
 /** Кампания: набор сущностей, заметок, сцен, ссылающихся на систему. */
 export interface Campaign {
   schema: typeof SCHEMA_VERSION;
@@ -121,6 +139,8 @@ export interface Campaign {
   name: string;
   systemId: string;
   entities: Entity[];
+  /** links — id сущностей и заметок, с которыми связана заметка */
   notes: { id: string; title: string; body: string; links?: string[] }[];
+  encounters?: Encounter[];
   scenes?: { id: string; title: string; entityIds: string[]; notes?: string }[];
 }
