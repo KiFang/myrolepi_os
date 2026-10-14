@@ -13,6 +13,11 @@ const statePath = path.join(root, 'state.json');
 const modules = JSON.parse(fs.readFileSync(path.join(__dirname, 'modules.json'), 'utf8'));
 fs.mkdirSync(root, { recursive: true });
 
+function findApp(dir) {
+  const a = fs.readdirSync(dir).find((f) => f.endsWith('.app'));
+  if (!a) throw new Error('Не найден .app');
+  return path.join(dir, a);
+}
 const readState = () => { try { return JSON.parse(fs.readFileSync(statePath, 'utf8')); } catch { return { installed: {} }; } };
 const writeState = (s) => fs.writeFileSync(statePath, JSON.stringify(s, null, 2));
 const findModule = (id) => { const m = modules.find((x) => x.id === id); if (!m) throw new Error('Неизвестный модуль'); return m; };
@@ -47,9 +52,29 @@ ipcMain.handle('module:install', async (e, id, release) => {
   if (platform === 'linux') fs.chmodSync(file, 0o755);
   if (platform === 'mac' && file.endsWith('.zip')) {
     execFileSync('ditto', ['-xk', file, dir]);
-    const appDir = fs.readdirSync(dir).find((f) => f.endsWith('.app'));
-    if (!appDir) throw new Error('В архиве нет .app');
-    entry = path.join(dir, appDir);
+    entry = findApp(dir);
+  } else if (platform === 'mac' && file.endsWith('.dmg')) {
+    // dmg: монтируем без Finder, копируем .app в каталог версии, отмонтируем
+    const mnt = path.join(dir, '_mnt');
+    fs.mkdirSync(mnt, { recursive: true });
+    execFileSync('hdiutil', ['attach', file, '-nobrowse', '-readonly', '-mountpoint', mnt]);
+    try {
+      const appName = fs.readdirSync(mnt).find((f) => f.endsWith('.app'));
+      if (!appName) throw new Error('В dmg нет .app');
+      execFileSync('ditto', [path.join(mnt, appName), path.join(dir, appName)]);
+    } finally {
+      try { execFileSync('hdiutil', ['detach', mnt, '-force']); } catch {}
+      try { fs.rmdirSync(mnt); } catch {}
+    }
+    entry = findApp(dir);
+  } else if (platform === 'win' && /setup|install/i.test(asset.name)) {
+    // установщик NSIS: тихая установка в каталог версии (/D обязан идти последним, без кавычек)
+    const target = path.join(dir, 'app');
+    fs.mkdirSync(target, { recursive: true });
+    execFileSync(file, ['/S', `/D=${target}`], { windowsVerbatimArguments: true });
+    const exe = fs.readdirSync(target).find((f) => f.toLowerCase().endsWith('.exe') && !/uninstall|setup/i.test(f));
+    if (!exe) throw new Error('Установщик не создал исполняемый файл');
+    entry = path.join(target, exe);
   }
   const s = readState();
   const rec = s.installed[id] || { versions: {}, current: null };

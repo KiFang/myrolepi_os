@@ -23,7 +23,7 @@ Windows (установщик + portable), macOS (dmg, x64/arm64), Linux (AppIma
 Минимальный лаунчер Asteia Alltools: список модулей (`launcher/modules.json`), выбор любой версии из GitHub Releases,
 установка, запуск, переключение и удаление версий, changelog из описания релиза. Запуск: `cd launcher && npm install && npm start`.
 Модуль запускается с `--launcher --data-dir --plugins-dir --lang`. Для Facet OS укажите `repo` в `modules.json`.
-Имена файлов релиза важны: Windows `*-portable.exe`, Linux `*.AppImage`, macOS `*-mac.zip` — их лаунчер выбирает автоматически (`npm run dist` уже называет их так).
+Файлы релиза выбираются автоматически: Windows — `*-portable.exe` или установщик `*Setup*.exe` (ставится тихо в каталог версии), Linux — `*.AppImage`, macOS — `*.zip` или `*.dmg` (.app копируется из образа) (`npm run dist` уже называет их так).
 
 ## Структура
 - `src/core` — движок без привязки к UI: кубики, формулы, схема системы, вычисление полей, валидатор, i18n, контракт плагинов.

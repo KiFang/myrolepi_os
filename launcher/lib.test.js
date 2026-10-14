@@ -31,3 +31,11 @@ test('download allow-list and safe names', () => {
   assert.equal(isAllowedDownload('https://evil.com/x'), false);
   assert.equal(safeName('../../etc'), '.._.._etc');
 });
+
+test('pickAsset works with Facet OS release layout', () => {
+  const facet = ['Facet-OS-0.4.0-amd64.deb', 'Facet-OS-0.4.0-arm64.dmg', 'Facet-OS-0.4.0-x64.dmg', 'Facet-OS-0.4.0-x86_64.AppImage', 'Facet-OS-Setup-0.4.0-x64.exe'].map((name) => ({ name }));
+  assert.equal(pickAsset(facet, 'win', 'x64').name, 'Facet-OS-Setup-0.4.0-x64.exe');
+  assert.equal(pickAsset(facet, 'linux', 'x64').name, 'Facet-OS-0.4.0-x86_64.AppImage');
+  assert.equal(pickAsset(facet, 'mac', 'x64').name, 'Facet-OS-0.4.0-x64.dmg');
+  assert.equal(pickAsset(facet, 'mac', 'arm64').name, 'Facet-OS-0.4.0-arm64.dmg');
+});
