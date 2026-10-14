@@ -1,6 +1,6 @@
 {
   "name": "myrolepi-os",
-  "productName": "MyRolePi OS",
+  "productName": "Rolepi",
   "version": "0.1.0",
   "description": "Конструктор настольных ролевых систем и кампаний (модуль лаунчера Asteia Alltools)",
   "main": "dist-electron/main/main.js",
@@ -36,7 +36,7 @@
   },
   "build": {
     "appId": "com.asteia.myrolepi-os",
-    "productName": "MyRolePi OS",
+    "productName": "Rolepi",
     "copyright": "Asteia",
     "directories": {
       "output": "release",

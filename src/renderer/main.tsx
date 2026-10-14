@@ -54,7 +54,7 @@ function App() {
     <LangContext.Provider value={ctx}>
       <div className="workspace" data-theme={theme.id} style={{ ...theme.vars, colorScheme: theme.scheme } as React.CSSProperties}>
         <header className="ws-header">
-          <div className="ws-brand"><img className="ws-logo-img" src="./logo.svg" alt="" width={30} height={30} />{t("app.name")} <span>OS</span></div>
+          <div className="ws-brand"><img className="ws-logo-img" src="./logo.svg" alt="" width={30} height={30} />{t("app.name")}</div>
           <nav className="ws-menu" aria-label="Main">
             {PAGES.map((p) => (
               <button key={p} className={p === page ? "active" : ""} onClick={() => setPage(p)}>

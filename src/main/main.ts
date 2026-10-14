@@ -88,7 +88,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: '#14161c',
     icon: path.join(app.getAppPath(), 'build', 'icon.png'),
-    title: 'MyRolePi OS',
+    title: 'Rolepi',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

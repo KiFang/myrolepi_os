@@ -1,9 +1,9 @@
-# AI Plugin Guide — MyRolePi OS (API v1)
+# AI Plugin Guide — Rolepi (API v1)
 
 > Отдайте этот файл нейросети вместе с описанием желаемого плагина. / Give this file to an AI along with a description of the plugin you want.
 
 ## Задача для ИИ
-Ты пишешь плагин для MyRolePi OS. Результат — **папка** с двумя файлами: `plugin.json` и `index.js`.
+Ты пишешь плагин для Rolepi. Результат — **папка** с двумя файлами: `plugin.json` и `index.js`.
 Пиши на чистом JavaScript (CommonJS, без import/require, без внешних библиотек, без доступа к сети и файлам).
 Ответь двумя блоками кода: содержимое `plugin.json` и содержимое `index.js`. Не добавляй ничего лишнего.
 
@@ -98,4 +98,4 @@ module.exports = {
 (`permissions: ["formulas"]`)
 
 ## Шаблон запроса
-«Вот AI Plugin Guide. Сделай плагин для MyRolePi OS: <опиши, что нужно>. Выдай plugin.json и index.js.»
+«Вот AI Plugin Guide. Сделай плагин для Rolepi: <опиши, что нужно>. Выдай plugin.json и index.js.»

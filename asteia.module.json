@@ -1,6 +1,6 @@
 {
   "id": "myrolepi-os",
-  "name": { "ru": "MyRolePi OS — конструктор настольных ролевых систем", "en": "MyRolePi OS — tabletop RPG system builder" },
+  "name": { "ru": "Rolepi — конструктор настольных ролевых игр", "en": "Rolepi — tabletop RPG builder" },
   "version": "0.1.0",
   "launcher": "Asteia Alltools",
   "platforms": ["win", "mac", "linux"],

@@ -3,7 +3,7 @@ import { registerLocale } from '../core';
 /** Тексты интерфейса студии (RU/EN). Базовые тексты инструментов — в core/i18n.ts, ошибки ядра — в core/messages.ts. */
 registerLocale('ru', {
   // разделы и общие
-  'app.name': 'MyRolePi',
+  'app.name': 'Rolepi',
   'ws.tabWorkspace': 'Студия',
   'ws.storage': 'Данные хранятся на этом компьютере',
   'ws.statusFooter': 'Всё сохраняется только у вас',
@@ -177,7 +177,7 @@ registerLocale('ru', {
 });
 
 registerLocale('en', {
-  'app.name': 'MyRolePi',
+  'app.name': 'Rolepi',
   'ws.tabWorkspace': 'Studio',
   'ws.storage': 'Your data is stored on this computer',
   'ws.statusFooter': 'Everything stays with you',

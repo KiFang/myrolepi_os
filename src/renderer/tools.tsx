@@ -122,7 +122,7 @@ export function About({ version }: { version?: string }) {
       <div className="about-head">
         <img src="./logo.svg" alt="" width={72} height={72} />
         <div>
-          <h1>MyRolePi OS</h1>
+          <h1>Rolepi</h1>
           <div className="muted">{t("about.version", { v: version ?? "—" })}</div>
         </div>
       </div>
