@@ -1,0 +1,36 @@
+name: Launcher release
+# Запуск: git tag launcher-v0.1.0 && git push origin launcher-v0.1.0
+on:
+  push:
+    tags: ['launcher-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm test
+      - run: npx electron-builder --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: softprop/action-gh-release@v2
+        with:
+          name: Asteia Alltools ${{ github.ref_name }}
+          files: |
+            launcher/release/*.exe
+            launcher/release/*.AppImage
+            launcher/release/*.zip

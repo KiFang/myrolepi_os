@@ -32,7 +32,7 @@ function pickAsset(assets, platform, arch) {
 /** Релизы GitHub API -> список версий для UI (черновики отбрасываются). */
 function normalizeReleases(releases, platform, arch) {
   return releases
-    .filter((r) => !r.draft)
+    .filter((r) => !r.draft && /^v?\d/.test(String(r.tag_name)))
     .map((r) => ({
       version: String(r.tag_name).replace(/^v/, ''),
       date: r.published_at,

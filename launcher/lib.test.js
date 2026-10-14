@@ -39,3 +39,8 @@ test('pickAsset works with Facet OS release layout', () => {
   assert.equal(pickAsset(facet, 'mac', 'x64').name, 'Facet-OS-0.4.0-x64.dmg');
   assert.equal(pickAsset(facet, 'mac', 'arm64').name, 'Facet-OS-0.4.0-arm64.dmg');
 });
+
+test('releases with non-version tags (e.g. launcher-v0.1.0) are ignored', () => {
+  const r = normalizeReleases([{ tag_name: 'launcher-v0.1.0', assets }, { tag_name: 'v0.1.0', assets }], 'win', 'x64');
+  assert.deepEqual(r.map((x) => x.version), ['0.1.0']);
+});

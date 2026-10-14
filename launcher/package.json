@@ -4,6 +4,57 @@
   "version": "0.1.0",
   "description": "Лаунчер проектов Asteia: установка, версии, обновления, changelog",
   "main": "main.js",
-  "scripts": { "start": "electron .", "test": "node --test" },
-  "devDependencies": { "electron": "^33.0.0" }
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.asteia.alltools",
+    "productName": "Asteia Alltools",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "lib.js",
+      "modules.json",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Asteia-Alltools-${version}-portable.exe"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "Asteia-Alltools-${version}-${arch}-mac.${ext}"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "artifactName": "Asteia-Alltools-${version}.${ext}"
+    }
+  }
 }
