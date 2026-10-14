@@ -386,7 +386,7 @@ registerLocale('en', {
 });
 
 registerLocale('ru', {
-  'ws.ctab.heroes': 'Герои', 'ws.ctab.cards': 'Карточки', 'ws.ctab.combat': 'Бой', 'ws.ctab.notes': 'Заметки',
+  'ws.ctab.heroes': 'Герои', 'ws.ctab.cards': 'Карточки', 'ws.ctab.combat': 'Бой', 'ws.ctab.scenes': 'Сцены', 'ws.ctab.maps': 'Карты', 'ws.ctab.notes': 'Заметки',
   'ws.rollAction': 'Бросок', 'ws.sheetForm': 'Лист', 'ws.sheetCard': 'Карточка', 'ws.chooseView': 'Вид карточки',
   'ws.filter': 'Показать', 'ws.filterAll': 'Все', 'ws.galleryHint': 'Выберите «Существо» в фильтре — получится бестиарий. У каждой карточки можно выбрать вид и сделать бросок.',
   'ws.galleryEmpty': 'Здесь пока нет карточек. Добавьте героев на вкладке «Герои».',
@@ -399,7 +399,7 @@ registerLocale('ru', {
   'ws.tabProblems': 'Проблемы', 'ws.tabRolls': 'Журнал бросков', 'ws.noRolls': 'Бросков пока не было. Нажмите кнопку действия у героя.', 'ws.applyEffects': 'Применить', 'ws.applied': 'применено', 'ws.clearRolls': 'Очистить',
 });
 registerLocale('en', {
-  'ws.ctab.heroes': 'Heroes', 'ws.ctab.cards': 'Cards', 'ws.ctab.combat': 'Combat', 'ws.ctab.notes': 'Notes',
+  'ws.ctab.heroes': 'Heroes', 'ws.ctab.cards': 'Cards', 'ws.ctab.combat': 'Combat', 'ws.ctab.scenes': 'Scenes', 'ws.ctab.maps': 'Maps', 'ws.ctab.notes': 'Notes',
   'ws.rollAction': 'Roll', 'ws.sheetForm': 'Sheet', 'ws.sheetCard': 'Card', 'ws.chooseView': 'Card view',
   'ws.filter': 'Show', 'ws.filterAll': 'All', 'ws.galleryHint': 'Pick "Creature" in the filter to get a bestiary. Each card can switch view and make rolls.',
   'ws.galleryEmpty': 'No cards yet. Add heroes on the "Heroes" tab.',
@@ -567,3 +567,50 @@ registerLocale('en', { 'prot.readOnly': 'The system is protected by its author a
 
 registerLocale('ru', { 'panel.loading': 'Панель загружается…', 'panel.slow': 'Панель не отвечает. Проверьте, что страница подключает @sdk.js, и перечитайте плагины.', 'plugins.adds.panels': 'Панели', 'plugins.panelsHint': 'Панели плагина работают в изолированной рамке: у них нет доступа к сети и файлам, только к тому, что вы разрешили.' });
 registerLocale('en', { 'panel.loading': 'Loading panel…', 'panel.slow': 'The panel is not responding. Check that the page includes @sdk.js and reload the plugins.', 'plugins.adds.panels': 'Panels', 'plugins.panelsHint': 'Plugin panels run in an isolated frame: no network or file access, only what you allowed.' });
+
+registerLocale('ru', {
+  'audio.title': 'Звук', 'audio.intro': 'Бросьте музыку и звуки в папки — они появятся здесь сами. Подпапки в музыке работают как плейлисты. Музыку и звуки можно привязать к сценам кампании.',
+  'audio.desktopOnly': 'Звук работает в настольном приложении.', 'audio.openMusic': 'Папка с музыкой', 'audio.openSounds': 'Папка со звуками', 'audio.refresh': 'Обновить',
+  'audio.player': 'Плеер', 'audio.nothing': 'Ничего не играет', 'audio.failed': 'Не удалось воспроизвести файл', 'audio.play': 'Играть', 'audio.pause': 'Пауза', 'audio.next': 'Следующий', 'audio.prev': 'Предыдущий', 'audio.stop': 'Остановить',
+  'audio.seek': 'Перемотка', 'audio.shuffle': 'Вперемешку', 'audio.volume': 'Громкость музыки', 'audio.sfxVolume': 'Громкость звуков', 'audio.loop.off': 'Без повтора', 'audio.loop.all': 'Повторять всё', 'audio.loop.one': 'Повторять трек',
+  'audio.music': 'Музыка', 'audio.sounds': 'Звуки', 'audio.search': 'Поиск по названию', 'audio.noMusic': 'Музыки пока нет. Положите mp3, ogg, wav, flac или m4a в папку музыки.', 'audio.noSounds': 'Звуков пока нет. Положите короткие звуки в папку звуков — на этой панели появятся кнопки.',
+  'audio.nothingFound': 'Ничего не найдено', 'audio.playFolder': 'Играть папку', 'audio.stopSounds': 'Стоп', 'audio.open': 'Открыть раздел «Звук»',
+});
+registerLocale('en', {
+  'audio.title': 'Sound', 'audio.intro': 'Drop music and sounds into the folders — they appear here by themselves. Subfolders in music work as playlists. Music and sounds can be attached to campaign scenes.',
+  'audio.desktopOnly': 'Sound works in the desktop app.', 'audio.openMusic': 'Music folder', 'audio.openSounds': 'Sounds folder', 'audio.refresh': 'Refresh',
+  'audio.player': 'Player', 'audio.nothing': 'Nothing is playing', 'audio.failed': 'Could not play the file', 'audio.play': 'Play', 'audio.pause': 'Pause', 'audio.next': 'Next', 'audio.prev': 'Previous', 'audio.stop': 'Stop',
+  'audio.seek': 'Seek', 'audio.shuffle': 'Shuffle', 'audio.volume': 'Music volume', 'audio.sfxVolume': 'Sounds volume', 'audio.loop.off': 'No repeat', 'audio.loop.all': 'Repeat all', 'audio.loop.one': 'Repeat track',
+  'audio.music': 'Music', 'audio.sounds': 'Sounds', 'audio.search': 'Search by title', 'audio.noMusic': 'No music yet. Put mp3, ogg, wav, flac or m4a files into the music folder.', 'audio.noSounds': 'No sounds yet. Put short sounds into the sounds folder — buttons will appear on this panel.',
+  'audio.nothingFound': 'Nothing found', 'audio.playFolder': 'Play folder', 'audio.stopSounds': 'Stop', 'audio.open': 'Open the Sound section',
+});
+
+registerLocale('ru', {
+  'ws.summaryExtra': 'Сцен: {scenes}, карт: {maps}',
+  'scene.title': 'Сцены', 'scene.add': 'Новая сцена', 'scene.none': 'Сцен пока нет. Сцена — это место и момент игры: карта, участники, музыка и звуки.', 'scene.newTitle': 'Сцена {n}', 'scene.name': 'Название сцены',
+  'scene.start': 'Запустить сцену', 'scene.stop': 'Закончить сцену', 'scene.delete': 'Удалить сцену', 'scene.deleteConfirm': 'Удалить сцену «{name}»?', 'scene.running': 'Сцена идёт',
+  'scene.notes': 'Описание для мастера', 'scene.map': 'Карта', 'scene.noMap': 'Без карты', 'scene.music': 'Музыка', 'scene.noMusic': 'Без музыки', 'scene.fileMissing': 'файл не найден',
+  'scene.musicHint': 'Музыки нет: положите файлы в папку музыки (раздел «Звук» → «Папка с музыкой») — они появятся в списке.',
+  'scene.people': 'Участники', 'scene.addPerson': 'Добавить участника', 'scene.sounds': 'Звуки', 'scene.addSound': 'Добавить звук',
+  'map.title': 'Карты', 'map.add': 'Добавить карту', 'map.none': 'Карт пока нет. Загрузите картинку карты — на ней можно расставить метки и связать их со сценами, героями и заметками.', 'map.newName': 'Карта', 'map.name': 'Название карты',
+  'map.addMarker': 'Поставить метку', 'map.addingOn': 'Нажмите на карту…', 'map.delete': 'Удалить карту', 'map.deleteConfirm': 'Удалить карту «{name}» вместе с метками?',
+  'map.hint': 'Метки можно перетаскивать, а когда метка выбрана — двигать стрелками.', 'map.hintAdding': 'Нажмите на карту, чтобы поставить метку.', 'map.selectHint': 'Выберите метку, чтобы переименовать её или связать со сценой, героем или заметкой.',
+  'map.markerUnnamed': 'Метка без названия', 'map.markerDefault': 'Метка {n}', 'map.markerLabel': 'Название метки', 'map.markerColor': 'Цвет метки', 'map.linkKind': 'Куда ведёт', 'map.linkTarget': 'Выберите',
+  'map.link.none': 'Никуда', 'map.link.scene': 'К сцене', 'map.link.entity': 'К герою', 'map.link.note': 'К заметке', 'map.deleteMarker': 'Удалить метку',
+});
+registerLocale('en', {
+  'ws.summaryExtra': 'Scenes: {scenes}, maps: {maps}',
+  'scene.title': 'Scenes', 'scene.add': 'New scene', 'scene.none': 'No scenes yet. A scene is a place and moment of play: a map, participants, music and sounds.', 'scene.newTitle': 'Scene {n}', 'scene.name': 'Scene name',
+  'scene.start': 'Start scene', 'scene.stop': 'End scene', 'scene.delete': 'Delete scene', 'scene.deleteConfirm': 'Delete the scene "{name}"?', 'scene.running': 'Scene in progress',
+  'scene.notes': 'Notes for the game master', 'scene.map': 'Map', 'scene.noMap': 'No map', 'scene.music': 'Music', 'scene.noMusic': 'No music', 'scene.fileMissing': 'file not found',
+  'scene.musicHint': 'No music yet: put files into the music folder (Sound section → “Music folder”) — they appear in the list.',
+  'scene.people': 'Participants', 'scene.addPerson': 'Add a participant', 'scene.sounds': 'Sounds', 'scene.addSound': 'Add a sound',
+  'map.title': 'Maps', 'map.add': 'Add a map', 'map.none': 'No maps yet. Upload a map picture — you can place markers on it and link them to scenes, characters and notes.', 'map.newName': 'Map', 'map.name': 'Map name',
+  'map.addMarker': 'Place a marker', 'map.addingOn': 'Click on the map…', 'map.delete': 'Delete map', 'map.deleteConfirm': 'Delete the map "{name}" with its markers?',
+  'map.hint': 'Markers can be dragged, and moved with the arrow keys when selected.', 'map.hintAdding': 'Click the map to place a marker.', 'map.selectHint': 'Select a marker to rename it or link it to a scene, character or note.',
+  'map.markerUnnamed': 'Unnamed marker', 'map.markerDefault': 'Marker {n}', 'map.markerLabel': 'Marker name', 'map.markerColor': 'Marker colour', 'map.linkKind': 'Leads to', 'map.linkTarget': 'Choose',
+  'map.link.none': 'Nowhere', 'map.link.scene': 'A scene', 'map.link.entity': 'A character', 'map.link.note': 'A note', 'map.deleteMarker': 'Delete marker',
+});
+
+registerLocale('ru', { 'exp.audioNote': 'Музыка и звуки сцен в пакет не входят (они лежат в ваших папках звука). Получателю нужны такие же файлы в его папках — иначе сцена покажет «файл не найден».' });
+registerLocale('en', { 'exp.audioNote': 'Scene music and sounds are not included in the package (they live in your sound folders). The recipient needs the same files in their folders — otherwise the scene shows “file not found”.' });

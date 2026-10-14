@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ActionDef, Campaign, Encounter, Entity, GameSystem } from "../../core";
+import type { ActionDef, Campaign, Encounter, Entity, GameSystem, MapMarker } from "../../core";
 import { adjustResource, computeEntity, loc, rollInitiative, runAction } from "../../core";
 import { CardRenderer } from "../cards/CardRenderer";
 import { putImage, resolveSrc } from "../assets";
@@ -9,11 +9,13 @@ import type { PluginRegistry } from "../plugin-host";
 import type { RollEntry } from "../rolls";
 import { createEntity, newId, preview } from "../workspace-model";
 import { CampaignGallery } from "./CampaignGallery";
+import { CampaignMaps } from "./CampaignMaps";
 import { CampaignNotes } from "./CampaignNotes";
+import { CampaignScenes } from "./CampaignScenes";
 import { CombatTracker } from "./CombatTracker";
 import { Input, JsonInput } from "./inputs";
 
-export type CampaignTab = "heroes" | "cards" | "combat" | "notes";
+export type CampaignTab = "heroes" | "cards" | "combat" | "scenes" | "maps" | "notes";
 
 /** Состояние редактора кампании: выбранный герой, вкладка, броски действий, бой. */
 export function useCampaignEditor(
@@ -27,6 +29,10 @@ export function useCampaignEditor(
   const [entityIndex, setEntityIndex] = useState(0);
   const [newTypeIndex, setNewTypeIndex] = useState(0);
   const [tab, setTab] = useState<CampaignTab>("heroes");
+  const [sceneId, setSceneId] = useState<string | null>(null);
+  const [mapId, setMapId] = useState<string | null>(null);
+  const [activeScene, setActiveScene] = useState<string | null>(null);
+  const [focusNote, setFocusNote] = useState<string | null>(null);
   useEffect(() => {
     if (campaign && entityIndex >= campaign.entities.length) setEntityIndex(Math.max(0, campaign.entities.length - 1));
   }, [campaign, entityIndex]);
@@ -42,15 +48,28 @@ export function useCampaignEditor(
 
   return {
     campaign, system, entity, entityType, computed, entityIndex, newTypeIndex, tab, registry,
+    sceneId, setSceneId, mapId, setMapId, activeScene, setActiveScene, focusNote,
     setEntityIndex, setNewTypeIndex, setTab, updateCampaign, updateEntity, patchEntity,
-    reset: () => { setEntityIndex(0); setNewTypeIndex(0); setTab("heroes"); },
+    reset: () => { setEntityIndex(0); setNewTypeIndex(0); setTab("heroes"); setSceneId(null); setMapId(null); setFocusNote(null); },
+    /** Переход по метке карты или по ссылке сцены: к сцене, герою или заметке. */
+    openTarget: (to: Pick<MapMarker, "sceneId" | "entityId" | "noteId">) => {
+      if (to.sceneId) { setSceneId(to.sceneId); setTab("scenes"); }
+      else if (to.entityId && campaign) { const i = campaign.entities.findIndex((e) => e.id === to.entityId); if (i >= 0) { setEntityIndex(i); setTab("heroes"); } }
+      else if (to.noteId) { setFocusNote(to.noteId); setTab("notes"); }
+    },
     addEntity: () => {
       const type = system?.entityTypes[newTypeIndex];
       if (!campaign || !type) return;
       updateCampaign((c) => ({ ...c, entities: [...c.entities, createEntity(type, lang, c.entities.filter((e) => e.typeId === type.id).length + 1)] }));
       setEntityIndex(campaign.entities.length);
     },
-    removeEntity: () => updateCampaign((c) => ({ ...c, entities: c.entities.filter((_, i) => i !== entityIndex), encounters: c.encounters?.map((en) => ({ ...en, combatants: en.combatants.filter((x) => x.entityId !== entity?.id) })) })),
+    removeEntity: () => updateCampaign((c) => ({
+      ...c,
+      entities: c.entities.filter((_, i) => i !== entityIndex),
+      encounters: c.encounters?.map((en) => ({ ...en, combatants: en.combatants.filter((x) => x.entityId !== entity?.id) })),
+      scenes: c.scenes?.map((s) => ({ ...s, entityIds: s.entityIds.filter((id) => id !== entity?.id) })),
+      maps: c.maps?.map((m) => ({ ...m, markers: m.markers.map((k) => (k.entityId === entity?.id ? { ...k, entityId: undefined } : k)) })),
+    })),
     addNote: (title: string) => updateCampaign((c) => ({ ...c, notes: [...c.notes, { id: newId("note"), title, body: "" }] })),
     /** Бросок действия героя: результат уходит в журнал. */
     run: (target: Entity, action: ActionDef, inputs: Record<string, unknown> = {}) => {
@@ -226,7 +245,7 @@ export function CampaignCanvas({ ed }: { ed: CampaignEditorState }) {
   const { t, label } = useLang();
   const { campaign, system } = ed;
   if (!campaign) return null;
-  const TABS: CampaignTab[] = ["heroes", "cards", "combat", "notes"];
+  const TABS: CampaignTab[] = ["heroes", "cards", "combat", "scenes", "maps", "notes"];
   return (
     <>
       <div className="ws-document-heading">
@@ -244,6 +263,8 @@ export function CampaignCanvas({ ed }: { ed: CampaignEditorState }) {
       {ed.tab === "heroes" && <Heroes ed={ed} />}
       {ed.tab === "cards" && <CampaignGallery ed={ed} />}
       {ed.tab === "combat" && <CombatTracker ed={ed} />}
+      {ed.tab === "scenes" && <CampaignScenes ed={ed} />}
+      {ed.tab === "maps" && <CampaignMaps ed={ed} />}
       {ed.tab === "notes" && <CampaignNotes ed={ed} />}
     </>
   );
@@ -260,6 +281,7 @@ export function CampaignInspector({ ed }: { ed: CampaignEditorState }) {
       <p className="ws-hint">{t("ws.rules", { name: system ? label(system.name) : t("ws.rulesMissing") })}</p>
       <div className="ws-property-group">{t("ws.summary")}</div>
       <p>{t("ws.summaryCount", { entities: campaign.entities.length, notes: campaign.notes.length })}</p>
+      <p>{t("ws.summaryExtra", { scenes: campaign.scenes?.length ?? 0, maps: campaign.maps?.length ?? 0 })}</p>
       <p className="ws-hint">{t("ws.computedHint")}</p>
     </>
   );

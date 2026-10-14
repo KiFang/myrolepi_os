@@ -172,5 +172,40 @@ export interface Campaign {
   /** links — id сущностей и заметок, с которыми связана заметка */
   notes: { id: string; title: string; body: string; links?: string[] }[];
   encounters?: Encounter[];
-  scenes?: { id: string; title: string; entityIds: string[]; notes?: string }[];
+  scenes?: Scene[];
+  maps?: GameMap[];
+}
+
+/** Сцена: место и момент игры — участники, карта, музыка и звуки. Музыка и звуки — ссылки на файлы из папок звука (см. audio.ts). */
+export interface Scene {
+  id: string;
+  title: string;
+  notes?: string;
+  entityIds: string[];
+  mapId?: string;
+  /** ссылка на музыку: "music/<путь>" */
+  music?: string;
+  /** ссылки на звуки: "sounds/<путь>" */
+  sounds?: string[];
+}
+
+/** Метка на карте. Координаты — доли размера картинки (0…1). */
+export interface MapMarker {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+  color?: string;
+  /** куда ведёт метка (любое одно): сцена, герой или заметка */
+  sceneId?: string;
+  entityId?: string;
+  noteId?: string;
+}
+
+/** Карта: картинка (ссылка "asset:…") и метки на ней. */
+export interface GameMap {
+  id: string;
+  name: string;
+  image: string;
+  markers: MapMarker[];
 }

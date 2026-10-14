@@ -24,6 +24,14 @@ const api = {
     gc: (extraRefs: string[]) => ipcRenderer.invoke('assets:gc', extraRefs) as Promise<{ deleted: number; bytes: number; kept: number }>,
     url: (id: string) => `rolepi-asset://${id}`,
   },
+  /** Музыка и звуки из папок приложения (появляются сами, когда файлы кладут в папку). */
+  audio: {
+    list: () => ipcRenderer.invoke('audio:list') as Promise<import('../core/audio').AudioFile[]>,
+    folders: () => ipcRenderer.invoke('audio:folders') as Promise<{ root: string; music: string; sounds: string }>,
+    openFolder: (kind?: 'music' | 'sounds') => ipcRenderer.invoke('audio:openFolder', kind) as Promise<string>,
+    url: (ref: string) => { const i = ref.indexOf('/'); return `rolepi-audio://${ref.slice(0, i)}/${ref.slice(i + 1).split('/').map(encodeURIComponent).join('/')}`; },
+    onChange: (cb: () => void) => { const h = () => cb(); ipcRenderer.on('audio:changed', h); return () => { ipcRenderer.removeListener('audio:changed', h); }; },
+  },
   /** Ключ автора для подписи защищённых систем. */
   keys: {
     author: () => ipcRenderer.invoke('keys:author') as Promise<{ publicKey: string; keyId: string; name?: string } | null>,

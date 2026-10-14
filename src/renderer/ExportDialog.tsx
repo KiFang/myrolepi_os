@@ -73,6 +73,7 @@ export function ExportDialog({ kind, system, campaign, onClose }: Props) {
         <label className="ws-checkbox exp-row"><input type="checkbox" checked={includeSystem} onChange={(e) => setIncludeSystem(e.target.checked)} />{t("exp.includeSystem", { name: label(system.name) })}</label>
       )}
       {kind === "campaign" && !system && <p className="muted">{t("exp.noSystem")}</p>}
+      {kind === "campaign" && !!campaign?.scenes?.some((x) => x.music || x.sounds?.length) && <p className="ws-hint">{t("exp.audioNote")}</p>}
       {kind === "system" && alreadyProtected && <p className="exp-note"><Icon name="shield" size={15} />{t("exp.alreadyProtected")}</p>}
       {kind === "system" && !alreadyProtected && (
         <>

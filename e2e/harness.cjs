@@ -64,7 +64,7 @@ const plug = (d) => {
 async function run(name, port, opts, scenario) {
   const plugs = (opts.plugins || []).map(plug);
   const srv = await serve(port, plugs);
-  const browser = await chromium.launch({ executablePath: findChrome(), args: ['--no-sandbox'] });
+  const browser = await chromium.launch({ executablePath: findChrome(), args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
   const ctx = await browser.newContext({ viewport: { width: 1500, height: 950 }, locale: opts.locale || 'ru-RU', acceptDownloads: true });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   const page = await ctx.newPage();
@@ -92,7 +92,9 @@ async function run(name, port, opts, scenario) {
     if (op === 'import') { try { const j = JSON.parse(a); if (!j.publicKey || !j.privateKey) return null; author = j; return info(); } catch { return null; } }
     return null;
   });
-  await page.addInitScript(({ plugins, seed }) => {
+  // звуки: короткий настоящий WAV (0,4 с тишины), чтобы плеер действительно играл
+  const wav = (() => { const n = 3200, b = Buffer.alloc(44 + n, 128); b.write('RIFF', 0); b.writeUInt32LE(36 + n, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(8000, 24); b.writeUInt32LE(8000, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write('data', 36); b.writeUInt32LE(n, 40); return 'data:audio/wav;base64,' + b.toString('base64'); })();
+  await page.addInitScript(({ plugins, seed, audio, wavUrl }) => {
     if (window !== window.top) return; // как в приложении: мост window.rpi есть только у главного окна, не у рамок панелей
     const db = JSON.parse(JSON.stringify(seed || {}));
     const scaffolds = [];
@@ -107,15 +109,19 @@ async function run(name, port, opts, scenario) {
     window.__backups = backups;
     const snapshot = (reason, note) => {
       const data = {}; for (const k of DOCS) data[k] = JSON.parse(JSON.stringify(db[k] || {}));
-      const m = { id: `${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}-${String(backups.length).padStart(3, '0')}-${reason}`, createdAt: new Date().toISOString(), reason, note, app: '0.2.0', systems: Object.keys(data.systems).length, campaigns: Object.keys(data.campaigns).length, bytes: JSON.stringify(data).length };
+      const m = { id: `${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}-${String(backups.length).padStart(3, '0')}-${reason}`, createdAt: new Date().toISOString(), reason, note, app: '0.3.0', systems: Object.keys(data.systems).length, campaigns: Object.keys(data.campaigns).length, bytes: JSON.stringify(data).length };
       backups.push({ m, data }); return m;
     };
+    let audioList = (audio || []).map((r) => { const i = r.indexOf('/'), kind = r.slice(0, i), p = r.slice(i + 1), j = p.lastIndexOf('/'), f = p.slice(j + 1); return { ref: r, kind, path: p, title: f.replace(/\.[^.]+$/, ''), folder: j < 0 ? '' : p.slice(0, j), size: 3244 }; });
+    let audioChanged = null;
+    window.__setAudio = (refs) => { audioList = refs.map((r) => { const i = r.indexOf('/'), kind = r.slice(0, i), p = r.slice(i + 1), j = p.lastIndexOf('/'), f = p.slice(j + 1); return { ref: r, kind, path: p, title: f.replace(/\.[^.]+$/, ''), folder: j < 0 ? '' : p.slice(0, j), size: 3244 }; }); if (audioChanged) audioChanged(); };
     const K = (op) => (...a) => window.__keysOp(op, ...a);
     window.rpi = {
       keys: { author: K('author'), ensure: K('ensure'), setName: K('setName'), sign: K('sign'), verify: K('verify'), export: K('export'), import: K('import') },
+      audio: { list: async () => audioList, folders: async () => ({ root: '/audio', music: '/audio/music', sounds: '/audio/sounds' }), openFolder: async () => '', url: () => wavUrl, onChange: (cb) => { audioChanged = cb; return () => { audioChanged = null; }; } },
       panelUrl: (id, entry) => `http://localhost:${location.port}/__plugin/${id}/${entry}`,
-      env: async () => ({ version: '0.2.0', launcherMode: false, lang: navigator.language }),
-      plugins: async () => plugins, changelog: async () => '## 0.2.0\n- test', openPluginsFolder: async () => {},
+      env: async () => ({ version: '0.3.0', launcherMode: false, lang: navigator.language }),
+      plugins: async () => plugins, changelog: async () => '## 0.3.0\n- test', openPluginsFolder: async () => {},
       scaffoldPlugin: async (id, f) => { scaffolds.push({ id, files: f }); return id; }, installExamples: async () => 2,
       store: {
         list: async (k) => Object.keys(db[k] || {}), read: async (k, i) => (db[k] || {})[i] ?? null,
@@ -149,7 +155,7 @@ async function run(name, port, opts, scenario) {
         openFolder: async () => '',
       },
     };
-  }, { plugins: plugs.map(({ absDir, ...rest }) => rest), seed: opts.seed });
+  }, { plugins: plugs.map(({ absDir, ...rest }) => rest), seed: opts.seed, audio: opts.audio, wavUrl: wav });
   let failed = 0;
   const step = async (title, fn) => {
     try { await fn(); console.log('  ok   ', title); } catch (e) { failed++; console.log('  FAIL ', title, '—', String(e.message).split('\n')[0]); }

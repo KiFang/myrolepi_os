@@ -1100,3 +1100,68 @@
 .panels-stage{flex:1;min-height:0;display:flex}
 .panels-slot{flex:1;min-width:0}
 .panels-slot[hidden]{display:none}
+
+/* звук */
+.audio-folders { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 14px; }
+.audio-path { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.audio-player { margin-bottom: 18px; }
+.audio-now { display: flex; gap: 12px; align-items: baseline; margin-bottom: 10px; font-size: 15px; }
+.audio-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.audio-controls .audio-seek { flex: 1; min-width: 140px; }
+.audio-controls .audio-volume { width: 100px; }
+.audio-controls input[type=range], .ws-inline input[type=range] { padding: 0; accent-color: var(--accent); }
+.audio-time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; text-align: center; }
+.audio-play { width: 38px; height: 38px; border-radius: 50%; }
+button[aria-pressed=true].ws-icon-button { color: var(--accent); }
+.audio-group { margin-bottom: 12px; }
+.audio-folder { display: flex; align-items: center; gap: 8px; padding: 6px 4px; color: var(--muted); }
+.audio-folder button { margin-left: auto; padding: 3px 10px; font-size: 12px; }
+.audio-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 4px 10px; border-radius: 10px; border: 1px solid transparent; transition: background 0.12s; }
+.audio-row:hover { background: var(--hover); }
+.audio-row.current { background: var(--selected); border-color: var(--border); }
+.soundboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.sound-pad { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--panel2); text-align: left; transition: transform 0.08s, background 0.12s; }
+.sound-pad:hover { background: var(--hover); }
+.sound-pad:active { transform: scale(0.97); }
+.mini-player { display: flex; align-items: center; gap: 2px; padding: 2px 8px 2px 2px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel2); max-width: 220px; animation: rp-item 0.2s ease both; }
+.mini-title { display: flex; align-items: center; gap: 8px; min-width: 0; background: none; border: 0; padding: 4px 4px; color: var(--muted); font-size: 12.5px; }
+.mini-eq { width: 12px; height: 12px; border-radius: 3px; background: var(--muted); flex: none; }
+.mini-eq.on { background: var(--accent); animation: rp-eq 0.9s ease-in-out infinite alternate; }
+@keyframes rp-eq { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }
+@media (max-width: 1100px) { .mini-player { display: none; } }
+
+/* сцены и карты */
+.scenes { display: grid; grid-template-columns: 220px 1fr; gap: 18px; align-items: start; }
+.scene-list { display: flex; flex-direction: column; gap: 6px; }
+.scene-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid transparent; background: transparent; text-align: left; }
+.scene-item:hover { background: var(--hover); }
+.scene-item.active { background: var(--selected); border-color: var(--border); }
+.scene-live { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); margin-left: auto; flex: none; animation: rp-pulse 1.6s ease-in-out infinite; }
+.scene-live-title .scene-live { margin: 0 8px 0 0; display: inline-block; }
+@keyframes rp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.scene-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.scene-head { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.scene-head .ws-control { flex: 1; min-width: 200px; }
+.scene-live-panel { display: flex; flex-direction: column; gap: 12px; border-color: var(--accent); }
+.scene-live-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.scene-people { display: flex; gap: 6px; flex-wrap: wrap; }
+.scene-people .ws-chip { cursor: pointer; }
+.scene-notes { white-space: pre-wrap; margin: 0; color: var(--muted); }
+.map-editor { display: flex; flex-direction: column; gap: 10px; }
+.map-toolbar { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.map-toolbar .ws-control { flex: 1; min-width: 180px; }
+.map-canvas { position: relative; display: block; width: fit-content; align-self: flex-start; max-width: 100%; border: 1px solid var(--border-strong); border-radius: 12px; overflow: hidden; background: var(--sunken); user-select: none; touch-action: none; }
+.map-canvas img { display: block; max-width: 100%; max-height: 70vh; }
+.map-canvas.adding { cursor: crosshair; }
+.map-marker { position: absolute; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); transition: transform 0.1s; }
+.map-marker:hover { transform: translate(-50%, -100%) scale(1.1); }
+.map-marker.selected { z-index: 2; transform: translate(-50%, -100%) scale(1.2); }
+.map-marker.dragging { cursor: grabbing; transition: none; z-index: 3; }
+.map-marker:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.map-label { position: absolute; top: 100%; margin-top: 2px; white-space: nowrap; line-height: 1.2; padding: 1px 7px; border-radius: 999px; font-size: 12px; background: rgba(0, 0, 0, 0.72); color: #fff; pointer-events: none; }
+.map-marker.linked .map-label { background: var(--accent); color: var(--on-accent); }
+.map-colors { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 10px; }
+.map-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; padding: 0; }
+.map-swatch.on { border-color: var(--fg); }
+.ws-note.focus { outline: 2px solid var(--accent); }
+@media (max-width: 900px) { .scenes { grid-template-columns: 1fr; } }

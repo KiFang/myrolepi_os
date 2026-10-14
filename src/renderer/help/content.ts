@@ -159,6 +159,17 @@ export const ARTICLES: Article[] = [
     ],
   },
   {
+    id: "scenes", icon: "scene", title: l("Сцены, карты и звук", "Scenes, maps and sound"),
+    summary: l("Сцена соединяет карту, участников, музыку и звуки.", "A scene joins a map, participants, music and sounds."),
+    keywords: "scene map marker music sound audio сцена карта метка музыка звук",
+    blocks: [
+      { t: "p", text: l("В кампании откройте вкладки «Сцены» и «Карты». На карте расставьте метки (перетаскивайте их мышью или двигайте стрелками) и свяжите метки со сценами, героями и заметками. В сцене выберите карту, участников, музыку и звуки — и нажмите «Запустить сцену».", "In a campaign open the Scenes and Maps tabs. Place markers on a map (drag them or move with the arrow keys) and link markers to scenes, characters and notes. In a scene choose a map, participants, music and sounds — then press Start scene.") },
+      { t: "h", text: l("Откуда берётся музыка", "Where music comes from") },
+      { t: "p", text: l("Раздел «Звук» → «Папка с музыкой»: бросьте туда mp3, ogg, wav, flac или m4a — файлы появятся в приложении сами. Подпапки работают как плейлисты. Короткие эффекты кладите в «Папку со звуками» — они станут кнопками на звуковой панели.", "Sound section → Music folder: drop mp3, ogg, wav, flac or m4a files there — they appear in the app by themselves. Subfolders work as playlists. Put short effects into the Sounds folder — they become buttons on the soundboard.") },
+      { t: "tip", text: l("Сцена хранит только названия файлов. Если вы отправляете кампанию другу, музыка и звуки в пакет не входят: ему нужны такие же файлы в его папках. Картинки карт в пакет входят.", "A scene stores only file names. When you send a campaign to a friend, music and sounds are not in the package: they need the same files in their folders. Map pictures are included.") },
+    ],
+  },
+  {
     id: "data", icon: "save", title: l("Данные, копии и защита", "Data, backups and protection"),
     summary: l("Где лежат файлы, резервные копии и как поделиться системой.", "Where files live, backups, and how to share a system."),
     keywords: "save data backup export import rolepi protect lock sign key сохранение резервная копия экспорт импорт защита подпись ключ",

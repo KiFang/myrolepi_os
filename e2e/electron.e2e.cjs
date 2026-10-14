@@ -73,7 +73,32 @@ const ROOT = path.resolve(__dirname, '..');
     await page.getByRole('button', { name: 'Перезагрузить' }).click();
     await page.waitForSelector('.plugin-card:has-text("генератор имён").state-needs-approval');
   });
-  await step('«О программе»: версия и changelog', async () => { await page.getByRole('button', { name: 'О программе', exact: true }).click(); await page.waitForSelector('text=Версия 0.2.0'); if (!/0\.2\.0/.test(await page.locator('.ws-page pre').innerText())) throw new Error('нет changelog'); });
+  await step('звук: файл из папки появляется сам, играет, перематывается; чужие пути закрыты', async () => {
+    const wav = (() => { const n = 16000, b = Buffer.alloc(44 + n, 128); b.write('RIFF', 0); b.writeUInt32LE(36 + n, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(8000, 24); b.writeUInt32LE(8000, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write('data', 36); b.writeUInt32LE(n, 40); return b; })();
+    fs.mkdirSync(path.join(tmp, 'data', 'audio', 'music', 'Бой'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, 'data', 'audio', 'music', 'Бой', 'тест.wav'), wav);
+    fs.writeFileSync(path.join(tmp, 'secret.wav'), wav);
+    await page.getByRole('button', { name: 'Звук', exact: true }).click();
+    await page.waitForSelector('.audio-row >> text=тест', { timeout: 10000 }); // обновляется слежением за папкой или при возврате в окно
+    await page.getByRole('button', { name: 'Играть: тест' }).click();
+    await page.waitForSelector('.mini-player >> text=тест', { timeout: 10000 });
+    await page.waitForSelector('.audio-player button[aria-label="Пауза"]');
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Page.setBypassCSP', { enabled: true });
+    await page.reload(); await page.waitForSelector('.ws-header');
+    const r = await page.evaluate(async () => {
+      const get = async (u, h) => { const x = await fetch(u, { headers: h }); return { status: x.status, len: (await x.arrayBuffer()).byteLength, range: x.headers.get('content-range') }; };
+      const base = 'rolepi-audio://music/' + encodeURIComponent('Бой') + '/' + encodeURIComponent('тест.wav');
+      return { full: await get(base), part: await get(base, { Range: 'bytes=0-9' }), tail: await get(base, { Range: 'bytes=-4' }), bad: await get(base, { Range: 'bytes=999999-' }),
+        up: await get('rolepi-audio://music/..%2F..%2Fsecret.wav'), other: await get('rolepi-audio://evil/x.wav'), notAudio: await get('rolepi-audio://music/_README.txt') };
+    });
+    if (r.full.status !== 200 || r.full.len !== 16044) throw new Error('полный: ' + JSON.stringify(r.full));
+    if (r.part.status !== 206 || r.part.len !== 10 || !/^bytes 0-9\/16044$/.test(r.part.range)) throw new Error('диапазон: ' + JSON.stringify(r.part));
+    if (r.tail.status !== 206 || r.tail.len !== 4) throw new Error('хвост: ' + JSON.stringify(r.tail));
+    if (r.bad.status !== 416) throw new Error('за пределами: ' + JSON.stringify(r.bad));
+    for (const k of ['up', 'other', 'notAudio']) if (r[k].status !== 404) throw new Error(k + ': ' + JSON.stringify(r[k]));
+  });
+  await step('«О программе»: версия и changelog', async () => { await page.getByRole('button', { name: 'О программе', exact: true }).click(); await page.waitForSelector('text=Версия 0.3.0'); if (!/0\.3\.0/.test(await page.locator('.ws-page pre').innerText())) throw new Error('нет changelog'); });
   if (errors.length) { failed++; console.log('  FAIL ошибки страницы:', errors.join('; ')); }
   await browser.close(); app.kill('SIGTERM');
   fs.rmSync(tmp, { recursive: true, force: true });

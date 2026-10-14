@@ -6,6 +6,8 @@ import { CommandPalette } from "./CommandPalette";
 import type { PaletteCommand } from "./CommandPalette";
 import { Icon } from "./icons";
 import { HelpContext, LangContext, rememberLang, savedLang } from "./lang";
+import { AudioPage, MiniPlayer } from "./AudioPage";
+import { useAudioLibrary } from "./audio/useAudio";
 import { DataPage } from "./DataPage";
 import { PanelFrame, PanelsContext } from "./PanelFrame";
 import { currentProjectApi } from "./projectBridge";
@@ -19,9 +21,9 @@ import { usePlugins } from "./usePlugins";
 import { Workspace } from "./workspace/Workspace";
 import "./styles.css";
 
-type Page = "workspace" | "panels" | "dice" | "formulas" | "plugins" | "data" | "help" | "about";
-const PAGES: Page[] = ["workspace", "panels", "dice", "formulas", "plugins", "data", "help", "about"];
-const PAGE_ICONS: Record<Page, string> = { workspace: "studio", panels: "panel", dice: "dice", formulas: "formula", plugins: "plugin", data: "folder", help: "help", about: "info" };
+type Page = "workspace" | "panels" | "audio" | "dice" | "formulas" | "plugins" | "data" | "help" | "about";
+const PAGES: Page[] = ["workspace", "panels", "audio", "dice", "formulas", "plugins", "data", "help", "about"];
+const PAGE_ICONS: Record<Page, string> = { workspace: "studio", panels: "panel", audio: "music", dice: "dice", formulas: "formula", plugins: "plugin", data: "folder", help: "help", about: "info" };
 const LANG_NAMES: Record<string, string> = { ru: "Русский", en: "English" };
 
 function pickLang(candidate: string | null | undefined): string {
@@ -36,6 +38,7 @@ function Shell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpTarget, setHelpTarget] = useState<string | undefined>();
   const notify = useToast();
+  useAudioLibrary();
   const plugins = usePlugins(() => lang);
   const reg = plugins.registry;
 
@@ -134,6 +137,7 @@ function Shell() {
               </button>
             ))}
           </nav>
+          <MiniPlayer onOpen={() => setPage("audio")} />
           <button className="ws-palette-hint" onClick={() => setPaletteOpen(true)} title={t("palette.title")}><Icon name="search" size={14} /><span className="lbl">{t("palette.hint")}</span><kbd>Ctrl K</kbd></button>
           <select className="ws-lang ws-theme" aria-label={t("theme")} value={theme.id} onChange={(e) => setTheme(e.target.value)}>
             {themes.map((th) => <option key={th.id} value={th.id}>{th.name[lang === "ru" ? "ru" : "en"]}</option>)}
@@ -165,6 +169,7 @@ function Shell() {
               {page === "dice" && <Dice reg={reg} />}
               {page === "formulas" && <Formulas reg={reg} />}
               {page === "plugins" && <Plugins api={plugins} />}
+              {page === "audio" && <AudioPage />}
               {page === "data" && <DataPage />}
               {page === "help" && <Help reg={reg} target={helpTarget} onOpenFormula={(f) => { sessionStorage.setItem("rpi.formula", f); setPage("formulas"); }} />}
               {page === "about" && <About version={plugins.version} />}
