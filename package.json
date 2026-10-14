@@ -102,8 +102,7 @@
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "category": "Game",
       "artifactName": "${productName}-${version}.${ext}"
@@ -122,5 +121,9 @@
       "repo": "myrolepi_os",
       "releaseType": "draft"
     }
+  },
+  "author": {
+    "name": "KiFang",
+    "email": "kifangames@gmail.com"
   }
 }
