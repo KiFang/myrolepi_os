@@ -1,3 +1,4 @@
+import spaceExample from "../../examples/space-opera.system.json";
 import { computeEntity, loc, validateSystem } from "../core";
 import type { Campaign, EntityType, FieldDef, GameSystem } from "../core";
 import type { PluginRegistry } from "./plugin-host";
@@ -30,9 +31,11 @@ export function newSystem(): GameSystem {
     entityTypes: [newType()],
   };
 }
-export function newField(): FieldDef {
+export function newField(existing: FieldDef[] = []): FieldDef {
+  let index = 1;
+  while (existing.some((f) => f.id === `field_${index}`)) index++;
   return {
-    id: newId("field"),
+    id: `field_${index}`,
     label: "Новое поле",
     type: "number",
     default: 0,
@@ -94,4 +97,64 @@ export function createEntity(type: EntityType) {
     name: `Новый ${label(type.label).toLowerCase()}`,
     values: {},
   };
+}
+
+/** Create an independent editable document; templates never become the user's live data. */
+export function starterSystem(
+  name: string,
+  template: "blank" | "classic" | "space" | GameSystem,
+): GameSystem {
+  if (typeof template === "object" || template === "space") {
+    const source =
+      typeof template === "object" ? template : (spaceExample as GameSystem);
+    return {
+      ...structuredClone(source),
+      id: newId("system"),
+      name: rename(source.name, name),
+    };
+  }
+  const system = { ...newSystem(), name };
+  if (template === "classic") {
+    system.entityTypes[0].fields = [
+      {
+        id: "strength",
+        label: "Сила",
+        type: "number",
+        default: 10,
+        group: "Характеристики",
+      },
+      {
+        id: "agility",
+        label: "Ловкость",
+        type: "number",
+        default: 10,
+        group: "Характеристики",
+      },
+      {
+        id: "endurance",
+        label: "Выносливость",
+        type: "number",
+        default: 10,
+        group: "Характеристики",
+      },
+      {
+        id: "level",
+        label: "Уровень",
+        type: "number",
+        default: 1,
+        min: 1,
+        group: "Развитие",
+      },
+      {
+        id: "max_hp",
+        label: "Максимум здоровья",
+        type: "number",
+        formula: "endurance * 2 + level * 4",
+        group: "Ресурсы",
+      },
+    ];
+    system.description =
+      "Базовая система: измените характеристики и формулы под правила своей игры.";
+  }
+  return system;
 }

@@ -1,15 +1,15 @@
 .workspace {
-  --accent: #8faeff;
-  --panel: #20232b;
-  --panel2: #2b303c;
-  --bg: #191c23;
+  --accent: #83a0ff;
+  --panel: #191b20;
+  --panel2: #252830;
+  --bg: #15171c;
   --fg: #e4e7ef;
   --muted: #929bad;
-  --border: #343a47;
+  --border: #30343e;
   color: var(--fg);
   background: var(--bg);
   height: 100vh;
-  min-width: 900px;
+  min-width: 800px;
   display: flex;
   flex-direction: column;
   font-size: 13px;
@@ -38,12 +38,12 @@
   outline-offset: 2px;
 }
 .workspace .ws-primary {
-  background: #4463b6;
-  border-color: #617dd0;
+  background: #517cff;
+  border-color: #668bff;
   color: #fff;
 }
 .workspace .ws-primary:hover {
-  background: #506ec0;
+  background: #658aff;
 }
 .workspace .ws-danger {
   color: #ffa0a8;
@@ -121,7 +121,7 @@
 }
 .ws-body {
   display: grid;
-  grid-template-columns: 216px minmax(340px, 1fr) 280px;
+  grid-template-columns: 220px minmax(0, 1fr) 320px;
   flex: 1;
   min-height: 0;
 }
@@ -168,8 +168,8 @@
   color: #93adf3;
 }
 .workspace .selected {
-  background: #2f3c5a;
-  border-color: #4d679f;
+  background: #345ca8;
+  border-color: #537fff;
 }
 .ws-tree-footer {
   margin-top: auto;
@@ -213,7 +213,7 @@
   padding: 12px 18px;
 }
 .ws-canvas {
-  padding: 28px;
+  padding: 22px;
   flex: 1;
   overflow: auto;
 }
@@ -499,7 +499,7 @@
 }
 @media (max-width: 1100px) {
   .ws-body {
-    grid-template-columns: 180px minmax(300px, 1fr) 250px;
+    grid-template-columns: 180px minmax(0, 1fr) 280px;
   }
   .ws-canvas {
     padding: 20px;
@@ -528,4 +528,481 @@
   height: 36px;
   padding: 0 9px;
   line-height: normal;
+}
+/* Studio controls and guided creation */
+.workspace {
+  font-family: "Segoe UI", Inter, system-ui, sans-serif;
+  line-height: 1.5;
+}
+.workspace button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  font-weight: 500;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.studio-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+.studio-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.studio-mark.large {
+  width: 48px;
+  height: 48px;
+}
+.ws-header {
+  height: 44px;
+  padding: 0 14px;
+  gap: 28px;
+  background: #191b20;
+}
+.ws-brand {
+  font-size: 14px;
+}
+.ws-menu button {
+  color: #dce1eb;
+  font-size: 12px;
+}
+.ws-toolbar {
+  padding: 7px 12px;
+  background: #1c1f25;
+  gap: 6px;
+}
+.ws-toolbar > button:not(.ws-primary) {
+  background: transparent;
+  border-color: transparent;
+}
+.ws-toolbar > button:not(.ws-primary):hover {
+  background: #2c303a;
+  border-color: #383e4a;
+}
+.ws-panel-title {
+  background: #1d2027;
+  font-size: 11px;
+  color: #b6bdcb;
+}
+.ws-tree-section {
+  padding-top: 20px;
+  letter-spacing: 0.06em;
+}
+.ws-tree > button {
+  justify-content: flex-start;
+  font-size: 12px;
+  padding: 7px 10px;
+  margin: 2px 6px;
+}
+.ws-tree > button.selected {
+  background: #4e77ee;
+  border-color: transparent;
+  color: white;
+}
+.ws-tabs {
+  min-height: 36px;
+  background: #1d2027;
+  border-bottom: 1px solid var(--border);
+}
+.ws-tabs button {
+  background: transparent;
+  font-size: 12px;
+}
+.ws-tabs button[aria-selected="true"] {
+  background: #252a34;
+}
+.ws-canvas {
+  scrollbar-width: thin;
+  scrollbar-color: #434956 transparent;
+}
+.ws-document-heading {
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.ws-document-heading > div {
+  min-width: 0;
+}
+.ws-document-heading > button {
+  flex-shrink: 0;
+}
+.workspace h1 {
+  font-size: 23px;
+  font-weight: 650;
+  margin-bottom: 5px;
+}
+.ws-document-heading p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.ws-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.09em;
+  margin-bottom: 6px;
+  color: #8ba2d9;
+}
+.ws-guide {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 20px 0;
+  background: #1d2129;
+}
+.ws-guide > div,
+.ws-guide > button {
+  padding: 12px 10px;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 2px 8px;
+  align-content: center;
+}
+.ws-guide > * + * {
+  border-left: 1px solid var(--border);
+}
+.ws-guide .ws-step {
+  grid-row: span 2;
+  align-self: center;
+  background: #2d3854;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  color: #b8cbff;
+  text-align: center;
+  line-height: 23px;
+  font-size: 11px;
+}
+.ws-guide strong {
+  font-size: 11px;
+  font-weight: 600;
+}
+.ws-guide small {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.ws-guide > button {
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+  grid-template-columns: 24px 1fr;
+}
+.ws-guide > button strong,
+.ws-guide > button small {
+  display: block;
+}
+.ws-guide > button > .studio-icon {
+  display: none;
+}
+.ws-table th {
+  background: #22262f;
+  font-size: 11px;
+}
+.ws-table tr {
+  background: #1c2028;
+}
+.ws-table td {
+  padding: 11px 12px;
+}
+.ws-table tr.selected {
+  background: #263654;
+}
+.ws-table td button {
+  font-weight: 600;
+}
+.ws-type-tabs {
+  padding-bottom: 2px;
+}
+.ws-control {
+  font-size: 12px;
+  gap: 6px;
+  margin: 14px 0;
+}
+.workspace input,
+.workspace textarea {
+  background: #15171c;
+  border-color: #393f4c;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.workspace input:not([type="checkbox"]):not([type="radio"]) {
+  height: 34px;
+}
+.workspace input:focus,
+.workspace textarea:focus {
+  border-color: #7094ff;
+}
+.ws-inspector {
+  scrollbar-width: thin;
+  scrollbar-color: #434956 transparent;
+}
+.ws-inspector-content {
+  padding: 0 16px 22px;
+}
+.ws-property-group {
+  font-size: 10px;
+  color: #8d9ab1;
+  margin-top: 20px;
+}
+.ws-context {
+  border-bottom: 1px solid var(--border);
+  margin: 14px 0 18px;
+  padding-bottom: 12px;
+}
+.ws-context summary {
+  color: #abb5c8;
+  cursor: pointer;
+  padding: 5px 0;
+  font-size: 12px;
+}
+.ws-context[open] summary {
+  color: #d9e1f0;
+}
+.ws-inline {
+  min-width: 0;
+}
+.ws-inline > * {
+  min-width: 0;
+}
+.ws-section-heading .ws-inline {
+  flex: 0 1 280px;
+}
+.ws-section-heading .ws-inline > button {
+  flex: 0 0 auto;
+}
+.ws-sheet,
+.ws-note {
+  background: #1d212b;
+  padding: 18px 20px;
+}
+.ws-entities button {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 2px;
+}
+.ws-entities small {
+  margin: 0;
+  font-size: 11px;
+}
+.ws-computed {
+  padding: 2px 0;
+}
+.ws-computed strong {
+  font-size: 24px;
+}
+.ws-sheet-fields {
+  column-gap: 24px;
+}
+.studio-select {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  height: 34px;
+  border: 1px solid #393f4c;
+  border-radius: 5px;
+  background: #15171c;
+  padding: 0 30px 0 10px;
+  color: var(--fg);
+  font-size: 12px;
+}
+.studio-select > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.studio-select .studio-chevron {
+  position: absolute;
+  right: 10px;
+  font-size: 16px;
+  color: #a0aabd;
+}
+.workspace .studio-select select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.studio-select:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.ws-welcome {
+  max-width: 700px;
+  padding: 32px 8px;
+}
+.ws-welcome h1 {
+  font-size: 32px;
+  line-height: 1.3;
+}
+.ws-welcome-actions {
+  margin: 24px 0 32px;
+}
+.ws-stages {
+  gap: 16px;
+}
+.ws-diagnostics {
+  max-height: 130px;
+  background: #191d24;
+}
+.ws-status {
+  background: #20232a;
+  font-size: 10px;
+  padding: 5px 12px;
+}
+.create-system-dialog {
+  color: var(--fg);
+  background: #1e2129;
+  border: 1px solid #424a5c;
+  border-radius: 12px;
+  padding: 28px;
+  width: min(660px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  box-shadow: 0 24px 80px #0009;
+  overflow: auto;
+}
+.create-system-dialog::backdrop {
+  background: #070a11b5;
+  backdrop-filter: blur(4px);
+}
+.create-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.create-heading > div {
+  flex: 1;
+}
+.create-heading h1 {
+  font-size: 22px;
+}
+.create-heading .ws-icon-button {
+  background: transparent;
+  border-color: transparent;
+  padding: 5px;
+  min-width: 30px;
+}
+.create-intro {
+  color: #aab4c6;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 20px 0;
+}
+.create-system-dialog .ws-control {
+  margin: 22px 0;
+}
+.create-system-dialog input:not([type="radio"]) {
+  height: 40px;
+}
+.create-label {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.create-label > span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  margin-top: 3px;
+}
+.create-templates {
+  display: grid;
+  gap: 8px;
+}
+.create-templates label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid #393f4d;
+  border-radius: 7px;
+  cursor: pointer;
+  background: #191d25;
+}
+.create-templates label.chosen {
+  border-color: #7194ff;
+  background: #263653;
+}
+.create-templates input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  flex: none;
+  accent-color: #759aff;
+  margin: 0;
+}
+.create-templates label > span {
+  flex: 1;
+}
+.create-templates strong,
+.create-templates small {
+  display: block;
+}
+.create-templates strong {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.create-templates small {
+  font-size: 11px;
+  color: #a9b5cc;
+  line-height: 1.6;
+}
+.create-templates .studio-icon {
+  color: #a8bfff;
+}
+.create-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.create-footer > span {
+  flex: 1;
+  color: var(--muted);
+  font-size: 10px;
+  max-width: 220px;
+}
+@media (max-width: 1050px) {
+  .ws-guide {
+    grid-template-columns: 1fr;
+  }
+  .ws-guide > * + * {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .ws-document-heading {
+    flex-wrap: wrap;
+  }
+  .ws-header {
+    gap: 12px;
+  }
+  .ws-sheet-fields {
+    grid-template-columns: 1fr;
+  }
+}
+.ws-table td button {
+  min-height: 0;
+  border-radius: 2px;
+}
+.ws-table td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+.create-footer > button:first-of-type {
+  margin-left: auto;
 }

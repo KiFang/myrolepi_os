@@ -5,6 +5,7 @@ import {
   preview,
   rename,
   systemIssues,
+  starterSystem,
 } from "../src/renderer/workspace-model";
 import type { PluginRegistry } from "../src/renderer/plugin-host";
 
@@ -67,5 +68,32 @@ describe("editable systems and campaigns", () => {
     expect(
       systemIssues(system).filter((i) => i.level === "error"),
     ).toHaveLength(2);
+  });
+});
+
+describe("system templates", () => {
+  it("creates a playable base with valid independent rules", () => {
+    const first = starterSystem("Северные земли", "classic");
+    const second = starterSystem("Другая игра", "classic");
+    expect(systemIssues(first).filter((i) => i.level === "error")).toEqual([]);
+    expect(
+      preview(
+        first.entityTypes[0],
+        { endurance: 16, level: 2 },
+        first,
+        registry,
+      ).values.max_hp,
+    ).toBe(40);
+    first.entityTypes[0].fields[0].default = 99;
+    expect(second.entityTypes[0].fields[0].default).toBe(10);
+    expect(first.id).not.toBe(second.id);
+  });
+  it("copies plugin data without modifying its source", () => {
+    const source = starterSystem("Источник", "classic");
+    const copy = starterSystem("Моя игра", source);
+    copy.entityTypes[0].fields[0].label = "Моя сила";
+    expect(source.entityTypes[0].fields[0].label).toBe("Сила");
+    expect(copy.name).toBe("Моя игра");
+    expect(copy.id).not.toBe(source.id);
   });
 });

@@ -8,13 +8,13 @@ import type {
   GameSystem,
 } from "../core";
 import type { PluginRegistry } from "./plugin-host";
-import example from "../../examples/space-opera.system.json";
+import { CreateSystem } from "./create-system";
+import { Icon, StudioMark, StudioSelect } from "./studio-ui";
 import {
   createEntity,
   label,
   newField,
   newId,
-  newSystem,
   newType,
   preview,
   rename,
@@ -162,6 +162,7 @@ export function Workspace({
   const [saved, setSaved] = useState(stringify(empty));
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState<string | null>(null);
   const [notice, setNotice] = useState("Открытие библиотеки…");
   const [loadError, setLoadError] = useState("");
   const [undo, setUndo] = useState<Project[]>([]);
@@ -328,7 +329,7 @@ export function Workspace({
   }, [ready, saving, saved]);
   useEffect(() => {
     const keyboard = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
+      if (creating !== null || !(e.ctrlKey || e.metaKey)) return;
       if (e.key.toLowerCase() === "s") {
         e.preventDefault();
         void save();
@@ -358,7 +359,7 @@ export function Workspace({
       window.removeEventListener("keydown", keyboard);
       window.removeEventListener("beforeunload", leave);
     };
-  }, [dirty, save, step]);
+  }, [dirty, save, step, creating]);
 
   const system =
     selection?.kind === "system"
@@ -425,16 +426,10 @@ export function Workspace({
     setFieldIndex(null);
     setEntityIndex(0);
   };
-  const addSystem = (template?: GameSystem) => {
-    const s = template
-      ? {
-          ...structuredClone(template),
-          id: newId("system"),
-          name: `${label(template.name)} — копия`,
-        }
-      : newSystem();
+  const addSystem = (s: GameSystem) => {
     change((p) => ({ ...p, systems: [...p.systems, s] }));
     open("system", s.id);
+    setCreating(null);
   };
   const addCampaign = () => {
     const s = system ?? project.systems[0];
@@ -456,27 +451,48 @@ export function Workspace({
 
   return (
     <div className="workspace">
+      {creating !== null && (
+        <CreateSystem
+          initial={creating}
+          pluginSystems={registry.systems}
+          onCreate={addSystem}
+          onCancel={() => setCreating(null)}
+        />
+      )}
       <header className="ws-header">
         <div className="ws-brand">
-          <span className="ws-logo">M</span>MyRolePi <span>STUDIO</span>
+          <StudioMark />
+          MyRolePi <span>STUDIO</span>
         </div>
         <div className="ws-menu">
-          <button onClick={() => onTool("dice")}>Кубики</button>
-          <button onClick={() => onTool("formulas")}>Формулы</button>
-          <button onClick={() => onTool("plugins")}>Плагины</button>
-          <button onClick={() => onTool("help")}>Справка</button>
+          <button onClick={() => onTool("dice")}>
+            <Icon name="dice" />
+            Кубики
+          </button>
+          <button onClick={() => onTool("formulas")}>
+            <Icon name="formula" />
+            Формулы
+          </button>
+          <button onClick={() => onTool("plugins")}>
+            <Icon name="plugin" />
+            Плагины
+          </button>
+          <button onClick={() => onTool("help")}>
+            <Icon name="help" />
+            Справка
+          </button>
         </div>
         <span className="ws-local">Локальная библиотека</span>
       </header>
       <div className="ws-toolbar">
-        <button disabled={!ready} onClick={() => addSystem()}>
-          ＋ Система
+        <button disabled={!ready} onClick={() => setCreating("classic")}>
+          <Icon name="plus" /> Система
         </button>
         <button
           disabled={!ready || !project.systems.length}
           onClick={addCampaign}
         >
-          ＋ Кампания
+          <Icon name="campaign" /> Кампания
         </button>
         <span className="ws-separator" />
         <button
@@ -484,14 +500,14 @@ export function Workspace({
           onClick={() => step("undo")}
           title="Отменить · Ctrl+Z"
         >
-          ↶ Отменить
+          <Icon name="undo" /> Отменить
         </button>
         <button
           disabled={!redo.length}
           onClick={() => step("redo")}
           title="Повторить · Ctrl+Shift+Z"
         >
-          ↷ Повторить
+          <Icon name="redo" /> Повторить
         </button>
         <span className="ws-grow" />
         <span className="ws-save-state">
@@ -502,6 +518,7 @@ export function Workspace({
           disabled={!ready || saving || !dirty}
           onClick={() => void save()}
         >
+          <Icon name="save" />
           {saving ? "Сохранение…" : "Сохранить всё"} <kbd>Ctrl S</kbd>
         </button>
       </div>
@@ -517,7 +534,7 @@ export function Workspace({
               className={selection?.id === s.id ? "selected" : ""}
               onClick={() => open("system", s.id)}
             >
-              <span>◇</span>
+              <Icon name="system" />
               {label(s.name)}
             </button>
           ))}
@@ -530,7 +547,7 @@ export function Workspace({
               className={selection?.id === c.id ? "selected" : ""}
               onClick={() => open("campaign", c.id)}
             >
-              <span>▤</span>
+              <Icon name="campaign" />
               {c.name}
             </button>
           ))}
@@ -549,7 +566,7 @@ export function Workspace({
                 key={s.id}
                 onClick={() => open("system", s.id)}
               >
-                ◇ {label(s.name)}
+                <Icon name="system" /> {label(s.name)}
               </button>
             ))}
             {project.campaigns.map((c) => (
@@ -559,7 +576,7 @@ export function Workspace({
                 key={c.id}
                 onClick={() => open("campaign", c.id)}
               >
-                ▤ {c.name}
+                <Icon name="campaign" /> {c.name}
               </button>
             ))}
             {!selection && <span>Начало работы</span>}
@@ -592,13 +609,13 @@ export function Workspace({
                   <button
                     className="ws-primary"
                     disabled={!ready}
-                    onClick={() => addSystem()}
+                    onClick={() => setCreating("classic")}
                   >
                     Создать систему
                   </button>
                   <button
                     disabled={!ready}
-                    onClick={() => addSystem(example as GameSystem)}
+                    onClick={() => setCreating("space")}
                   >
                     Открыть пример
                   </button>
@@ -621,7 +638,9 @@ export function Workspace({
                   <button
                     key={s.id}
                     disabled={!ready}
-                    onClick={() => addSystem(s)}
+                    onClick={() =>
+                      setCreating(`plugin-${registry.systems.indexOf(s)}`)
+                    }
                   >
                     Создать из плагина: {label(s.name)}
                   </button>
@@ -635,7 +654,10 @@ export function Workspace({
                       РЕДАКТОР СИСТЕМЫ / {system.version}
                     </div>
                     <h1>{label(system.name) || "Без названия"}</h1>
-                    <p>Правила и структура сущностей вашей игры</p>
+                    <p>
+                      Настройте персонажей и другие объекты, которые существуют
+                      в вашей игре
+                    </p>
                   </div>
                   <button
                     onClick={() => {
@@ -649,6 +671,26 @@ export function Workspace({
                     }}
                   >
                     ＋ Тип сущности
+                  </button>
+                </div>
+                <div className="ws-guide">
+                  <div>
+                    <span className="ws-step">1</span>
+                    <strong>Структура системы</strong>
+                    <small>Типы сущностей и их поля</small>
+                  </div>
+                  <div>
+                    <span className="ws-step">2</span>
+                    <strong>Правила и формулы</strong>
+                    <small>Выберите поле и задайте вычисление</small>
+                  </div>
+                  <button onClick={addCampaign}>
+                    <span className="ws-step">3</span>
+                    <span>
+                      <strong>Перейти к кампании</strong>
+                      <small>Создайте героев по этим правилам</small>
+                    </span>
+                    <Icon name="arrow" />
                   </button>
                 </div>
                 <div className="ws-type-tabs">
@@ -673,7 +715,7 @@ export function Workspace({
                         onClick={() => {
                           updateType((t) => ({
                             ...t,
-                            fields: [...t.fields, newField()],
+                            fields: [...t.fields, newField(t.fields)],
                           }));
                           setFieldIndex(type.fields.length);
                         }}
@@ -755,7 +797,7 @@ export function Workspace({
                       Сущности <small>{campaign.entities.length}</small>
                     </h2>
                     <div className="ws-inline">
-                      <select
+                      <StudioSelect
                         aria-label="Тип новой сущности"
                         value={typeIndex}
                         onChange={(e) => setTypeIndex(Number(e.target.value))}
@@ -765,7 +807,7 @@ export function Workspace({
                             {label(t.label)}
                           </option>
                         ))}
-                      </select>
+                      </StudioSelect>
                       <button
                         disabled={!linked?.entityTypes[typeIndex]}
                         onClick={() => {
@@ -868,7 +910,8 @@ export function Workspace({
                               ) : f.type === "select" ? (
                                 <label className="ws-control">
                                   <span>{label(f.label)}</span>
-                                  <select
+                                  <StudioSelect
+                                    aria-label={label(f.label)}
                                     value={String(value ?? "")}
                                     onChange={(e) => set(e.target.value)}
                                   >
@@ -878,7 +921,7 @@ export function Workspace({
                                         {label(o.label)}
                                       </option>
                                     ))}
-                                  </select>
+                                  </StudioSelect>
                                 </label>
                               ) : f.type === "list" ||
                                 (f.type === "resource" &&
@@ -1007,62 +1050,69 @@ export function Workspace({
           <div className="ws-inspector-content">
             {system ? (
               <>
-                <div className="ws-property-group">Документ</div>
-                <Input
-                  title="Название системы"
-                  value={label(system.name)}
-                  onChange={(v) =>
-                    updateSystem((s) => ({ ...s, name: rename(s.name, v) }))
-                  }
-                />
-                <Input
-                  title="Версия"
-                  value={system.version}
-                  onChange={(version) =>
-                    updateSystem((s) => ({ ...s, version }))
-                  }
-                />
-                <Input
-                  title="Описание"
-                  multiline
-                  value={label(system.description)}
-                  onChange={(v) =>
-                    updateSystem((s) => ({
-                      ...s,
-                      description: rename(s.description, v),
-                    }))
-                  }
-                />
-                {type && (
-                  <>
-                    <div className="ws-property-group">Тип сущности</div>
-                    <Input
-                      title="Название типа"
-                      value={label(type.label)}
-                      onChange={(v) =>
-                        updateType((t) => ({ ...t, label: rename(t.label, v) }))
-                      }
-                    />
-                    <label className="ws-control">
-                      <span>Категория</span>
-                      <select
-                        value={type.category}
-                        onChange={(e) =>
+                <details className="ws-context" open={!field}>
+                  <summary>Система и тип сущности</summary>
+                  <div className="ws-property-group">Документ</div>
+                  <Input
+                    title="Название системы"
+                    value={label(system.name)}
+                    onChange={(v) =>
+                      updateSystem((s) => ({ ...s, name: rename(s.name, v) }))
+                    }
+                  />
+                  <Input
+                    title="Версия"
+                    value={system.version}
+                    onChange={(version) =>
+                      updateSystem((s) => ({ ...s, version }))
+                    }
+                  />
+                  <Input
+                    title="Описание"
+                    multiline
+                    value={label(system.description)}
+                    onChange={(v) =>
+                      updateSystem((s) => ({
+                        ...s,
+                        description: rename(s.description, v),
+                      }))
+                    }
+                  />
+                  {type && (
+                    <>
+                      <div className="ws-property-group">Тип сущности</div>
+                      <Input
+                        title="Название типа"
+                        value={label(type.label)}
+                        onChange={(v) =>
                           updateType((t) => ({
                             ...t,
-                            category: e.target.value as EntityCategory,
+                            label: rename(t.label, v),
                           }))
                         }
-                      >
-                        {Object.entries(categories).map(([id, name]) => (
-                          <option key={id} value={id}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </>
-                )}
+                      />
+                      <label className="ws-control">
+                        <span>Категория</span>
+                        <StudioSelect
+                          aria-label="Категория"
+                          value={type.category}
+                          onChange={(e) =>
+                            updateType((t) => ({
+                              ...t,
+                              category: e.target.value as EntityCategory,
+                            }))
+                          }
+                        >
+                          {Object.entries(categories).map(([id, name]) => (
+                            <option key={id} value={id}>
+                              {name}
+                            </option>
+                          ))}
+                        </StudioSelect>
+                      </label>
+                    </>
+                  )}
+                </details>
                 {field ? (
                   <>
                     <div className="ws-property-group">Выбранное поле</div>
@@ -1080,7 +1130,8 @@ export function Workspace({
                     />
                     <label className="ws-control">
                       <span>Тип поля</span>
-                      <select
+                      <StudioSelect
+                        aria-label="Тип поля"
                         value={field.type}
                         onChange={(e) => {
                           const kind = e.target.value as FieldType;
@@ -1108,7 +1159,7 @@ export function Workspace({
                             {name}
                           </option>
                         ))}
-                      </select>
+                      </StudioSelect>
                     </label>
                     <Input
                       title="Группа"
@@ -1127,11 +1178,50 @@ export function Workspace({
                       В формулах используйте ID полей. Функции плагинов также
                       доступны.
                     </p>
-                    <JsonInput
-                      title="Значение по умолчанию"
-                      value={field.default}
-                      onChange={(value) => updateField({ default: value })}
-                    />
+                    {(field.type === "number" || field.type === "resource") &&
+                    typeof field.default !== "object" ? (
+                      <Input
+                        title="Начальное значение"
+                        type="number"
+                        value={
+                          typeof field.default === "number" ? field.default : ""
+                        }
+                        onChange={(v) =>
+                          updateField({
+                            default: v === "" ? undefined : Number(v),
+                          })
+                        }
+                      />
+                    ) : field.type === "boolean" ? (
+                      <label className="ws-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(field.default)}
+                          onChange={(e) =>
+                            updateField({ default: e.target.checked })
+                          }
+                        />
+                        Включено по умолчанию
+                      </label>
+                    ) : [
+                        "text",
+                        "longtext",
+                        "image",
+                        "reference",
+                        "select",
+                      ].includes(field.type) ? (
+                      <Input
+                        title="Начальное значение"
+                        value={String(field.default ?? "")}
+                        onChange={(v) => updateField({ default: v })}
+                      />
+                    ) : (
+                      <JsonInput
+                        title="Значение по умолчанию"
+                        value={field.default}
+                        onChange={(value) => updateField({ default: value })}
+                      />
+                    )}
                     {(field.type === "number" || field.type === "resource") && (
                       <div className="ws-inline">
                         <Input
@@ -1181,7 +1271,8 @@ export function Workspace({
                     {field.type === "reference" && (
                       <label className="ws-control">
                         <span>Ссылка на тип</span>
-                        <select
+                        <StudioSelect
+                          aria-label="Ссылка на тип"
                           value={field.refType ?? ""}
                           onChange={(e) =>
                             updateField({
@@ -1195,7 +1286,7 @@ export function Workspace({
                               {label(t.label)}
                             </option>
                           ))}
-                        </select>
+                        </StudioSelect>
                       </label>
                     )}
                     <Input
