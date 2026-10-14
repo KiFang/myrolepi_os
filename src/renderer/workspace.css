@@ -874,3 +874,4 @@
 .workspace .ws-theme { margin-left: auto; }
 .workspace .ws-theme + .ws-lang { margin-left: 8px; }
 .workspace .ws-export { width: 100%; justify-content: center; margin-bottom: 4px; }
+.ws-image-preview { max-width: 160px; max-height: 160px; border-radius: 10px; border: 1px solid var(--border); object-fit: cover; }

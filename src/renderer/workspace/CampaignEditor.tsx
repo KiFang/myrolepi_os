@@ -191,6 +191,21 @@ function Heroes({ ed }: { ed: CampaignEditorState }) {
                           {f.options?.map((o) => <option key={o.value} value={o.value}>{label(o.label)}</option>)}
                         </select>
                       </label>
+                    ) : f.type === "image" ? (
+                      <div className="ws-control">
+                        <span>{label(f.label)}</span>
+                        {typeof value === "string" && value && <img className="ws-image-preview" src={value} alt="" />}
+                        <input type="file" accept="image/*" aria-label={label(f.label)} onChange={(ev) => {
+                          const file = ev.target.files?.[0];
+                          ev.target.value = "";
+                          if (!file) return;
+                          if (file.size > 2_000_000) return window.alert(t("ws.imageTooBig"));
+                          const r = new FileReader();
+                          r.onload = () => set(String(r.result));
+                          r.readAsDataURL(file);
+                        }} />
+                        {typeof value === "string" && value && <button onClick={() => set("")}>{t("ws.removeImage")}</button>}
+                      </div>
                     ) : f.type === "list" || (f.type === "resource" && typeof value === "object") ? (
                       <JsonInput title={label(f.label)} value={value} onChange={set} />
                     ) : (
