@@ -11,7 +11,7 @@ npm run dev        # разработка (Vite + Electron)
 npm run build && npm start
 npm test           # тесты ядра
 ```
-Из лаунчера: `--launcher --data-dir <путь> --plugins-dir <путь> --lang ru` (см. `asteia.module.json`).
+Из лаунчера: `--launcher --data-dir <путь> --plugins-dir <путь> --lang ru` (см. `asteia.module.json`). Лаунчер ещё не создан — этот контракт задаёт модуль, лаунчер будет писаться под него.
 
 ## Структура
 - `src/core` — движок без привязки к UI: кубики, формулы, схема системы, вычисление полей, валидатор, i18n, контракт плагинов.

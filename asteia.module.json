@@ -4,5 +4,5 @@
   "version": "0.1.0",
   "launcher": "Asteia Alltools",
   "entry": { "command": "electron", "args": ["."], "launcherArgs": ["--launcher", "--data-dir", "{dataDir}", "--plugins-dir", "{pluginsDir}", "--lang", "{lang}"] },
-  "_note": "Черновой формат модуля. Подгоните под реальную спецификацию лаунчера Asteia Alltools."
+  "_note": "Черновой контракт модуля. Лаунчера Asteia Alltools ещё нет: его будем делать под этот формат и менять формат здесь по мере необходимости."
 }
